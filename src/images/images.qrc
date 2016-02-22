@@ -1,0 +1,31 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource prefix="/images">
+    <file alias="open.png">flaticon/folders.png</file>
+    <file alias="import.png">icons/glyphicons-359-file-import.png</file>
+    <file alias="exit.png">icons/glyphicons-389-exit.png</file>
+    <file alias="about.png">icons/glyphicons-21-home.png</file>
+    <file alias="options.png">icons/glyphicons-281-settings.png</file>   
+    <file alias="accept.png">icons/glyphicons-207-ok-2.png</file>
+    <file alias="cancel.png">icons/glyphicons-208-remove-2.png</file>
+    <file alias="min.png">icons/glyphicons-434-minus.png</file>
+    <file alias="max.png">icons/glyphicons-433-plus.png</file>
+    <file alias="app.png">app.png</file>
+    <file alias="refresh.png">icons/glyphicons-82-refresh.png</file>
+    <file alias="close.png">flaticon/close10.png</file>
+    <file alias="reload.png">icons/glyphicons-86-repeat.png</file>
+    <file alias="search.png">icons/glyphicons-28-search.png</file>
+    <file alias="explorer.png">flaticon/folder284.png</file>	
+    <file alias="first.png">flaticon/rewind44.png</file>  
+    <file alias="prev.png">flaticon/left216.png</file>  
+    <file alias="next.png">flaticon/keyboard53.png</file>  
+    <file alias="last.png">flaticon/fast44.png</file>  
+    <file alias="filteroptions.png">icons/glyphicons-137-cogwheel.png</file>
+    <file alias="update.png">icons/glyphicons-182-download-alt.png</file>     
+    <file alias="favfolder.png">flaticon/folder290.png</file>
+    <file alias="removefavfolder.png">flaticon/folder285.png</file>
+	<file alias="folder.png">flaticon/folders.png</file>
+	<file alias="home.png">icons/glyphicons-21-home.png</file>
+	<file alias="addfolder.png">flaticon/folderadd.png</file>
+</qresource>
+</RCC>

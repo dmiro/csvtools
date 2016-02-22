@@ -1,0 +1,1 @@
+lrelease i18n/es_ES.ts
