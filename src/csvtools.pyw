@@ -9,6 +9,8 @@ from widgets.csvm import QCsv
 from widgets.explorer import QExplorer
 from widgets.status import QStatus
 from widgets.search import QSearch
+from widgets.opencsvfiledialog import QOpenCsvFileDialog
+from widgets.csvwiz import QCsvWiz
 import lib.document
 from lib.config import config
 from lib.helper import waiting, get_excel_sheets
@@ -182,10 +184,16 @@ class MainWindow(QMainWindow):
 
     def openDialogAction(self):
         """open csv dialog"""
-        filename = QFileDialog.getOpenFileName(self, self.tr('Open file'), '', "Csv Files (*.csv)")
+        filename, useWizard = QOpenCsvFileDialog.getOpenFileName(self)
         if filename:
-            filename = str(filename)
-            self.openCsv(filename)
+            # use csv wizard
+            if useWizard:
+               csvWiz = QCsvWiz(filename=filename)
+               csvWiz.exec_()
+            # open csv with standard parameters
+            else:
+                filename = str(filename)
+                self.openCsv(filename)
 
     def exitDialogAction(self):
         """exit dialog"""
