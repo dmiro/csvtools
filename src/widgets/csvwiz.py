@@ -3,7 +3,7 @@ from PyQt4.QtGui import *
 from helpers.qradiobuttongroup import QRadioButtonGroup
 from helpers.qcheckboxgroup import QCheckGroupBox
 from widgets.csvm import QCsv
-from lib.document import Csv
+import lib.document
 import sys
 
 
@@ -24,7 +24,7 @@ class DelimiterGroupBox(QRadioButtonGroup):
         elif index == 3:
             return ' '
         else:
-            return self.buddie(4).text()
+            return str(self.buddie(4).text())
 
     #
     # init
@@ -54,7 +54,7 @@ class QuoteGroupBox(QRadioButtonGroup):
         elif index == 2:
             return '\''
         else:
-            return self.buddie(3).text()
+            return str(self.buddie(3).text())
       
     #
     # init
@@ -79,7 +79,7 @@ class LineTerminatorGroupBox(QRadioButtonGroup):
         if index == 0:
             return '\\r\\n'
         else:
-            return self.buddie(1).text()
+            return str(self.buddie(1).text())
       
     #
     # init
@@ -143,7 +143,9 @@ class QCsvWiz(QDialog):
         groupBox = QGroupBox(self.tr('Preview'), parent=self)
         formLayout = QFormLayout(parent=groupBox)
         # Preview TableView
-        self.preview = QCsv(Csv(self.filename))
+        csvDocument = lib.document.Csv(self.filename)
+        csvDocument.load()
+        self.preview = QCsv(csvDocument)
         self.preview.setEnabled(False)
         formLayout.addRow(self.preview)        
         return groupBox
@@ -153,16 +155,21 @@ class QCsvWiz(QDialog):
     #
     
     def _groupBoxClickedSlot(self):
-        print self.delimiterGroupBox.value()
-        print self.quoteGroupBox.value()
-        print self.adjustsGroupBox.isSkipInitialSpace()
-        print self.adjustsGroupBox.isSkipEmptyLines()
-        print self.adjustsGroupBox.isHeaderRow()
-        print self.adjustsGroupBox.isSkipEmptyColumns()
-        print self.lineTerminatorGroupBox.value()
-        csv = Csv(self.filename,
-                  delimiter =self.delimiterGroupBox.value())
-        self.preview.setDocument(csv)
+        # print self.delimiterGroupBox.value()
+        # print self.quoteGroupBox.value()
+        # print self.adjustsGroupBox.isSkipInitialSpace()
+        # print self.adjustsGroupBox.isSkipEmptyLines()
+        # print self.adjustsGroupBox.isHeaderRow()
+        # print self.adjustsGroupBox.isSkipEmptyColumns()
+        # print self.lineTerminatorGroupBox.value()
+        #csvDocument = lib.document.Csv(self.filename,
+        #                       delimiter =self.delimiterGroupBox.value())
+        #csvDocument.load()
+        #self.preview.setDocument(csvDocument)
+        self.preview.document.delimiter = self.delimiterGroupBox.value()
+     #   self.preview.document.quotechar = self.quoteGroupBox.value()
+     #   self.preview.document.quoting = True
+        self.preview.document.load()
 
         ##self.preview.data = data
 
@@ -205,9 +212,3 @@ class QCsvWiz(QDialog):
         self.setWindowTitle(self.tr('Import Csv'))
         self.setFixedSize(800, 400)
 
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    w = QCsvWiz(filename='..\..\testdocs\demo4.csv')
-    w.show()
-    sys.exit(app.exec_())
