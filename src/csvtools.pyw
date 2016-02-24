@@ -12,9 +12,9 @@ from widgets.search import QSearch
 from widgets.opencsvfiledialog import QOpenCsvFileDialog
 from widgets.csvwiz import QCsvWiz
 import lib.document
+import lib.export
 from lib.config import config
 from lib.helper import waiting, get_excel_sheets
-from lib.export import rectangularAreaToClipboardFormat, rectangularAreaToJSONClipboardFormat,rectangularAreaToDelimitiedClipboardFormat, rectangularAreaToXMLClipboardFormat, rectangularAreaToTextClipboardFormat,rectangularAreaToHTMLClipboardFormat, rectangularAreaToPythonTextClipboardFormat,rectangularAreaToPythonTupleClipboardFormat, rectangularAreaToPythonListClipboardFormat, rectangularAreaToPythonDictClipboardFormat
 import lib.images_rc
 import sys
 import os
@@ -266,61 +266,61 @@ class MainWindow(QMainWindow):
             if action == self.copyToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=False)
                 if matrix:
-                    textClip = rectangularAreaToClipboardFormat(matrix)    
+                    textClip = lib.export.ClipboardFormat.toClipboard(matrix)    
             # copy with Column Name(s) action            
             elif action == self.copyWithHeaderColumnsToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToClipboardFormat(matrix)    
+                    textClip = lib.export.ClipboardFormat.toClipboard(matrix)    
             # copy Column Name(s) action 
             elif action == self.copyHeaderColumnsToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToClipboardFormat([matrix[0]])    
+                    textClip = lib.export.ClipboardFormat.toClipboard([matrix[0]])    
             # copy As JSON action
             elif action == self.copyAsJSON:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToJSONClipboardFormat(matrix)
+                    textClip = lib.export.ClipboardFormat.toJSON(matrix)
             # copy As Delimited action
             elif action == self.copyAsDelimited:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToDelimitiedClipboardFormat(matrix)
+                    textClip = lib.export.ClipboardFormat.toDelimitied(matrix)
             # copy As Delimited action
             elif action == self.copyAsXML:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToXMLClipboardFormat(matrix)
+                    textClip = lib.export.ClipboardFormat.toXML(matrix)
             # copy As Text action
             elif action == self.copyAsText:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToTextClipboardFormat(matrix)
+                    textClip = lib.export.ClipboardFormat.toText(matrix)
             # copy As HTML action
             elif action == self.copyAsHTML:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToHTMLClipboardFormat(matrix)            
+                    textClip = lib.export.ClipboardFormat.toHTML(matrix)            
             # copy Python Source Code As TEXT action
             elif action == self.copyPythonAsText:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToPythonTextClipboardFormat(matrix)
+                    textClip = lib.export.ClipboardFormat.toPythonText(matrix)
             # copy Python Source Code As TUPLE action                   
             elif action == self.copyPythonAsTuple:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToPythonTupleClipboardFormat(matrix)
+                    textClip = lib.export.ClipboardFormat.toPythonTuple(matrix)
             # copy Python Source Code As LIST action                   
             elif action == self.copyPythonAsList:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToPythonListClipboardFormat(matrix)
+                    textClip = lib.export.ClipboardFormat.toPythonList(matrix)
             elif action == self.copyPythonAsDict:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = rectangularAreaToPythonDictClipboardFormat(matrix)               
+                    textClip = lib.export.ClipboardFormat.toPythonDict(matrix)               
 
             # at last copy result to clipboard
             if textClip:
