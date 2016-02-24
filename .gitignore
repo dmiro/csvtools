@@ -10,9 +10,12 @@ __pycache__/
 # C extensions
 *.so
 
+# proyecto
+csvtools.cfg
+.idea/
+
 # Distribution / packaging
 .Python
-.idea/
 env/
 build/
 develop-eggs/

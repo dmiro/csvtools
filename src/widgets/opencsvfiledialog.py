@@ -1,6 +1,6 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-
+from lib.config import config
 
 class QOpenCsvFileDialog(QFileDialog):
 
@@ -10,6 +10,17 @@ class QOpenCsvFileDialog(QFileDialog):
 
     def useWizard(self):
         return self.checkboxWizard.checkState() == Qt.Checked
+
+    #
+    # private
+    #
+    
+    def __checkboxWizardStateChangedSlot(self, value):
+        if self.checkboxWizard.checkState() == Qt.Checked:
+            config.file_useCsvWizard = True
+        else:
+            config.file_useCsvWizard = False
+ 
     #
     # init
     #
@@ -24,6 +35,11 @@ class QOpenCsvFileDialog(QFileDialog):
         layout = self.layout()
         self.checkboxWizard = QCheckBox(self.tr('Use Wizard'))
         self.checkboxWizard.setStyleSheet("background-color: yellow; font: bold")
+        if config.file_useCsvWizard:
+            self.checkboxWizard.setCheckState(Qt.Checked)
+        else:
+            self.checkboxWizard.setCheckState(Qt.Unchecked)
+        self.checkboxWizard.stateChanged.connect(self.__checkboxWizardStateChangedSlot)
         if layout:                
             layout.addWidget(self.checkboxWizard, 4, 2)
 

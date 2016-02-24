@@ -156,8 +156,8 @@ class QExplorer(QWidget):
             # home = os.getenv('USERPROFILE') or os.getenv('HOME')
             if home:
                 self.setRootPath(home)
-        elif action == self.addFolderDir:
-            pass #acabar
+##        elif action == self.addFolderDir:
+##            pass #acabar
 
     def _treeDirscustomContextMenuRequestedEvent(self, point):
         # show menu
@@ -196,7 +196,7 @@ class QExplorer(QWidget):
         # action 
         self.refreshDirs = QAction(QIcon(':images/refresh.png'), self.tr('Refresh'), self)
         self.userFolderDir = QAction(QIcon(':images/home.png'), self.tr('User Folder'), self)
-        self.addFolderDir = QAction(QIcon(':images/addfolder.png'), self.tr('Add Folder'), self)
+##        self.addFolderDir = QAction(QIcon(':images/addfolder.png'), self.tr('Add Folder'), self)
         
         # favorite folder Menu
         self.favoriteFolderMenu = QMenu()
@@ -215,7 +215,7 @@ class QExplorer(QWidget):
         self.toolBarDirs.addWidget(self.favoriteFolderButton)
         self.toolBarDirs.addSeparator()
         self.toolBarDirs.addAction(self.userFolderDir)
-        self.toolBarDirs.addAction(self.addFolderDir)
+##        self.toolBarDirs.addAction(self.addFolderDir)
         self.toolBarDirs.addSeparator()
         self.toolBarDirs.addAction(self.refreshDirs)        
         self.toolBarDirs.actionTriggered.connect(self._toolBarDirsActionTriggeredEvent)
