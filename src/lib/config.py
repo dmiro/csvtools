@@ -1,6 +1,7 @@
 import ConfigParser
 import json
 
+
 class Config(object):
 
     #
@@ -8,21 +9,12 @@ class Config(object):
     #
 
     @property
-    def searches(self):
-        return self._searches
+    def tools_searches(self):
+        return self._tools_searches
 
-    @searches.setter
-    def searches(self, value):
-        self._searches = value
-        self.save()
-
-    @property
-    def recent(self):
-        return self._recent
-
-    @recent.setter
-    def recent(self, value):
-        self._recent = value
+    @tools_searches.setter
+    def tools_searches(self, value):
+        self._tools_searches = value
         self.save()
 
     @property
@@ -108,74 +100,82 @@ class Config(object):
         self._file_useCsvWizard = value
         self.save()
 
+    @property
+    def file_recent(self):
+        return self._file_recent
+
+    @file_recent.setter
+    def file_recent(self, value):
+        self._file_recent = value
+        self.save()
+
     #
     # private
     #
 
-    def __getBoolean(self, config, section, option, default):
-        if not config.has_section(section):
-            config.add_section(section)
-        if config.has_option(section, option):
-            return config.getboolean(section, option)
+    def __getBoolean(self, section, option, default):
+        if not self.__config.has_section(section):
+            self.__config.add_section(section)
+        if self.__config.has_option(section, option):
+            return self.__config.getboolean(section, option)
         else:
             return default
 
-    def __getInt(self, config, section, option, default):
-        if not config.has_section(section):
-            config.add_section(section)
-        if config.has_option(section, option):
-            return config.getint(section, option)
+    def __getInt(self, section, option, default):
+        if not self.__config.has_section(section):
+            self.__config.add_section(section)
+        if self.__config.has_option(section, option):
+            return self.__config.getint(section, option)
         else:
             return default
 
-    def __get(self, config, section, option, default):
-        if not config.has_section(section):
-            config.add_section(section)
-        if config.has_option(section, option):
-            return config.get(section, option)
+    def __get(self, section, option, default):
+        if not self.__config.has_section(section):
+            self.__config.add_section(section)
+        if self.__config.has_option(section, option):
+            return self.__config.get(section, option)
         else:
             return default
+
+    def __set(self, section, option, value):
+        if not self.__config.has_section(section):
+            self.__config.add_section(section)
+        self.__config.set(section, option, value)
 
     def __load(self):
-        config = ConfigParser.ConfigParser()
-        config.read('csvtools.cfg')
-        self.files = json.loads(self.__get(config, 'config', 'files', '[]'))
-        self._recent = json.loads(self.__get(config, 'config', 'recent', '[]'))
-        self._searches = json.loads(self.__get(config, 'config', 'searches', '[]'))
-        self._filterFiles = json.loads(self.__get(config, 'config', 'filterFiles', '[]'))
-        self._favFolders = json.loads(self.__get(config, 'config', 'favFolders', '[]'))
-        self.restore = self.__getBoolean(config, 'config', 'restore', True)
-        self.headerrow = self.__getBoolean(config, 'config', 'headerrow', True)
-        self._matchMode = self.__getInt(config, 'config', 'matchMode', 0)
-        self._matchCase = self.__getBoolean(config, 'config', 'matchCase', False)
-        self._findAllDocuments = self.__getBoolean(config, 'config', 'findAllDocuments', False)
-        self._showUnmatchedDisabled = self.__getBoolean(config, 'config', 'showUnmatchedDisabled', False)
-        self._showColumnSize = self.__getBoolean(config, 'config', 'showColumnSize', True)
-        self._showColumnDateModified = self.__getBoolean(config, 'config', 'showColumnDateModified', True)
-        self._file_useCsvWizard = self.__getBoolean(config, 'file', 'useCsvWizard', True)
+        self.__config.read('csvtools.cfg')
+        self.files = json.loads(self.__get('config', 'files', '[]'))
+        self._file_recent = json.loads(self.__get('file', 'recent', '[]'))
+        self._tools_searches = json.loads(self.__get('tools', 'searches', '[]'))
+        self._filterFiles = json.loads(self.__get('config', 'filterFiles', '[]'))
+        self._favFolders = json.loads(self.__get('config', 'favFolders', '[]'))
+        self.restore = self.__getBoolean('config', 'restore', True)
+        self.headerrow = self.__getBoolean('config', 'headerrow', True)
+        self._matchMode = self.__getInt('config', 'matchMode', 0)
+        self._matchCase = self.__getBoolean('config', 'matchCase', False)
+        self._findAllDocuments = self.__getBoolean('config', 'findAllDocuments', False)
+        self._showUnmatchedDisabled = self.__getBoolean('config', 'showUnmatchedDisabled', False)
+        self._showColumnSize = self.__getBoolean('config', 'showColumnSize', True)
+        self._showColumnDateModified = self.__getBoolean('config', 'showColumnDateModified', True)
+        self._file_useCsvWizard = self.__getBoolean('file', 'useCsvWizard', True)
 
     def save(self):
-        config = ConfigParser.ConfigParser()
-        if not config.has_section('config'):
-            config.add_section('config')
-        if not config.has_section('file'):
-            config.add_section('file')
-        config.set('config', 'files', json.dumps(self.files))
-        config.set('config', 'recent', json.dumps(self._recent))
-        config.set('config', 'searches', json.dumps(self._searches))
-        config.set('config', 'filterFiles', json.dumps(self._filterFiles))
-        config.set('config', 'favFolders', json.dumps(self._favFolders))
-        config.set('config', 'restore', self.restore)
-        config.set('config', 'headerrow', self.headerrow)
-        config.set('config', 'matchMode', self._matchMode)
-        config.set('config', 'matchCase', self._matchCase)
-        config.set('config', 'findAllDocuments', self._findAllDocuments)
-        config.set('config', 'showUnmatchedDisabled', self._showUnmatchedDisabled)
-        config.set('config', 'showColumnSize', self._showColumnSize)
-        config.set('config', 'showColumnDateModified', self._showColumnDateModified)
-        config.set('file', 'useCsvWizard', self._file_useCsvWizard)
+        self.__set('config', 'files', json.dumps(self.files))
+        self.__set('config', 'recent', json.dumps(self._file_recent))
+        self.__set('tools', 'searches', json.dumps(self._tools_searches))
+        self.__set('config', 'filterFiles', json.dumps(self._filterFiles))
+        self.__set('config', 'favFolders', json.dumps(self._favFolders))
+        self.__set('config', 'restore', self.restore)
+        self.__set('config', 'headerrow', self.headerrow)
+        self.__set('config', 'matchMode', self._matchMode)
+        self.__set('config', 'matchCase', self._matchCase)
+        self.__set('config', 'findAllDocuments', self._findAllDocuments)
+        self.__set('config', 'showUnmatchedDisabled', self._showUnmatchedDisabled)
+        self.__set('config', 'showColumnSize', self._showColumnSize)
+        self.__set('config', 'showColumnDateModified', self._showColumnDateModified)
+        self.__set('file', 'useCsvWizard', self._file_useCsvWizard)
         with open('csvtools.cfg', 'wb') as configfile:
-            config.write(configfile)
+            self.__config.write(configfile)
 
     #
     # init
@@ -183,6 +183,7 @@ class Config(object):
 
     def __init__(self, *args):
         object.__init__(self, *args)
+        self.__config = ConfigParser.ConfigParser()
         self.__load()
 
 

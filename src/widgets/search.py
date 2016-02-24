@@ -87,7 +87,7 @@ class QSearch(QWidget):
 
     def _loadConfig(self):
         # text search
-        self.textSearch.addItems(config.searches)
+        self.textSearch.addItems(config.tools_searches)
         # match mode
         self.matchMode.setCurrentIndex(config.matchMode)
         # match case
@@ -100,7 +100,7 @@ class QSearch(QWidget):
     def _saveConfig(self):
         # text search
         items = [str(self.textSearch.itemText(i)) for i in range(self.textSearch.count())]
-        config.searches = items
+        config.tools_searches = items
         # match mode
         config.matchMode = self.matchMode.currentIndex()
         # match case

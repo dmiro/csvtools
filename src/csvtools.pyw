@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
 
     def emptyRecentFiles(self):
         """empty recent files and refresh menu"""
-        config.recent = []
+        config.file_recent = []
         self.refreshRecentFileActions()
 
     def restoreLastSession(self):
@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
     def refreshRecentFileActions(self):
         """update recent files menu"""
         self.recent.clear()
-        for index, recent in enumerate(config.recent):
+        for index, recent in enumerate(config.file_recent):
             action = QAction("%d. %s" % (index+1,recent), self)
             action.setStatusTip("%s %s" % (self.tr('Open'), recent))
             action.triggered[()].connect(lambda recent=recent: self.openCsv(recent))
@@ -100,15 +100,15 @@ class MainWindow(QMainWindow):
         empty = QAction(self.tr('Empty'), self)
         empty.setStatusTip(self.tr('Empty recent list'))
         empty.triggered.connect(self.emptyRecentFiles)
-        empty.setDisabled(len(config.recent) == 0)
+        empty.setDisabled(len(config.file_recent) == 0)
         self.recent.addAction(empty)
 
     def addRecentFile(self, file_):
         """add in config file the last opened file"""
-        if file_ in config.recent:
-            config.recent.remove(file_)
-        config.recent.insert(0, file_)
-        config.recent = config.recent[0:20]
+        if file_ in config.file_recent:
+            config.file_recent.remove(file_)
+        config.file_recent.insert(0, file_)
+        config.file_recent = config.file_recent[0:20]
 #        config.save()
 
     def saveSessionFile(self):
