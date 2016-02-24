@@ -12,35 +12,34 @@ import sys
 #http://www.qtcentre.org/archive/index.php/t-22863.html
 
 
-
 class QSearch(QWidget):
-    
+
     #
     # public
     #
-    
+
     searchClicked = pyqtSignal(str)
     resultClicked = pyqtSignal(str, int, int, str)
-    
+
     def matchModeOption(self):
         index = self.matchMode.currentIndex()
         if index == 0:
             return MatchModeEnum.Contains
         if index == 1:
-            return MatchModeEnum.WholeWord 
+            return MatchModeEnum.WholeWord
         if index == 2:
-            return MatchModeEnum.StartsWidth  
+            return MatchModeEnum.StartsWidth
         if index == 3:
             return MatchModeEnum.EndsWith
         if index == 4:
             return MatchModeEnum.RegularExpression
-        
-    def matchCaseOption(self):   
+
+    def matchCaseOption(self):
         return self.matchCase.checkState() == Qt.Checked
 
-    def findAllDocumentsOption(self):   
+    def findAllDocumentsOption(self):
         return self.findAllDocuments.checkState() == Qt.Checked
-     
+
     def setResult(self, data):
         """ create and populate model with search result
             data struct is:
@@ -53,7 +52,7 @@ class QSearch(QWidget):
         self.result.setModel(model)
         self.result.setUniformRowHeights(True)
         self.toolBar.setDisabled(len(data) == 0)
-        
+
         # iterate files
         for item in data:
             text = '{1} [{0}]'.format(len(item['result']), item['tabText'])
@@ -62,7 +61,7 @@ class QSearch(QWidget):
             parent.setToolTip(item['tabToolTip'])
             parent.setData(item['tabToolTip'], Qt.WhatsThisRole)
             # iterating over search result file
-            for value in item['result']:    
+            for value in item['result']:
                 row = QStandardItem(str(value[0]))
                 row.setData(value, Qt.WhatsThisRole)
                 row.setEditable(False)
@@ -76,7 +75,7 @@ class QSearch(QWidget):
                 text.setData(value, Qt.WhatsThisRole)
                 text.setEditable(False)
                 parent.appendRow([row, col, text])
-                
+
             model.appendRow(parent)
             self.result.setFirstColumnSpanned(model.rowCount()-1, self.result.rootIndex(), True)
 
@@ -120,10 +119,10 @@ class QSearch(QWidget):
         self.textSearch.clear()
         self.textSearch.addItems(items)
         self._saveConfig()
-    
+
     def _getResultRow(self, item, row):
         return item.child(row, 0), item.child(row, 1), item.child(row, 2)
-        
+
     def _firstResultItem(self):
         model = self.result.model()
         parent = model.index(0, 0)
@@ -135,7 +134,7 @@ class QSearch(QWidget):
         parent = model.index(row-1, 0)
         row = model.rowCount(parent)
         return self._getResultRow(parent, row-1)
-        
+
     def _nextResultItem(self):
         model = self.result.model()
         item = self.result.currentIndex()
@@ -154,15 +153,15 @@ class QSearch(QWidget):
                     if parent.isValid():
                         return self._getResultRow(parent, 0)
                     else:
-                        return self._lastResultItem()  
-            # estoy en un item que tiene hijos 
+                        return self._lastResultItem()
+            # estoy en un item que tiene hijos
             else:
                 return self._getResultRow(item, 0)
         return self._firstResultItem()
-            
+
     def _prevResultItem(self):
         model = self.result.model()
-        item = self.result.currentIndex()       
+        item = self.result.currentIndex()
         if item.isValid():
             parent = item.parent()
             # estoy en un item valido
@@ -178,12 +177,12 @@ class QSearch(QWidget):
                     if parent.isValid():
                         row = model.rowCount(parent)
                         return self._getResultRow(parent, row-1)
-            # estoy en un item que tiene hijos 
+            # estoy en un item que tiene hijos
             else:
                 return self._getResultRow(item, 0)
         # otherwise get firt item
         return self._firstResultItem()
-    
+
     #
     # events
     #
@@ -197,16 +196,16 @@ class QSearch(QWidget):
                 data = index.data(Qt.WhatsThisRole).toStringList()
                 row = int(data[0])
                 column = int(data[1])
-                value = data[2] 
+                value = data[2]
                 self.resultClicked.emit(file_, row, column, value)
-        
+
     def _searchClickedEvent(self):
         """search button press event"""
         if self.search.isEnabled():
             self._textSearchAddText()
             text = self.textSearch.currentText()
             self.searchClicked.emit(text)
-        
+
     def _textSearchEditTextChangedEvent(self, text):
         """edit text to find event"""
         if text:
@@ -235,10 +234,10 @@ class QSearch(QWidget):
     #
     # init
     #
-      
+
     def __init__(self, *args):
         QWidget.__init__(self, *args)
-       
+
         # textSearch widget
         self.textSearch = QComboBoxEnter()
         ##self.textSearch.addItems(config.searches)
@@ -249,7 +248,7 @@ class QSearch(QWidget):
         self.textSearch.setDuplicatesEnabled(False)
         self.textSearch.editTextChanged.connect(self._textSearchEditTextChangedEvent)
         self.textSearch.enter.connect(self._searchClickedEvent)
-                
+
         # matchMode widget
         self.matchMode = QComboBox()
         self.matchMode.addItems(QStringList(['Contains',
@@ -259,11 +258,11 @@ class QSearch(QWidget):
                                              'Regular expression']))
         # matchCase widget
         self.matchCase = QCheckBox()
-    
+
         # findAllDocuments widget
         self.findAllDocuments = QCheckBox()
 
-        # button search widget 
+        # button search widget
         self.search = QPushButton('Search')
         self.search.clicked.connect(self._searchClickedEvent)
         self._textSearchEditTextChangedEvent(str(self.textSearch.currentText()))
@@ -273,7 +272,7 @@ class QSearch(QWidget):
         self.matchMode.currentIndexChanged.connect(self._optionsChangedEvent)
         self.matchCase.stateChanged.connect(self._optionsChangedEvent)
         self.findAllDocuments.stateChanged.connect(self._optionsChangedEvent)
-      
+
         # navigate toolbar widget
         self.toolBar = QToolBar()
         ### self.buttonFirst = self.toolBar.addAction(QIcon(QPixmap(':images/first.png').scaled(12, 12, Qt.KeepAspectRatio)), '')
@@ -299,17 +298,17 @@ class QSearch(QWidget):
         self.grid.addRow(self.tr('Match case'), self.matchCase)
         self.grid.addRow(self.tr('Find in all documents'), self.findAllDocuments)
         self.grid.addRow(self.search)
-        
+
         # result tree view widget
         self.result= QTreeView()
         self.result.setAllColumnsShowFocus(True)
         self.result.doubleClicked.connect(self._resultDoubleClickedEvent)
-        
+
         # main layout
         layout= QVBoxLayout()
         layout.addLayout(self.grid)
         layout.addWidget(self.result)
         layout.addWidget(self.toolBar, alignment=Qt.AlignRight)
         layout.setContentsMargins(4, 4, 4, 0)
-        self.setLayout(layout)        
+        self.setLayout(layout)
 

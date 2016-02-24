@@ -27,13 +27,13 @@ class QFavFolders(QDialog):
         index = model.rowCount()
         # name column
         item = QStandardItem(nameFolder)
-        item.setEditable (False)          
+        item.setEditable (False)
         model.setItem (index, 0, item)
         # path folder column
         item = QStandardItem(pathFolder)
         item.setEditable (False)
-        model.setItem (index, 1, item)  
-        
+        model.setItem (index, 1, item)
+
     def _getFavFoldersList(self, favFolders):
         model = QStandardItemModel(0, 2)
         model.setHeaderData(0, Qt.Horizontal, self.tr('Name'))
@@ -41,8 +41,8 @@ class QFavFolders(QDialog):
         for value in favFolders:
             # add row to model
             nameFolder = value[0]
-            pathFolder = value[1]            
-            self._addFavFolderToModel(model, nameFolder, pathFolder)          
+            pathFolder = value[1]
+            self._addFavFolderToModel(model, nameFolder, pathFolder)
         return model
 
     #
@@ -52,7 +52,7 @@ class QFavFolders(QDialog):
     def _acceptButtonAcceptedEvent(self):
         self._saveConfig()
         self.accept()
-        
+
     def _verticalButtonBoxClickedEvent(self, button):
         # add button
         if button == self.addButton:
@@ -76,7 +76,7 @@ class QFavFolders(QDialog):
                        model.removeRow(row)
                        self._treeViewclickedEvent()
                        self.acceptButton.setEnabled(True)
-        
+
     def _treeViewclickedEvent(self):
         treeIndex = self.favFoldersView.currentIndex()
         if treeIndex:
@@ -87,7 +87,7 @@ class QFavFolders(QDialog):
     #
     # init
     #
-        
+
     def __init__(self, *args):
         QDialog.__init__ (self, *args)
 
@@ -107,9 +107,9 @@ class QFavFolders(QDialog):
         verticalButtonBox = QDialogButtonBox()
         verticalButtonBox.setOrientation(Qt.Vertical)
         verticalButtonBox.addButton(self.addButton, QDialogButtonBox.ActionRole)
-        verticalButtonBox.addButton(self.removeButton, QDialogButtonBox.ActionRole)     
+        verticalButtonBox.addButton(self.removeButton, QDialogButtonBox.ActionRole)
         verticalButtonBox.clicked.connect(self._verticalButtonBoxClickedEvent)
-     
+
         # accept & cancel buttonbox
         self.acceptButton = QPushButton(self.tr('Accept'), self)
         self.acceptButton.setIcon(QIcon(':images/accept.png'))

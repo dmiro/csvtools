@@ -8,16 +8,16 @@ class QCheckGroupBox(QRadioButtonGroup):
     #
     # public
     #
-    
+
     def selectedItems(self):
-        result = [] 
+        result = []
         for item in self.group.buttons():
             if item.checkState() == Qt.Checked:
-                index = self.group.id(item) 
+                index = self.group.id(item)
                 result.append(index)
         return result
 
-    def setChecked_(self, index, isChecked):        
+    def setChecked_(self, index, isChecked):
         item = self.group.button(index)
         if isChecked:
             item.setCheckState(Qt.Checked)
@@ -28,10 +28,10 @@ class QCheckGroupBox(QRadioButtonGroup):
     #
     # protected
     #
-    
+
     def newItem(self, text):
         return QCheckBox(text)
-    
+
     def setEnabledBuddie(self):
         for item in self.group.buttons():
             if item.buddie:
@@ -41,7 +41,7 @@ class QCheckGroupBox(QRadioButtonGroup):
     #
     # init
     #
-    
+
     def __init__(self, title='', columns=1):
         QRadioButtonGroup.__init__(self, title, columns)
         self.group.setExclusive(False)
@@ -51,7 +51,7 @@ class QCheckGroupBox(QRadioButtonGroup):
 #
 
 if __name__ == '__main__':
-    
+
     import sys
     app = QApplication(sys.argv)
     main = QCheckGroupBox(title='fiesta loca', columns=2)
@@ -66,4 +66,4 @@ if __name__ == '__main__':
     main.buddie(1).setText('text item 2')
     main.show()
     sys.exit(app.exec_())
-            
+

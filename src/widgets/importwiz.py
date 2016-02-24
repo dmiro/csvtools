@@ -8,7 +8,7 @@ class QImportWiz(QDialog):
     #
     # private
     #
-    
+
     def _getCheckableList(self, sheets):
         """return an instance model with a sheet list composed of
            three columns (sheet, number of rows, number of columns)
@@ -19,7 +19,7 @@ class QImportWiz(QDialog):
         model.setHeaderData(2, Qt.Horizontal, self.tr('Columns'))
         for index, value in enumerate(sheets):
             # get data
-            key = value[1]            
+            key = value[1]
             numRows = value[2]
             numColumns = value[3]
             rowEnabled = numRows*numColumns>0
@@ -53,13 +53,13 @@ class QImportWiz(QDialog):
         return model
 
     def _viewClicked(self):
-        sheets = self.sheets() 
+        sheets = self.sheets()
         self.acceptButton.setEnabled(bool(sheets))
 
     #
     # public
     #
-    
+
     def sheets(self):
         """returns key list of selected sheets"""
         selects = []
@@ -69,11 +69,11 @@ class QImportWiz(QDialog):
                 key = item.data().toString()
                 selects.append(str(key))
         return selects
-    
+
     #
     # init
     #
-    
+
     def __init__(self, sheets, *args):
         QDialog.__init__ (self, *args)
 
@@ -81,13 +81,13 @@ class QImportWiz(QDialog):
         self.acceptButton.setIcon(QIcon(':images/accept.png'))
         self.cancelButton = QPushButton(self.tr('Cancel'), self)
         self.cancelButton.setIcon(QIcon(':images/cancel.png'))
-        
+
         buttonBox = QDialogButtonBox()
         buttonBox.addButton(self.acceptButton, QDialogButtonBox.AcceptRole)
         buttonBox.addButton(self.cancelButton, QDialogButtonBox.RejectRole)
         buttonBox.accepted.connect(lambda: self.accept())
         buttonBox.rejected.connect(lambda: self.reject())
-        
+
         self.model = self._getCheckableList(sheets)
         view = QTreeView()
         view.setRootIsDecorated(False)
@@ -97,11 +97,11 @@ class QImportWiz(QDialog):
         view.resizeColumnToContents(2)
         view.clicked.connect(self._viewClicked)
         self._viewClicked()
-        
+
         vbox = QVBoxLayout()
         vbox.addWidget(view)
         vbox.addWidget(buttonBox)
-       
+
         self.setLayout(vbox)
         self.setWindowTitle(self.tr('Import Excel'))
         self.setMinimumSize(300, 250)

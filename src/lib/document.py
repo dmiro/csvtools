@@ -6,9 +6,10 @@ import xlrd
 from PyQt4.QtCore import *
 
 
-class QABCMeta(pyqtWrapperType, ABCMeta):   # problem in your case is that the classes you try to inherit from 
-    pass                                    # have different metaclasses: 
+class QABCMeta(pyqtWrapperType, ABCMeta):   # problem in your case is that the classes you try to inherit from
+    pass                                    # have different metaclasses:
                                             # http://www.gulon.co.uk/2012/12/28/pyqt4-qobjects-and-metaclasses/
+
 
 class Document(QObject):
     __metaclass__ = QABCMeta
@@ -55,7 +56,7 @@ class Document(QObject):
                     obj.__dict__.pop('data_')  # data_ is not serializable
                     d.update(obj.__dict__)
                     return d
-                if not isfunction(obj):                    
+                if not isfunction(obj):
                     return super(_Encoder, self).default(obj)
         return _Encoder().encode(self)
 
@@ -106,7 +107,7 @@ class Csv(Document):
         self.quoting= quoting
         self.skipinitialspace= skipinitialspace
 
-    def load(self):     
+    def load(self):
         self.data_ = []
         with open(self.filename, 'rb') as f:
             reader = csv.reader(f,
@@ -137,14 +138,14 @@ class Xsl(Document):
     def load(self):
         self.data_ = []
         wb = xlrd.open_workbook(self.filename)
-        sh = wb.sheet_by_name(self.sheetname) 
+        sh = wb.sheet_by_name(self.sheetname)
         for rownum in xrange(sh.nrows):
             self.data_.append(sh.row_values(rownum))
         super(Xsl, self).load()
 
     def save(self):
         pass
-        
+
 
 if __name__ == "__main__":
     d = Csv('..\\..\\testdocs\\demo3.csv', delimiter =';')

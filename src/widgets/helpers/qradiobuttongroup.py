@@ -7,7 +7,7 @@ class QRadioButtonGroup(QGroupBox):
     #
     # public
     #
-    
+
     selectItemChanged = pyqtSignal(int, QWidget)
 
     def selectedItem(self):
@@ -16,15 +16,15 @@ class QRadioButtonGroup(QGroupBox):
     def buddie(self, index):
         item = self.group.button(index)
         return item.buddie
-        
-    def setChecked_(self, index, isChecked):        
+
+    def setChecked_(self, index, isChecked):
         self.group.button(index).setChecked(isChecked)
         self.setEnabledBuddie()
-        
+
     def addItem(self, text, widget=None, isChecked=False):
         item = self.newItem(text)
         index = len(self.group.buttons())
-        self.group.addButton(item, index)        
+        self.group.addButton(item, index)
         item.buddie = widget
         if widget:
             row, column = self.__getRowCol(index)
@@ -51,7 +51,7 @@ class QRadioButtonGroup(QGroupBox):
     #
     # protected
     #
-    
+
     def newItem(self, text):
         return QRadioButton(text)
 
@@ -79,7 +79,7 @@ class QRadioButtonGroup(QGroupBox):
     #
     # init
     #
-    
+
     def __init__(self, title='', columns=1):
         QGroupBox.__init__(self)
         self.setTitle(title)
@@ -111,5 +111,5 @@ if __name__ == '__main__':
     main.buddie(1).setText('text item 2')
     main.show()
     sys.exit(app.exec_())
-        
+
 

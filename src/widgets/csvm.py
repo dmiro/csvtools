@@ -8,14 +8,14 @@ from datetime import datetime
 import os
 import re
 
-##class NumberSortModel(QSortFilterProxyModel):  
+##class NumberSortModel(QSortFilterProxyModel):
 ##    def lessThan(self, left, right):
 ##        lvalue = left.data().toDouble()[0]
 ##        rvalue = right.data().toDouble()[0]
 ##        return lvalue < rvalue
 
 
-class StringSortModel(QSortFilterProxyModel):    
+class StringSortModel(QSortFilterProxyModel):
     def lessThan(self, left, right):
         lvalue = left.data().toString().toUpper()
         rvalue = right.data().toString().toUpper()
@@ -29,18 +29,18 @@ class MyTableView(QTableView):
         self.items = items
         self.sum_ = sum_
         self.setSortingEnabled(True)
-        
-       
+
+
 class MyTableModel(QAbstractTableModel):
     def __init__(self, datain, headerrow=False, parent=None, *args):
         QAbstractTableModel.__init__(self, parent, *args)
         self.headerrow= headerrow
         self.arraydata= datain
         self.pointSize= QFont().pointSize()
-  
+
     def setPointSize(self, pointSize):
         self.pointSize = pointSize
-  
+
     def rowCount(self, parent):
         if self.headerrow:
             return len(self.arraydata)-1
@@ -58,7 +58,7 @@ class MyTableModel(QAbstractTableModel):
             font.setPointSize(self.pointSize)
             return font
         return QAbstractTableModel.headerData(self, section, orientation, role)
-        
+
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
@@ -85,10 +85,10 @@ class QCsv(QTableView):
     def selectionChanged (self, selected, deselected):
         self.selectionChanged_.emit()
         return QTableView.selectionChanged (self, selected, deselected)
-    
+
     def _customContextMenuRequestedEvent(self, point):
         if len(self.selectedIndexes()) > 0:
-            self.contextMenuRequested.emit(self.selectedIndexes(), self.mapToGlobal(point))    
+            self.contextMenuRequested.emit(self.selectedIndexes(), self.mapToGlobal(point))
 
     def _getHeaderRows(self):
         result = []
@@ -102,10 +102,10 @@ class QCsv(QTableView):
     #
     # public
     #
-    
+
     selectionChanged_ = pyqtSignal()
     contextMenuRequested = pyqtSignal(list, QPoint)
-    
+
     def sizeValue(self):
         return get_size(self.document.filename)
 
@@ -158,7 +158,7 @@ class QCsv(QTableView):
     def setSelectCell(self, row, column):
         model = self.tablemodel
         column = column - 1
-        row = row - 1           
+        row = row - 1
         index = model.index(row, column)
         if index.isValid():
             #1st scroll to the item
@@ -166,7 +166,7 @@ class QCsv(QTableView):
             #2st select the row & column
             self.selectRow(row)
             self.selectColumn(column)
-            #3st select cell 
+            #3st select cell
             selectionModel = self.selectionModel()
             selectionModel.clear()
             selectionModel.select(index, QItemSelectionModel.Select)
@@ -177,7 +177,7 @@ class QCsv(QTableView):
         """search data in CSV"""
         result = []
         model = self.tablemodel
-        
+
         # set regular expression pattern
         if matchMode == MatchModeEnum.WholeWord:
             pattern = r'\b{0}\b'.format(str(text))
@@ -189,25 +189,25 @@ class QCsv(QTableView):
             pattern = r'{0}'.format(str(text))
         else:
             pattern = ''
-             
-        # compile regular expression   
+
+        # compile regular expression
         if matchCaseOption:
             rePattern = re.compile(pattern, flags=re.IGNORECASE|re.DOTALL)
         else:
             rePattern = re.compile(pattern, flags=re.DOTALL)
 
-        # search    
+        # search
         for numRow, dataRow in enumerate(self.document.data):
             if model.headerrow and numRow == 0:
-                continue     
+                continue
             for numCol, dataCell in enumerate(dataRow):
                 find = False
                 if matchMode == MatchModeEnum.Contains:
                     if matchCaseOption:
                         find = QString(dataCell).contains(text, Qt.CaseInsensitive)
                     else:
-                        find = dataCell.find(text) > -1    
-                else:            
+                        find = dataCell.find(text) > -1
+                else:
                     find = rePattern.search(dataCell)
                 if find:
                     if model.headerrow:
@@ -215,7 +215,7 @@ class QCsv(QTableView):
                     else:
                         result.append([numRow+1, numCol+1, dataCell])
         return result
-    
+
     def selectedIndexesToRectangularArea(self, includeHeaderRows=False):
         """convert selected indexes to string matrix"""
         result = None
@@ -253,12 +253,12 @@ class QCsv(QTableView):
                 if headerRows:
                     header = headerRows[minColumn:maxColumn+1]
                     result.insert(0, header)
-        return result    
+        return result
 
     def loadRequested(self):
         self.tablemodel = MyTableModel(self.document.data, config.headerrow)
-        self.setModel(self.tablemodel)   
-        
+        self.setModel(self.tablemodel)
+
     def setDocument(self, document):
         self.document = document
         self.document.loadRequested.connect(self.loadRequested)
@@ -271,7 +271,7 @@ class QCsv(QTableView):
     def __init__(self, document, *args):
         QTableView.__init__(self, *args)
         self.setSortingEnabled(True)
-        
+
         # set data
         self.setDocument(document)
 #       self.filename = filename
@@ -279,11 +279,11 @@ class QCsv(QTableView):
 
         # table model
 #        self.tablemodel = MyTableModel(self.data, config.headerrow)
-                       
+
         # table model proxy
 #        proxy = StringSortModel()
 #        proxy.setSourceModel(self.tablemodel)
-        
+
         # tableview
 #       self.setModel(self.tablemodel)#(proxy)
         self.setContextMenuPolicy(Qt.CustomContextMenu)

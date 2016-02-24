@@ -8,7 +8,7 @@ class QReport(QDialog):
     #
     # init
     #
-    
+
     def __init__(self, lines, *args):
         QDialog.__init__ (self, *args)
 
@@ -26,11 +26,11 @@ class QReport(QDialog):
         buttonBox = QDialogButtonBox()
         buttonBox.addButton(acceptButton, QDialogButtonBox.AcceptRole)
         buttonBox.accepted.connect(lambda: self.accept())
-        
+
         vbox = QVBoxLayout()
         vbox.addWidget(scrollArea)
         vbox.addWidget(buttonBox)
-       
+
         self.setLayout(vbox)
         self.setWindowTitle(self.tr('Report'))
         self.setMinimumSize(600, 150)

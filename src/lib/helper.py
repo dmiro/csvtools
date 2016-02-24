@@ -3,7 +3,8 @@ from PyQt4.QtGui import *
 import os
 import xlrd
 import csv
-    
+
+
 def waiting(function):
     """decorator function. Show hour glass while waiting end method"""
     def new_function(*args, **kwargs):
@@ -31,51 +32,17 @@ def bestUnitSize(bytes_size):
     return {"s":bu_size, "u":unit, "b":bytes_size}
 
 def get_size(filename):
-    """"Get the file size in format string"""
+    """Get the file size in format string"""
     bytesize = os.lstat(filename).st_size
     size = bestUnitSize(bytesize)
     return "{0:.2f} {1}".format(size['s'], size['u'])
 
-# sin uso
-#def get_excel_sheets_old(filename):
-    #sh = {}
-    #wb = xlrd.open_workbook(filename)
-    #for sheet in wb.sheets():
-        #name = '{0} (rows={1} cols={2})'.format(sheet.name,sheet.nrows,sheet.ncols);
-        #sh[sheet.number] = name
-    #return sh
-
 def get_excel_sheets(filename):
     sh = []
     wb = xlrd.open_workbook(filename)
-    for sheet in wb.sheets():        
+    for sheet in wb.sheets():
         sh.append([sheet.number, sheet.name, sheet.nrows, sheet.ncols])
     return sh
-
-###import csv
-##def import_excel(filename, sheetname=0):
-##    wb = xlrd.open_workbook(filename)
-##    sh = wb.sheet_by_name(sheetname) 
-##    #your_csv_file = open('your_csv_file.csv', 'wb')
-##    #wr = csv.writer(your_csv_file, quoting=csv.QUOTE_ALL)
-##
-##    data = []
-##    for rownum in xrange(sh.nrows):
-##        data.append(sh.row_values(rownum))
-##        ##print sh.row_values(rownum)
-##    return data
-##        
-##        #wr.writerow(sh.row_values(rownum))
-##
-##    #your_csv_file.close()
-
-##def load_csv(filename):
-##    data = []
-##    with open(filename, 'rb') as f:
-##        reader = csv.reader(f)
-##        for row in reader:
-##            data.append(row)
-##    return data
 
 # por ahora sin uso
 #def isSelectedRectangle(selectedIndexes):
@@ -86,15 +53,15 @@ def get_excel_sheets(filename):
         #numColumns = maxIndex.column() - minIndex.column() + 1
         #numRows = maxIndex.row() - minIndex.row() + 1
         #numItems = numColumns * numRows
-      
+
         #if numItems == len(selectedIndexes):
             #for item in selectedIndexes:
                 #innerCell = item.column() >= minIndex.column() and item.row() >= minIndex.row() and item.column() <= maxIndex.column() and item.row() <= maxIndex.row()
                 #if not innerCell:
                     #return False
             #return True
-    #return False 
+    #return False
 
-            
-                
-        
+
+
+

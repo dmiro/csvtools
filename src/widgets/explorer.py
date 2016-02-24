@@ -13,7 +13,7 @@ class QExplorer(QWidget):
     #
     # public
     #
-    
+
     clickedFile = pyqtSignal(str)
 
     def setRootPath(self, rootPath):
@@ -35,7 +35,7 @@ class QExplorer(QWidget):
             action.setStatusTip(pathFolder)
             action.triggered[()].connect(lambda pathFolder=pathFolder: self.setRootPath(pathFolder))
             self.favoriteFolderMenu.addAction(action)
-           
+
     def _loadConfig(self):
         # filter files widget
         self.filterFiles.addItems(config.filterFiles)
@@ -45,23 +45,23 @@ class QExplorer(QWidget):
         self.showUnmatchedDisabled.setChecked(config.showUnmatchedDisabled)
         # show column size
         self.showColumnSize.setChecked(config.showColumnSize)
-        # show columns date modified 
+        # show columns date modified
         self.showColumnDateModified.setChecked(config.showColumnDateModified)
         # show Column Size & show Column Date Modified
         self._setFileColumns()
 
     def _saveConfig(self):
-        # filter files widget. Not add the first two filters 
+        # filter files widget. Not add the first two filters
         items = [str(self.filterFiles.itemText(i)) for i in range(self.filterFiles.count())]
         config.filterFiles = items[4:]
         # show unmatched disabled
         config.showUnmatchedDisabled = self.showUnmatchedDisabled.isChecked()
         # show column size
         config.showColumnSize = self.showColumnSize.isChecked()
-        # show columns date modified 
+        # show columns date modified
         config.showColumnDateModified = self.showColumnDateModified.isChecked()
 
-    def _getModelFiles(self, filter_):        
+    def _getModelFiles(self, filter_):
         modelFiles= QFileSystemModel()
         modelFiles.setRootPath('*')
         modelFiles.setFilter(QDir.AllDirs | QDir.Dirs | QDir.Files | QDir.NoDot)    # you set should always include the QDir.AllDirs enum value, otherwise
@@ -81,7 +81,7 @@ class QExplorer(QWidget):
         self.treeFiles.resizeColumnToContents(2)
         self.treeFiles.resizeColumnToContents(3)
         self._saveConfig()
-    
+
     #
     # event
     #
@@ -92,19 +92,19 @@ class QExplorer(QWidget):
         if isFile:
             filePath = self.modelFiles.filePath(index)
             self.clickedFile.emit(filePath)
-        
-    def _modelFilesClickedEvent(self, index):        
+
+    def _modelFilesClickedEvent(self, index):
         fileInfo = self.modelFiles.fileInfo(index)
         isDir = fileInfo.isDir()
-        if isDir:          
+        if isDir:
             # update tree dirs
             filePath = self.modelFiles.filePath(index)
-            self.treeDirs.setCurrentIndex(self.modelDirs.index(filePath))       
+            self.treeDirs.setCurrentIndex(self.modelDirs.index(filePath))
             # update tree files
             treeIndex = self.treeDirs.currentIndex()
             self._modelDirsClickedEvent(treeIndex)
 
-    def _modelDirsClickedEvent(self, index):        
+    def _modelDirsClickedEvent(self, index):
         # get filter to apply
         if self.filterFiles.currentIndex() == 0:
             filter_ = '*.csv'
@@ -119,7 +119,7 @@ class QExplorer(QWidget):
         self.modelFiles = self._getModelFiles(filter_)
         self.treeFiles.setModel(self.modelFiles)
         self.treeFiles.setRootIndex(self.modelFiles.index(filePath))
-    
+
     def _filterFilesClickedEvent(self):
         treeIndex = self.treeDirs.currentIndex()
         self._modelDirsClickedEvent(treeIndex)
@@ -136,8 +136,8 @@ class QExplorer(QWidget):
     def _favoriteFolderButtonClickedEvent(self):
         favFolders = QFavFolders(self)
         if favFolders.exec_() == QDialog.Accepted:
-            self._loadFavoriteFolderConfig()        
-        
+            self._loadFavoriteFolderConfig()
+
     def _toolBarFilesActionTriggeredEvent(self, action):
         # toolbar file actions
         if action == self.refreshFiles:
@@ -147,7 +147,7 @@ class QExplorer(QWidget):
             self._filterFilesClickedEvent()
         elif action == self.showColumnSize or action == self.showColumnDateModified:
             self._setFileColumns()
-  
+
     def _toolBarDirsActionTriggeredEvent(self, action):
         if action == self.refreshDirs:
             self._filterFilesClickedEvent()
@@ -184,7 +184,7 @@ class QExplorer(QWidget):
     #
 
     def _addMenuDirsFiles(self):
-        # action 
+        # action
         self.addFavoriteFolder = QAction(QIcon(':images/favfolder.png'), self.tr('Add to Favorite Folder'), self,
                                          triggered=self._addFavoriteFolderAction)
 
@@ -193,11 +193,11 @@ class QExplorer(QWidget):
         self.menuDirsFiles.addAction(self.addFavoriteFolder)
 
     def _addToolBarDirsFiles(self):
-        # action 
+        # action
         self.refreshDirs = QAction(QIcon(':images/refresh.png'), self.tr('Refresh'), self)
         self.userFolderDir = QAction(QIcon(':images/home.png'), self.tr('User Folder'), self)
 ##        self.addFolderDir = QAction(QIcon(':images/addfolder.png'), self.tr('Add Folder'), self)
-        
+
         # favorite folder Menu
         self.favoriteFolderMenu = QMenu()
 
@@ -217,7 +217,7 @@ class QExplorer(QWidget):
         self.toolBarDirs.addAction(self.userFolderDir)
 ##        self.toolBarDirs.addAction(self.addFolderDir)
         self.toolBarDirs.addSeparator()
-        self.toolBarDirs.addAction(self.refreshDirs)        
+        self.toolBarDirs.addAction(self.refreshDirs)
         self.toolBarDirs.actionTriggered.connect(self._toolBarDirsActionTriggeredEvent)
 
     def _addToolBarTreeFiles(self):
@@ -229,9 +229,9 @@ class QExplorer(QWidget):
         self.showColumnDateModified = QAction(self.tr('Show column Date Modified'), self)
         self.showColumnDateModified.setCheckable(True)
         self.refreshFiles = QAction(QIcon(':images/refresh.png'), self.tr('Refresh'), self)
-        
+
         # filter ComboBox
-        self.filterFiles = QComboBoxEnter()        
+        self.filterFiles = QComboBoxEnter()
         self.filterFiles.addItem(QIcon(':images/app.png'), 'Csv Files (*.csv)')
         self.filterFiles.addItem(QIcon(':images/app.png'), 'Excel Files (*.xlsx *.xls)')
         self.filterFiles.addItem(QIcon(':images/app.png'), 'All Files (*.*)')
@@ -251,7 +251,7 @@ class QExplorer(QWidget):
         self.filterOptionsMenu.addAction(self.showUnmatchedDisabled)
         self.filterOptionsMenu.addAction(self.showColumnSize)
         self.filterOptionsMenu.addAction(self.showColumnDateModified)
-        self.filterOptionsMenu.triggered.connect(self._toolBarFilesActionTriggeredEvent) 
+        self.filterOptionsMenu.triggered.connect(self._toolBarFilesActionTriggeredEvent)
 
         # filter options ToolButton
         self.optionsButton = QToolButton()
@@ -260,22 +260,22 @@ class QExplorer(QWidget):
         self.optionsButton.setStatusTip(self.tr('Filter Options'))
         self.optionsButton.setPopupMode(QToolButton.MenuButtonPopup)
         self.optionsButton.clicked.connect(self._menuOptionClickedEvent)
-        
+
         # tree files ToolBar
         self.toolBarFiles= QToolBar()
-        self.toolBarFiles.setIconSize(QSize(16, 16))      
+        self.toolBarFiles.setIconSize(QSize(16, 16))
         self.toolBarFiles.addWidget(self.filterFiles)
-        self.toolBarFiles.addWidget(self.optionsButton)      
+        self.toolBarFiles.addWidget(self.optionsButton)
         self.toolBarFiles.addSeparator()
-        self.toolBarFiles.addAction(self.refreshFiles)  
-        self.toolBarFiles.actionTriggered.connect(self._toolBarFilesActionTriggeredEvent) 
+        self.toolBarFiles.addAction(self.refreshFiles)
+        self.toolBarFiles.actionTriggered.connect(self._toolBarFilesActionTriggeredEvent)
 
     def _addTreeViewDirsFiles(self):
         # model
         self.modelDirs= QFileSystemModel()
         self.modelDirs.setRootPath('*')
         self.modelDirs.setFilter(QDir.Dirs | QDir.NoDotAndDotDot)
-          
+
         # TreeView
         self.treeDirs= QTreeView()
         self.treeDirs.setModel(self.modelDirs)
@@ -290,7 +290,7 @@ class QExplorer(QWidget):
         self.treeDirslayout.setContentsMargins(0, 0, 0, 0)
         self.treeDirsWidget = QWidget(self.splitter)
         self.treeDirsWidget.setLayout(self.treeDirslayout)
-   
+
         # TreeView Signals
         self.treeDirs.clicked.connect(self._modelDirsClickedEvent)
         self.treeDirs.customContextMenuRequested.connect(self._treeDirscustomContextMenuRequestedEvent)
@@ -298,7 +298,7 @@ class QExplorer(QWidget):
     def _addTreeViewTreeFiles(self):
         # model
         self.modelFiles = self._getModelFiles('*.*')
-        
+
         # TreeView
         self.treeFiles= QTreeView()
         self.treeFiles.setModel(self.modelFiles)
@@ -316,11 +316,11 @@ class QExplorer(QWidget):
         # TreeView Signals
         self.treeFiles.clicked.connect(self._modelFilesClickedEvent)
         self.treeFiles.doubleClicked.connect(self._modelFilesDoubleClickedEvent)
-        
+
     #
     # init
     #
-        
+
     def __init__(self, rootPath, *args):
         QWidget.__init__(self, *args)
 
@@ -329,17 +329,17 @@ class QExplorer(QWidget):
 
         # add DIRS ToolBar
         self._addToolBarDirsFiles()
-        
+
         # add DIRS TreeView
         self._addTreeViewDirsFiles()
 
         # add DIRS Context Menu
         self._addMenuDirsFiles()
-        
+
         # add FILES ToolBar
         self._addToolBarTreeFiles()
 
-        # add FILES TreeView        
+        # add FILES TreeView
         self._addTreeViewTreeFiles()
 
         # load config
@@ -349,5 +349,5 @@ class QExplorer(QWidget):
         layout= QVBoxLayout()
         layout.addWidget(self.splitter)
         layout.setContentsMargins(4, 4, 4, 4)
-        self.setLayout(layout)        
+        self.setLayout(layout)
         self.setRootPath(rootPath)

@@ -18,7 +18,7 @@ class Options(QtGui.QDialog):
 
     def cancelDialog(self):
         self.accept()
-        
+
     def __init__(self, *args):
         QtGui.QWidget.__init__(self, *args)
 
@@ -29,7 +29,7 @@ class Options(QtGui.QDialog):
         cancel = QtGui.QPushButton(self.tr('Cancel'), self)
         cancel.setIcon(QtGui.QIcon(':images/cancel.png'))
         cancel.clicked.connect(self.cancelDialog)
-        
+
         hbox = QtGui.QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(accept)
@@ -37,21 +37,21 @@ class Options(QtGui.QDialog):
 
         self.language = QtGui.QComboBox()
         self.autodetect = QtGui.QCheckBox('')
-        
+
         grid = QtGui.QFormLayout()
         grid.addRow(self.tr('Language'), self.language)
         grid.addRow(self.tr('Detect format'), self.autodetect)
-             
+
         vbox = QtGui.QVBoxLayout()
         vbox.addLayout(grid)
         vbox.addStretch()
         vbox.addLayout(hbox)
-        
+
         self.setLayout(vbox)
         self.setWindowTitle(self.tr('Options'))
         #self.setFixedSize(225, 175)
 
 
-    
+
 
 

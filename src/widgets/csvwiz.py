@@ -12,7 +12,7 @@ class DelimiterGroupBox(QRadioButtonGroup):
     #
     # public
     #
-   
+
     def value(self):
         index = self.selectedItem()
         if index == 0:
@@ -29,7 +29,7 @@ class DelimiterGroupBox(QRadioButtonGroup):
     #
     # init
     #
-    
+
     def __init__(self):
         QRadioButtonGroup.__init__ (self, title='Delimiter', columns=1)
         self.addItem(self.tr('Comma (,)'))
@@ -44,7 +44,7 @@ class QuoteGroupBox(QRadioButtonGroup):
     #
     # public
     #
-   
+
     def value(self):
         index = self.selectedItem()
         if index == 0:
@@ -55,11 +55,11 @@ class QuoteGroupBox(QRadioButtonGroup):
             return '\''
         else:
             return str(self.buddie(3).text())
-      
+
     #
     # init
     #
-    
+
     def __init__(self):
         QRadioButtonGroup.__init__ (self, title='Quote Char', columns=1)
         self.addItem(self.tr('None'))
@@ -73,24 +73,24 @@ class LineTerminatorGroupBox(QRadioButtonGroup):
     #
     # public
     #
-   
+
     def value(self):
         index = self.selectedItem()
         if index == 0:
             return '\\r\\n'
         else:
             return str(self.buddie(1).text())
-      
+
     #
     # init
     #
-    
+
     def __init__(self):
         QRadioButtonGroup.__init__ (self, title='Line Terminator', columns=1)
         self.addItem(self.tr('\\r\\n'))
         self.addItem(self.tr('Other'), widget=QLineEdit())
 
-     
+
 class AdjustsGroupBox(QCheckGroupBox):
 
     #
@@ -99,46 +99,46 @@ class AdjustsGroupBox(QCheckGroupBox):
 
     def isSkipInitialSpace(self):
         return 0 in self.selectedItems()
-        
+
     def isSkipEmptyLines(self):
         return 1 in self.selectedItems()
-         
+
     def isHeaderRow(self):
         return 2 in self.selectedItems()
-         
+
     def isSkipEmptyColumns(self):
         return 3 in self.selectedItems()
 
     #
     # init
     #
-    
+
     def __init__(self):
         QCheckGroupBox.__init__ (self, title='Adjusts', columns=2)
-        self.addItem(self.tr('Skip initial space'))       
-        self.addItem(self.tr('Skip empty lines'))        
-        self.addItem(self.tr('Header row'))        
+        self.addItem(self.tr('Skip initial space'))
+        self.addItem(self.tr('Skip empty lines'))
+        self.addItem(self.tr('Header row'))
         self.addItem(self.tr('Skip empty columns'))
-       
+
 
 class QCsvWiz(QDialog):
- 
+
     #
     # widgets
     #
-    
+
     def _addButtonBox(self):
         acceptButton = QPushButton(self.tr('Accept'), self)
         acceptButton.setIcon(QIcon(':images/accept.png'))
         cancelButton = QPushButton(self.tr('Cancel'), self)
-        cancelButton.setIcon(QIcon(':images/cancel.png'))    
+        cancelButton.setIcon(QIcon(':images/cancel.png'))
         buttonBox = QDialogButtonBox()
         buttonBox.addButton(acceptButton, QDialogButtonBox.AcceptRole)
         buttonBox.addButton(cancelButton, QDialogButtonBox.RejectRole)
         buttonBox.accepted.connect(lambda: self.accept())
         buttonBox.rejected.connect(lambda: self.reject())
         return buttonBox
-  
+
     def _addPreviewGroupBox(self):
         groupBox = QGroupBox(self.tr('Preview'), parent=self)
         formLayout = QFormLayout(parent=groupBox)
@@ -147,13 +147,13 @@ class QCsvWiz(QDialog):
         csvDocument.load()
         self.preview = QCsv(csvDocument)
         self.preview.setEnabled(False)
-        formLayout.addRow(self.preview)        
+        formLayout.addRow(self.preview)
         return groupBox
 
     #
     # slots
     #
-    
+
     def _groupBoxClickedSlot(self):
         # print self.delimiterGroupBox.value()
         # print self.quoteGroupBox.value()

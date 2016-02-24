@@ -74,10 +74,10 @@ class MainWindow(QMainWindow):
                 except IOError:
                     warnings.append('No such file {0}'.format(filename))
                 except Exception, e:
-                    warnings.append('Error opening file {0}: {1}'.format(filename, e))                
+                    warnings.append('Error opening file {0}: {1}'.format(filename, e))
             if warnings:
                 report = QReport(warnings)
-                report.exec_() 
+                report.exec_()
 
     def emptyRecentFiles(self):
         """empty recent files and refresh menu"""
@@ -87,7 +87,7 @@ class MainWindow(QMainWindow):
     def restoreLastSession(self):
         """retrieve files the last session"""
         self.openCsv(config.files)
-        
+
     def refreshRecentFileActions(self):
         """update recent files menu"""
         self.recent.clear()
@@ -125,7 +125,7 @@ class MainWindow(QMainWindow):
             return {'tabText':tabText, 'tabToolTip': tabToolTip, 'result':result}
 
     def editMenuDisabled(self, disabled):
-        self.copyToClipboard.setDisabled(disabled)       
+        self.copyToClipboard.setDisabled(disabled)
         for action in self.copySpecialMenu.actions():
             action.setDisabled(disabled)
         for action in self.copyToPythonMenu.actions():
@@ -147,7 +147,7 @@ class MainWindow(QMainWindow):
             event.accept()
         else:
             event.ignore()
-            
+
     def dropEvent(self, event):
         if event.mimeData().hasUrls:
             #event.setDropAction(QtCore.Qt.CopyAction)
@@ -173,11 +173,11 @@ class MainWindow(QMainWindow):
         im = QImportWiz(sheets)
         if im.exec_() == QDialog.Accepted:
             sheets = im.sheets()
-            filenames = ['{0}#{1}'.format(filename, sheet) for sheet in sheets]    
+            filenames = ['{0}#{1}'.format(filename, sheet) for sheet in sheets]
             self.openCsv(filenames)
-                    
+
     def importDialogAction(self):
-        """import xls/xlsx dialog"""        
+        """import xls/xlsx dialog"""
         filename = QFileDialog.getOpenFileName(self, self.tr('Import file'), '', "Excel Files (*.xlsx *.xls)")
         if filename:
             self.importExcelAction(filename)
@@ -207,7 +207,7 @@ class MainWindow(QMainWindow):
         index = self.tab.currentIndex()
         if index > -1:
             self.tabCloseRequestedEvent(index)
-            
+
     def closeAllFilesAction(self):
         """close all files"""
         self.tab.clear()
@@ -219,11 +219,11 @@ class MainWindow(QMainWindow):
         index = self.tab.currentIndex()
         tabToolTip = self.tab.tabToolTip(index)
         tabText = self.tab.tabText(index)
-        self.tab.clear()        
+        self.tab.clear()
         index = self.tab.addTab(csv, tabText)
-        self.tab.setTabToolTip(index, tabToolTip)        
+        self.tab.setTabToolTip(index, tabToolTip)
         self.saveSessionFile()
-            
+
     def reloadFileAction(self):
         """reload current file"""
         csv = self.tab.currentWidget()
@@ -261,22 +261,22 @@ class MainWindow(QMainWindow):
         csv = self.tab.currentWidget()
         if csv:
             textClip = None
-            
+
             # copy to clipboard action
             if action == self.copyToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=False)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toClipboard(matrix)    
-            # copy with Column Name(s) action            
+                    textClip = lib.export.ClipboardFormat.toClipboard(matrix)
+            # copy with Column Name(s) action
             elif action == self.copyWithHeaderColumnsToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toClipboard(matrix)    
-            # copy Column Name(s) action 
+                    textClip = lib.export.ClipboardFormat.toClipboard(matrix)
+            # copy Column Name(s) action
             elif action == self.copyHeaderColumnsToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toClipboard([matrix[0]])    
+                    textClip = lib.export.ClipboardFormat.toClipboard([matrix[0]])
             # copy As JSON action
             elif action == self.copyAsJSON:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
@@ -301,18 +301,18 @@ class MainWindow(QMainWindow):
             elif action == self.copyAsHTML:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toHTML(matrix)            
+                    textClip = lib.export.ClipboardFormat.toHTML(matrix)
             # copy Python Source Code As TEXT action
             elif action == self.copyPythonAsText:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
                     textClip = lib.export.ClipboardFormat.toPythonText(matrix)
-            # copy Python Source Code As TUPLE action                   
+            # copy Python Source Code As TUPLE action
             elif action == self.copyPythonAsTuple:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
                     textClip = lib.export.ClipboardFormat.toPythonTuple(matrix)
-            # copy Python Source Code As LIST action                   
+            # copy Python Source Code As LIST action
             elif action == self.copyPythonAsList:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
@@ -320,7 +320,7 @@ class MainWindow(QMainWindow):
             elif action == self.copyPythonAsDict:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toPythonDict(matrix)               
+                    textClip = lib.export.ClipboardFormat.toPythonDict(matrix)
 
             # at last copy result to clipboard
             if textClip:
@@ -340,7 +340,7 @@ class MainWindow(QMainWindow):
     #
     # config menu action methods
     #
-        
+
     def optionsDialogAction(self):
         """show options dialog"""
         dialog = Options(self)
@@ -354,7 +354,7 @@ class MainWindow(QMainWindow):
     def headerRowConfigAction(self):
         config.headerrow = not config.headerrow
         config.save()
-        
+
     #
     # help menu action methods
     #
@@ -371,15 +371,15 @@ class MainWindow(QMainWindow):
 
     def csvSelectionChangedEvent(self):
         csv = self.tab.currentWidget()
-        if csv:                                  
-            self.editMenuDisabled(len(csv.selectedIndexes()) == 0)     
+        if csv:
+            self.editMenuDisabled(len(csv.selectedIndexes()) == 0)
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
                                     csv.modifiedValue(), csv.itemsValue(), csv.averageValue(),
-                                    csv.sumValue())                        
+                                    csv.sumValue())
         else:
-            self.editMenuDisabled(True)            
+            self.editMenuDisabled(True)
             self.statusBar.setValues(None, None, None, None, None, None, None)
-                
+
     def csvcontextMenuRequestedEvent(self, selectedIndexes, globalPoint):
         self.editMenu.exec_(globalPoint)
 
@@ -420,7 +420,7 @@ class MainWindow(QMainWindow):
             self.allFilePathsToClipboard.setDisabled(True)
             self.editMenuDisabled(True)
             self.statusBar.setValues(None, None, None, None, None, None, None)
-                
+
     def tabBarcustomContextMenuRequestedEvent(self, point):
         tab = self.tab.tabBar()
         # set current tab index
@@ -450,19 +450,19 @@ class MainWindow(QMainWindow):
             for index in range(self.tab.count()):
                 result = self.searchText(text, index, matchMode, matchCaseOption)
                 if result:
-                    data.append(result)    
-        else: 
+                    data.append(result)
+        else:
             index = self.tab.currentIndex()
             result = self.searchText(text, index, matchMode, matchCaseOption)
             if result:
-                    data.append(result)        
+                    data.append(result)
         self.search.setResult(data)
 
     def searchResultClickedEvent(self, file_, row, column, value):
         file_ = str(file_)
         for index in range(self.tab.count()):
             if file_ in self.tab.tabToolTip(index):
-                self.tab.setCurrentIndex(index)        
+                self.tab.setCurrentIndex(index)
         csv = self.tab.currentWidget()
         csv.setSelectCell(row, column)
 
@@ -481,7 +481,7 @@ class MainWindow(QMainWindow):
     def addFileMenu(self):
         """add FILE menu"""
 
-        #open file action    
+        #open file action
         self.openFile = QAction(QIcon(':images/open.png'), self.tr('&Open'), self)
         self.openFile.setShortcut('Ctrl+O')
         self.openFile.setStatusTip(self.tr('Open Csv File'))
@@ -498,7 +498,7 @@ class MainWindow(QMainWindow):
         self.reloadFile.setShortcut('Ctrl+R')
         self.reloadFile.setStatusTip(self.tr('Reload File from Disk'))
         self.reloadFile.triggered.connect(self.reloadFileAction)
-        
+
         #close file action
         self.closeFile = QAction(QIcon(':images/close.png'), self.tr('Close'), self)
         self.closeFile.setShortcut('Ctrl+W')
@@ -540,17 +540,17 @@ class MainWindow(QMainWindow):
         fileMenu.addAction(self.closeFile)
         fileMenu.addAction(self.closeAllFiles)
         fileMenu.addAction(self.closeAllButThis)
-        self.recent = fileMenu.addMenu(self.tr('Recent Files'))       
+        self.recent = fileMenu.addMenu(self.tr('Recent Files'))
         self.refreshRecentFileActions()
         fileMenu.addSeparator()
-        self.copyToClipboardMenu = fileMenu.addMenu(self.tr('Copy to Clipboard')) 
+        self.copyToClipboardMenu = fileMenu.addMenu(self.tr('Copy to Clipboard'))
         fileMenu.addSeparator()
         fileMenu.addAction(self.exitApp)
 
         #clipboard submenu
         self.copyToClipboardMenu.addAction(self.filePathToClipboard)
-        self.copyToClipboardMenu.addAction(self.allFilePathsToClipboard) 
-    
+        self.copyToClipboardMenu.addAction(self.allFilePathsToClipboard)
+
     def addEditMenu(self):
         """add EDIT menu"""
 
@@ -592,8 +592,8 @@ class MainWindow(QMainWindow):
 
     def addToolsMenu(self):
         """add TOOLS menu"""
-        
-        #explorer action 
+
+        #explorer action
         self.explorer = QAction(QIcon(':images/explorer.png'), self.tr('Explorer'), self)
         self.explorer.setShortcut('Ctrl+E')
         self.explorer.setStatusTip(self.tr('Explorer'))
@@ -620,7 +620,7 @@ class MainWindow(QMainWindow):
         self.restoreSession.setChecked(config.restore)
         self.restoreSession.setStatusTip(self.tr('Restore Session'))
         self.restoreSession.changed.connect(self.restoreSessionConfigAction)
-        
+
         #header row action
         self.headerRow = QAction(self.tr('Header Row'), self)
         self.headerRow.setCheckable(True)
@@ -643,13 +643,13 @@ class MainWindow(QMainWindow):
 
     def addHelpMenu(self):
         """add HELP menu"""
-        
-        #update action 
+
+        #update action
         self.update = QAction(QIcon(':images/update.png'), self.tr('Update CSV Tools'), self)
         self.update.setStatusTip(self.tr('Update CSV Tools'))
         #####self.about.triggered.connect(self.aboutDialogAction)
-        
-        #about action 
+
+        #about action
         self.about = QAction(QIcon(':images/about.png'), self.tr('About'), self)
         self.about.setStatusTip(self.tr('About'))
         self.about.triggered.connect(self.aboutDialogAction)
@@ -660,15 +660,15 @@ class MainWindow(QMainWindow):
         helpMenu.addAction(self.update)
         helpMenu.addSeparator()
         helpMenu.addAction(self.about)
-        
+
     def addMenus(self):
         """add menus to application"""
-        
+
         self.addFileMenu()
         self.addEditMenu()
         self.addToolsMenu()
         self.addConfigMenu()
-        self.addHelpMenu()          
+        self.addHelpMenu()
 ##        copy to GIS dataset
 ##        la idea es añadir formatos como por ejemplo GeoJson, Kml, etc...
 ##        seguramente habra que añadir un wizard preguntando p.ej q columna contiene
@@ -683,21 +683,21 @@ class MainWindow(QMainWindow):
         """add explorer widget"""
         self.explorer = QExplorer('.')
         self.explorer.clickedFile.connect(self.explorerClickedFileEvent)
-                    
+
     def addSearch(self):
         """add search widget"""
         self.search = QSearch()
         self.search.searchClicked.connect(self.searchSearchClickedEvent)
         self.search.resultClicked.connect(self.searchResultClickedEvent)
-                                   
+
     def addToolTab(self):
         self.toolTab = QTabWidget(self.splitter)
         #self.toolTab.setTabPosition(QTabWidget.South)
         index = self.toolTab.addTab(self.explorer, QIcon(':images/explorer.png'), 'Explorer')
-        self.toolTab.setTabToolTip(index, 'Explorer')   
+        self.toolTab.setTabToolTip(index, 'Explorer')
         index = self.toolTab.addTab(self.search, QIcon(':images/search.png'), 'Search')
-        self.toolTab.setTabToolTip(index, 'Search')  
-             
+        self.toolTab.setTabToolTip(index, 'Search')
+
     def addTab(self):
         """add tab widget"""
         self.tab = QTabWidget(self.splitter)
@@ -711,7 +711,7 @@ class MainWindow(QMainWindow):
         self.tab.tabBar().customContextMenuRequested.connect(self.tabBarcustomContextMenuRequestedEvent)
         # set tab moved event
         self.tab.tabBar().tabMoved.connect(self.tabBartabMovedEvent)
-                
+
     def addStatusBar(self):
         """add status bar widget"""
         self.statusBar = QStatus()
@@ -727,7 +727,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self.tr("CSV Tools"))
         self.setAcceptDrops(True)
         self.resize(800, 400)
-        
+
         # add widgets
         self.addMenus()
         self.addSplitter()
@@ -746,7 +746,7 @@ class MainWindow(QMainWindow):
         self.hbox.addWidget(self.statusBar, -1)
         self.hbox.setContentsMargins(0, 4, 0, 0)
         centralWidget = QWidget()
-        centralWidget.setLayout(self.hbox)    
+        centralWidget.setLayout(self.hbox)
         self.setCentralWidget(centralWidget)
 
 #
@@ -756,7 +756,7 @@ class MainWindow(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
-    
+
     translator = QTranslator()
     translator.load("i18n/es_ES.qm")
     app.installTranslator(translator)
@@ -768,7 +768,7 @@ def main():
 
     if config.restore:
         main.restoreLastSession()
-        
+
     sys.exit(app.exec_())
 
 
