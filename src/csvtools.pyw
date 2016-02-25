@@ -105,10 +105,11 @@ class MainWindow(QMainWindow):
 
     def addRecentFile(self, file_):
         """add in config file the last opened file"""
-        if file_ in config.file_recent:
-            config.file_recent.remove(file_)
-        config.file_recent.insert(0, file_)
-        config.file_recent = config.file_recent[0:20]
+        file_recent = config.file_recent 
+        if file_ in file_recent:
+            file_recent.remove(file_)
+        file_recent.insert(0, file_)
+        config.file_recent = file_recent[0:20]
 
     def saveSessionFile(self):
         """save in config file the session files"""
