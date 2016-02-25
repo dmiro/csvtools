@@ -5,140 +5,45 @@ import json
 class Config(object):
 
     #
+    # class method
+    #
+
+    def configProperty(propName):
+        def getter(self):
+            propNameMangled = '_' + self.__class__.__name__ + '__' + propName
+            return getattr(self, propNameMangled)
+        def setter(self, value):
+            propNameMangled = '_' + self.__class__.__name__ + '__' + propName
+            setattr(self, propNameMangled, value)
+            self.__save()
+        return property(getter, setter)
+
+    #
     # public
     #
 
     # file section
 
-    @property
-    def file_useCsvWizard(self):
-        return self.__file_useCsvWizard
-
-    @file_useCsvWizard.setter
-    def file_useCsvWizard(self, value):
-        self.__file_useCsvWizard = value
-        self.__save()
-
-    @property
-    def file_recent(self):
-        return self.__file_recent
-
-    @file_recent.setter
-    def file_recent(self, value):
-        self.__file_recent = value
-        self.__save()
-
-    @property
-    def file_files(self):
-        return self.__file_files
-
-    @file_files.setter
-    def file_files(self, value):
-        self.__file_files = value
-        self.__save()
+    file_useCsvWizard = configProperty('file_useCsvWizard')
+    file_recent = configProperty('file_recent')
+    file_files = configProperty('file_files')
 
     # tools section
-    
-    @property
-    def tools_searches(self):
-        return self.__tools_searches
 
-    @tools_searches.setter
-    def tools_searches(self, value):
-        self.__tools_searches = value
-        self.__save()
-
-    @property
-    def tools_filterFiles(self):
-        return self.__tools_filterFiles
-
-    @tools_filterFiles.setter
-    def tools_filterFiles(self, value):
-        self.__tools_filterFiles = value
-        self.__save()
-
-    @property
-    def tools_favFolders(self):
-        return self.__tools_favFolders
-
-    @tools_favFolders.setter
-    def tools_favFolders(self, value):
-        self.__tools_favFolders = value
-        self.__save()
-
-    @property
-    def tools_matchMode(self):
-        return self.__tools_matchMode
-
-    @tools_matchMode.setter
-    def tools_matchMode(self, value):
-        self.__tools_matchMode = value
-        self.__save()
-
-    @property
-    def tools_matchCase(self):
-        return self.__tools_matchCase
-
-    @tools_matchCase.setter
-    def tools_matchCase(self, value):
-        self.__tools_matchCase = value
-        self.__save()
-
-    @property
-    def tools_findAllDocuments(self):
-        return self.__tools_findAllDocuments
-
-    @tools_findAllDocuments.setter
-    def tools_findAllDocuments(self, value):
-        self.__tools_findAllDocuments = value
-        self.__save()
-
-    @property
-    def tools_showUnmatchedDisabled(self):
-        return self.__tools_showUnmatchedDisabled
-
-    @tools_showUnmatchedDisabled.setter
-    def tools_showUnmatchedDisabled(self, value):
-        self.__tools_showUnmatchedDisabled = value
-        self.__save()
-
-    @property
-    def tools_showColumnSize(self):
-        return self.__tools_showColumnSize
-
-    @tools_showColumnSize.setter
-    def tools_showColumnSize(self, value):
-        self.__tools_showColumnSize = value
-        self.__save()
-
-    @property
-    def tools_showColumnDateModified(self):
-        return self.__tools_showColumnDateModified
-
-    @tools_showColumnDateModified.setter
-    def tools_showColumnDateModified(self, value):
-        self.__tools_showColumnDateModified = value
-        self.__save()
+    tools_searches = configProperty('tools_searches')
+    tools_filterFiles = configProperty('tools_filterFiles')
+    tools_favFolders = configProperty('tools_favFolders')
+    tools_matchMode = configProperty('tools_matchMode')
+    tools_matchCase = configProperty('tools_matchCase')
+    tools_findAllDocuments = configProperty('tools_findAllDocuments')
+    tools_showUnmatchedDisabled = configProperty('tools_showUnmatchedDisabled')
+    tools_showColumnSize = configProperty('tools_showColumnSize')
+    tools_showColumnDateModified = configProperty('tools_showColumnDateModified')
 
     # config section
 
-    @property
-    def config_restore(self):
-        return self.__config_restore
-
-    @config_restore.setter
-    def config_restore(self, value):
-        self.__config_restore = value
-        self.__save()
-
-    @property
-    def config_headerrow(self):
-        return self.__config_headerrow
-
-    @config_headerrow.setter
-    def config_headerrow(self, value):
-        self.__config_headerrow = value
-        self.__save()
+    config_restore = configProperty('config_restore')
+    config_headerrow = configProperty('config_headerrow')
 
     #
     # private
@@ -194,7 +99,6 @@ class Config(object):
         self.__config_headerrow = self.__getBoolean('config', 'headerrow', True)
 
     def __save(self):
-             
         # tools section
         self.__set('tools', 'searches', json.dumps(self.__tools_searches))
         self.__set('tools', 'filterFiles', json.dumps(self.__tools_filterFiles))
@@ -212,7 +116,7 @@ class Config(object):
         # config section
         self.__set('config', 'restore', self.__config_restore)
         self.__set('config', 'headerrow', self.__config_headerrow)
-        
+
         with open('csvtools.cfg', 'wb') as configfile:
             self.__config.write(configfile)
 
