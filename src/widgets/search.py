@@ -89,12 +89,12 @@ class QSearch(QWidget):
         # text search
         self.textSearch.addItems(config.tools_searches)
         # match mode
-        self.matchMode.setCurrentIndex(config.matchMode)
+        self.matchMode.setCurrentIndex(config.tools_matchMode)
         # match case
-        if config.matchCase:
+        if config.tools_matchCase:
             self.matchCase.setCheckState(Qt.Checked)
         # find all documents
-        if config.findAllDocuments:
+        if config.tools_findAllDocuments:
             self.findAllDocuments.setCheckState(Qt.Checked)
 
     def _saveConfig(self):
@@ -102,11 +102,11 @@ class QSearch(QWidget):
         items = [str(self.textSearch.itemText(i)) for i in range(self.textSearch.count())]
         config.tools_searches = items
         # match mode
-        config.matchMode = self.matchMode.currentIndex()
+        config.tools_matchMode = self.matchMode.currentIndex()
         # match case
-        config.matchCase = (self.matchCase.checkState() == Qt.Checked)
+        config.tools_matchCase = (self.matchCase.checkState() == Qt.Checked)
         # find all documents
-        config.findAllDocuments = (self.findAllDocuments.checkState() == Qt.Checked)
+        config.tools_findAllDocuments = (self.findAllDocuments.checkState() == Qt.Checked)
 
     def _textSearchAddText(self):
         """update list of recent searches"""
@@ -240,7 +240,6 @@ class QSearch(QWidget):
 
         # textSearch widget
         self.textSearch = QComboBoxEnter()
-        ##self.textSearch.addItems(config.searches)
         self.textSearch.setEditable(True)
         self.textSearch.setAutoCompletion(True)
         self.textSearch.setAutoCompletionCaseSensitivity(Qt.CaseSensitive)

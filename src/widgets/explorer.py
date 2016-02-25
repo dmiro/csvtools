@@ -28,7 +28,7 @@ class QExplorer(QWidget):
 
     def _loadFavoriteFolderConfig(self):
         self.favoriteFolderMenu.clear()
-        for favFolder in config.favFolders:
+        for favFolder in config.tools_favFolders:
             nameFolder = favFolder[0]
             pathFolder = favFolder[1]
             action = QAction(nameFolder, self)
@@ -38,28 +38,28 @@ class QExplorer(QWidget):
 
     def _loadConfig(self):
         # filter files widget
-        self.filterFiles.addItems(config.filterFiles)
+        self.filterFiles.addItems(config.tools_filterFiles)
         # favorite folders widget
         self._loadFavoriteFolderConfig()
         # show unmatched disabled
-        self.showUnmatchedDisabled.setChecked(config.showUnmatchedDisabled)
+        self.showUnmatchedDisabled.setChecked(config.tools_showUnmatchedDisabled)
         # show column size
-        self.showColumnSize.setChecked(config.showColumnSize)
+        self.showColumnSize.setChecked(config.tools_showColumnSize)
         # show columns date modified
-        self.showColumnDateModified.setChecked(config.showColumnDateModified)
+        self.showColumnDateModified.setChecked(config.tools_showColumnDateModified)
         # show Column Size & show Column Date Modified
         self._setFileColumns()
 
     def _saveConfig(self):
         # filter files widget. Not add the first two filters
         items = [str(self.filterFiles.itemText(i)) for i in range(self.filterFiles.count())]
-        config.filterFiles = items[4:]
+        config.tools_filterFiles = items[4:]
         # show unmatched disabled
-        config.showUnmatchedDisabled = self.showUnmatchedDisabled.isChecked()
+        config.tools_showUnmatchedDisabled = self.showUnmatchedDisabled.isChecked()
         # show column size
-        config.showColumnSize = self.showColumnSize.isChecked()
+        config.tools_showColumnSize = self.showColumnSize.isChecked()
         # show columns date modified
-        config.showColumnDateModified = self.showColumnDateModified.isChecked()
+        config.tools_showColumnDateModified = self.showColumnDateModified.isChecked()
 
     def _getModelFiles(self, filter_):
         modelFiles= QFileSystemModel()
@@ -173,10 +173,10 @@ class QExplorer(QWidget):
             nameFolder, ok = QInputDialog.getText(self, self.tr('Add Favorite'), self.tr('Enter favorite name:'), text=nameFolder)
             if ok and nameFolder:
                 # recuperar
-                favFolders = config.favFolders
+                favFolders = config.tools_favFolders
                 favFolders.append([str(nameFolder), pathFolder])
                 # salvar
-                config.favFolders = favFolders
+                config.tools_favFolders = favFolders
                 # refresh favorites
                 self._loadFavoriteFolderConfig()
     #

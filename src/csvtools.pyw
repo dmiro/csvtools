@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
 
     def restoreLastSession(self):
         """retrieve files the last session"""
-        self.openCsv(config.files)
+        self.openCsv(config.file_files)
 
     def refreshRecentFileActions(self):
         """update recent files menu"""
@@ -109,12 +109,10 @@ class MainWindow(QMainWindow):
             config.file_recent.remove(file_)
         config.file_recent.insert(0, file_)
         config.file_recent = config.file_recent[0:20]
-#        config.save()
 
     def saveSessionFile(self):
         """save in config file the session files"""
-        config.files = [str(self.tab.tabToolTip(index)) for index in range(self.tab.count())]
-        config.save()
+        config.file_files = [str(self.tab.tabToolTip(index)) for index in range(self.tab.count())]
 
     def searchText(self, text, tabIndex, matchMode, matchCaseOption):
         csv = self.tab.widget(tabIndex)
@@ -347,13 +345,11 @@ class MainWindow(QMainWindow):
         dialog.exec_()
 
     def restoreSessionConfigAction(self):
-        config.restore = not config.restore
-        config.save()
-        self.restoreSession.setChecked(config.restore)
+        config.config_restore = not config.config_restore
+        self.restoreSession.setChecked(config.config_restore)
 
     def headerRowConfigAction(self):
-        config.headerrow = not config.headerrow
-        config.save()
+        config.config_headerrow = not config.config_headerrow
 
     #
     # help menu action methods
@@ -617,14 +613,14 @@ class MainWindow(QMainWindow):
         #restore session action
         self.restoreSession = QAction(self.tr('Restore Session'), self)
         self.restoreSession.setCheckable(True)
-        self.restoreSession.setChecked(config.restore)
+        self.restoreSession.setChecked(config.config_restore)
         self.restoreSession.setStatusTip(self.tr('Restore Session'))
         self.restoreSession.changed.connect(self.restoreSessionConfigAction)
 
         #header row action
         self.headerRow = QAction(self.tr('Header Row'), self)
         self.headerRow.setCheckable(True)
-        self.headerRow.setChecked(config.headerrow)
+        self.headerRow.setChecked(config.config_headerrow)
         self.headerRow.setStatusTip(self.tr('Header Row'))
         self.headerRow.changed.connect(self.headerRowConfigAction)
 
@@ -766,7 +762,7 @@ def main():
 
     app.removeTranslator(translator)
 
-    if config.restore:
+    if config.config_restore:
         main.restoreLastSession()
 
     sys.exit(app.exec_())

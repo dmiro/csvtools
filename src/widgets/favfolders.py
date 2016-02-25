@@ -14,14 +14,14 @@ class QFavFolders(QDialog):
 
     def _loadConfig(self):
         # favorite folders
-        self.favFolders = config.favFolders
+        self.favFolders = config.tools_favFolders
 
     def _saveConfig(self):
         # favorite folders
         model = self.favFoldersView.model()
         data = [[str(model.item(index, 0).text()), str(model.item(index, 1).text())]
                 for index in range(model.rowCount())]
-        config.favFolders = data
+        config.tools_favFolders = data
 
     def _addFavFolderToModel(self, model, nameFolder, pathFolder):
         index = model.rowCount()

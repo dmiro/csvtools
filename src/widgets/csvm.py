@@ -115,7 +115,7 @@ class QCsv(QTableView):
         return unicode(strDateTime)
 
     def linesValue(self):
-        if config.headerrow:
+        if config.config_headerrow:
             return len(self.document.data)-1
         return len(self.document.data)
 
@@ -256,13 +256,13 @@ class QCsv(QTableView):
         return result
 
     def loadRequested(self):
-        self.tablemodel = MyTableModel(self.document.data, config.headerrow)
+        self.tablemodel = MyTableModel(self.document.data, config.config_headerrow)
         self.setModel(self.tablemodel)
 
     def setDocument(self, document):
         self.document = document
         self.document.loadRequested.connect(self.loadRequested)
-        self.tablemodel = MyTableModel(self.document.data, config.headerrow)
+        self.tablemodel = MyTableModel(self.document.data, config.config_headerrow)
         self.setModel(self.tablemodel)
     #
     # init
@@ -278,7 +278,7 @@ class QCsv(QTableView):
 #        self.data = data
 
         # table model
-#        self.tablemodel = MyTableModel(self.data, config.headerrow)
+#        self.tablemodel = MyTableModel(self.data, config.config_headerrow)
 
         # table model proxy
 #        proxy = StringSortModel()
