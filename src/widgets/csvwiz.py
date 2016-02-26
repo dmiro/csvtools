@@ -27,6 +27,13 @@ class DelimiterGroupBox(QRadioButtonGroup):
             return str(self.buddie(4).text())
 
     #
+    # private
+    #
+
+    def __otherTextChangedSlot(self, text):
+        self.selectItemChanged.emit(4, self.buddie(4))
+
+    #
     # init
     #
 
@@ -36,7 +43,10 @@ class DelimiterGroupBox(QRadioButtonGroup):
         self.addItem(self.tr('Semicolon (;)'))
         self.addItem(self.tr('Tab'))
         self.addItem(self.tr('Space'))
-        self.addItem(self.tr('Other'), widget=QLineEdit())
+        other = QLineEdit()
+        other.textChanged.connect(self.__otherTextChangedSlot)
+        other.setMaxLength(1)
+        self.addItem(self.tr('Other'), widget=other)
 
 
 class QuoteGroupBox(QRadioButtonGroup):
@@ -57,6 +67,13 @@ class QuoteGroupBox(QRadioButtonGroup):
             return str(self.buddie(3).text())
 
     #
+    # private
+    #
+
+    def __otherTextChangedSlot(self, text):
+        self.selectItemChanged.emit(3, self.buddie(3))
+
+    #
     # init
     #
 
@@ -65,7 +82,10 @@ class QuoteGroupBox(QRadioButtonGroup):
         self.addItem(self.tr('None'))
         self.addItem(self.tr('Double quote (")'))
         self.addItem(self.tr('Quote (\')'))
-        self.addItem(self.tr('Other'), widget=QLineEdit())
+        other = QLineEdit()
+        other.textChanged.connect(self.__otherTextChangedSlot)
+        other.setMaxLength(1)
+        self.addItem(self.tr('Other'), widget=other)
 
 
 class LineTerminatorGroupBox(QRadioButtonGroup):
@@ -80,6 +100,13 @@ class LineTerminatorGroupBox(QRadioButtonGroup):
             return '\\r\\n'
         else:
             return str(self.buddie(1).text())
+        
+    #
+    # private
+    #
+
+    def __otherTextChangedSlot(self, text):
+        self.selectItemChanged.emit(1, self.buddie(1))
 
     #
     # init
@@ -88,7 +115,9 @@ class LineTerminatorGroupBox(QRadioButtonGroup):
     def __init__(self):
         QRadioButtonGroup.__init__ (self, title='Line Terminator', columns=1)
         self.addItem(self.tr('\\r\\n'))
-        self.addItem(self.tr('Other'), widget=QLineEdit())
+        other = QLineEdit()
+        other.textChanged.connect(self.__otherTextChangedSlot)
+        self.addItem(self.tr('Other'), widget=other)
 
 
 class AdjustsGroupBox(QCheckGroupBox):
@@ -144,9 +173,9 @@ class QCsvWiz(QDialog):
         formLayout = QFormLayout(parent=groupBox)
         # Preview TableView
         csvDocument = lib.document.Csv(self.filename)
-        csvDocument.load()
+        csvDocument.load(20)
         self.preview = QCsv(csvDocument)
-        self.preview.setEnabled(False)
+##        self.preview.setEnabled(False)
         formLayout.addRow(self.preview)
         return groupBox
 
@@ -161,15 +190,16 @@ class QCsvWiz(QDialog):
         # print self.adjustsGroupBox.isSkipEmptyLines()
         # print self.adjustsGroupBox.isHeaderRow()
         # print self.adjustsGroupBox.isSkipEmptyColumns()
-        # print self.lineTerminatorGroupBox.value()
+        print 'lt', self.lineTerminatorGroupBox.value()
         #csvDocument = lib.document.Csv(self.filename,
         #                       delimiter =self.delimiterGroupBox.value())
         #csvDocument.load()
         #self.preview.setDocument(csvDocument)
         self.preview.document.delimiter = self.delimiterGroupBox.value()
+        self.preview.document.lineterminator = '\t'#self.lineTerminatorGroupBox.value()
      #   self.preview.document.quotechar = self.quoteGroupBox.value()
      #   self.preview.document.quoting = True
-        self.preview.document.load()
+        self.preview.document.load(20)
 
         ##self.preview.data = data
 

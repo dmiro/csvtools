@@ -69,10 +69,14 @@ class MyTableModel(QAbstractTableModel):
             font.setPointSize(self.pointSize)
             return font
         elif role == Qt.DisplayRole:
+            rowIndex = index.row()
+            columnIndex = index.column()
             if self.headerrow:
-                return QVariant(self.arraydata[index.row()+1][index.column()])
-            else:
-                return QVariant(self.arraydata[index.row()][index.column()])
+                rowIndex = rowIndex + 1              
+            if len(self.arraydata) > (rowIndex):
+                if len(self.arraydata[rowIndex]) > columnIndex:
+                    return QVariant(self.arraydata[rowIndex][columnIndex])
+
         return QVariant()
 
 

@@ -28,7 +28,7 @@ class Document(QObject):
         self.dataModified = False
 
     @abstractmethod
-    def load(self):
+    def load(self, linesToLoad=-1):
         self.loadRequested.emit()
 
     @abstractmethod
@@ -107,10 +107,10 @@ class Csv(Document):
         self.quoting= quoting
         self.skipinitialspace= skipinitialspace
 
-    def load(self):
+    def load(self, linesToLoad=-1):
         self.data_ = []
-        with open(self.filename, 'rb') as f:
-            reader = csv.reader(f,
+        with open(self.filename, 'rb') as csvFile:
+            reader = csv.reader(csvFile,
                                 delimiter=self.delimiter,
                                 doublequote=self.doublequote,
                                 escapechar = self.escapechar,
@@ -118,8 +118,14 @@ class Csv(Document):
                                 quotechar=self.quotechar,
                                 quoting=self.quoting,
                                 skipinitialspace=self.skipinitialspace)
-            for row in reader:
-                self.data_.append(row)
+            if linesToLoad > -1:
+                for line, row in enumerate(reader):
+                    if line > linesToLoad:
+                        break
+                    self.data_.append(row)
+            else:
+                for row in reader:
+                    self.data_.append(row)
         super(Csv, self).load()
 
     def save(self):
@@ -135,7 +141,7 @@ class Xsl(Document):
         super(Xsl, self).__init__(filename)
         self.sheetname = sheetname
 
-    def load(self):
+    def load(self, linesToLoad=-1):
         self.data_ = []
         wb = xlrd.open_workbook(self.filename)
         sh = wb.sheet_by_name(self.sheetname)
