@@ -12,7 +12,7 @@ class IniConfig(object):
     def booleanProperty(cls, section, option, default):
         def getter(self):
             return self.__get(section, option, default,
-                              self.__config.get)
+                              self.__config.getboolean)
         def setter(self, value):
             self.__set(section, option, value)
         return property(getter, setter)
@@ -51,7 +51,7 @@ class IniConfig(object):
 
     def __get(self, section, option, default, configGetter):
         value = self.__getProperty(section, option)
-        if not value:
+        if value == None:
             if not self.__config.has_section(section):
                 self.__config.add_section(section)
             if self.__config.has_option(section, option):
