@@ -123,12 +123,15 @@ class MainWindow(QMainWindow):
         if len(result) > 0:
             return {'tabText':tabText, 'tabToolTip': tabToolTip, 'result':result}
 
-    def editMenuDisabled(self, disabled):
-        self.copyToClipboard.setDisabled(disabled)
-        for action in self.copySpecialMenu.actions():
-            action.setDisabled(disabled)
-        for action in self.copyToPythonMenu.actions():
-            action.setDisabled(disabled)
+    def setMenuDisabled(self, menu, disabled):
+        for action in menu.actions():
+            if not action.menu():
+                action.setDisabled(disabled)
+  
+    def setEditMenuDisabled(self, disabled):
+        self.setMenuDisabled(self.editMenu, disabled)
+        self.setMenuDisabled(self.copySpecialMenu, disabled)
+        self.setMenuDisabled(self.copyToPythonMenu, disabled)
 
     #
     # drag and drop events
@@ -316,10 +319,24 @@ class MainWindow(QMainWindow):
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
                     textClip = lib.export.ClipboardFormat.toPythonList(matrix)
+            # copy Python Source Code As DICT action
             elif action == self.copyPythonAsDict:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
                     textClip = lib.export.ClipboardFormat.toPythonDict(matrix)
+
+            # paste from clipboard action
+            elif action == self.pasteFromClipboard:
+                clipboard = QApplication.clipboard()
+                textClip2 = clipboard.text() 
+                print textClip2
+####            http://python.6.x6.nabble.com/Paste-entire-column-into-QTableView-from-Excel-td5016995.html
+####            necesito una funcion que pase el clipboard a un matrix
+####            matrix = lib.import.ClipboardFormat.toMatrix(textClip2)
+####            para probar
+                matrix = [['1','2','3'],['4','5','6'],['','','7']]
+####            otra que a partir de la matriz haga el paste
+####            csv.rectangularAreaToSelectedIndex(matrix)
 
             # at last copy result to clipboard
             if textClip:
@@ -369,12 +386,12 @@ class MainWindow(QMainWindow):
     def csvSelectionChangedEvent(self):
         csv = self.tab.currentWidget()
         if csv:
-            self.editMenuDisabled(len(csv.selectedIndexes()) == 0)
+            self.setEditMenuDisabled(len(csv.selectedIndexes()) == 0)
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
                                     csv.modifiedValue(), csv.itemsValue(), csv.averageValue(),
                                     csv.sumValue())
         else:
-            self.editMenuDisabled(True)
+            self.setEditMenuDisabled(True)
             self.statusBar.setValues(None, None, None, None, None, None, None)
 
     def csvcontextMenuRequestedEvent(self, selectedIndexes, globalPoint):
@@ -404,7 +421,7 @@ class MainWindow(QMainWindow):
             self.closeFile.setDisabled(False)
             self.filePathToClipboard.setDisabled(False)
             self.allFilePathsToClipboard.setDisabled(False)
-            self.editMenuDisabled(len(csv.selectedIndexes()) == 0)
+            self.setEditMenuDisabled(len(csv.selectedIndexes()) == 0)
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
                                      csv.modifiedValue(), csv.itemsValue(), csv.averageValue(),
                                      csv.sumValue())
@@ -415,7 +432,7 @@ class MainWindow(QMainWindow):
             self.closeFile.setDisabled(True)
             self.filePathToClipboard.setDisabled(True)
             self.allFilePathsToClipboard.setDisabled(True)
-            self.editMenuDisabled(True)
+            self.setEditMenuDisabled(True)
             self.statusBar.setValues(None, None, None, None, None, None, None)
 
     def tabBarcustomContextMenuRequestedEvent(self, point):
@@ -551,19 +568,17 @@ class MainWindow(QMainWindow):
     def addEditMenu(self):
         """add EDIT menu"""
 
-        # copy action
-        self.copyToClipboard = QAction(self.tr('&Copy'), self)
-        self.copyToClipboard.setShortcut('Ctrl+C')
-
         # edit menu
         menubar = self.menuBar()
         self.editMenu = menubar.addMenu(self.tr('Edit'))
-        self.editMenu.addAction(self.copyToClipboard)
+        self.copyToClipboard = self.editMenu.addAction(self.tr('&Copy'))
+        self.copyToClipboard.setShortcut('Ctrl+C')
+        self.pasteFromClipboard = self.editMenu.addAction(self.tr('Paste'))
+        self.pasteFromClipboard.setShortcut('Ctrl+V')
         self.editMenu.addSeparator()
         self.copySpecialMenu = self.editMenu.addMenu(self.tr('Copy Special'))
         self.copyToSourceCodeMenu = self.editMenu.addMenu(self.tr('Copy to Source Code'))
         self.copyToPythonMenu = self.copyToSourceCodeMenu.addMenu(self.tr('Python'))
-        self.editMenu.triggered.connect(self.editAction)
 
         # copy special submenu
         self.copyWithHeaderColumnsToClipboard = self.copySpecialMenu.addAction(self.tr('Copy with Column Name(s)'))
@@ -580,12 +595,17 @@ class MainWindow(QMainWindow):
         self.copyPythonAsList = self.copyToPythonMenu.addAction(self.tr('As List'))
         self.copyPythonAsDict = self.copyToPythonMenu.addAction(self.tr('As Dict'))
 
+        self.editMenu.triggered.connect(self.editAction)
+
 ##        #copy to source code submenu
 ##        self.copyToSourceCodeMenu.addAction(QAction('C++', self)) ## acabar
 ##        self.copyToSourceCodeMenu.addAction(QAction('C#', self)) ## acabar
 ##        self.copyToSourceCodeMenu.addAction(QAction('Delphi', self)) ## acabar
 ##        self.copyToSourceCodeMenu.addAction(QAction('Java', self)) ## acabar
 ##        self.copyToSourceCodeMenu.addAction(QAction('Python', self)) ## acabar
+
+##        # ideas
+##        algo del estilo llamadas RESTFUL con datos del CSV...
 
     def addToolsMenu(self):
         """add TOOLS menu"""

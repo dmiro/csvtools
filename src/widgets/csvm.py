@@ -68,7 +68,7 @@ class MyTableModel(QAbstractTableModel):
             font = QFont()
             font.setPointSize(self.pointSize)
             return font
-        elif role == Qt.DisplayRole:
+        elif role == Qt.DisplayRole or role == Qt.EditRole:
             rowIndex = index.row()
             columnIndex = index.column()
             if self.headerrow:
@@ -76,9 +76,22 @@ class MyTableModel(QAbstractTableModel):
             if len(self.arraydata) > (rowIndex):
                 if len(self.arraydata[rowIndex]) > columnIndex:
                     return QVariant(self.arraydata[rowIndex][columnIndex])
-
+#        elif role == Qt.BackgroundRole:
+#            return QBrush(QColor(255, 0, 0, 127))
         return QVariant()
 
+    def setData(self, index, value, role):
+        rowIndex = index.row()
+        columnIndex = index.column()
+        if self.headerrow:
+            rowIndex = rowIndex + 1
+        if len(self.arraydata) > (rowIndex):
+            if len(self.arraydata[rowIndex]) > columnIndex:
+                self.arraydata[rowIndex][columnIndex] = value
+        return True
+
+    def flags(self, index):
+        return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
 class QCsv(QTableView):
 
@@ -274,7 +287,7 @@ class QCsv(QTableView):
 
     def __init__(self, document, *args):
         QTableView.__init__(self, *args)
-        self.setSortingEnabled(True)
+#        self.setSortingEnabled(True)
 
         # set data
         self.setDocument(document)

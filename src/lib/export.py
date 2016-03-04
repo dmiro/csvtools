@@ -10,7 +10,9 @@ class ClipboardFormat(object):
         if rectangularArea:
             textClip = ''
             for row in rectangularArea:
-                textClip = textClip + '\t'.join(row) + '\n'
+                if textClip:
+                    textClip = textClip + '\n'
+                textClip = textClip + '\t'.join(row)
             return textClip
         return None
 
@@ -28,7 +30,9 @@ class ClipboardFormat(object):
         if rectangularArea:
             textClip = ''
             for row in rectangularArea:
-                textClip = textClip + ','.join(row) + '\n'
+                if textClip:
+                    textClip = textClip + '\n'
+                textClip = textClip + ','.join(row)
             return textClip
         return None
 
