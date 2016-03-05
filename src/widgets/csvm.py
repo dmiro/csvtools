@@ -43,12 +43,12 @@ class MyTableModel(QAbstractTableModel):
 
     def rowCount(self, parent):
         if self.headerrow:
-            return len(self.arraydata)-1
+            return len(self.arraydata)-1 + 20
         else:
-            return len(self.arraydata)
+            return len(self.arraydata) + 20
 
     def columnCount(self, parent):
-        return len(self.arraydata[0])
+        return len(self.arraydata[0]) + 20
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if self.headerrow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
@@ -77,17 +77,25 @@ class MyTableModel(QAbstractTableModel):
                 if len(self.arraydata[rowIndex]) > columnIndex:
                     return QVariant(self.arraydata[rowIndex][columnIndex])
 #        elif role == Qt.BackgroundRole:
-#            return QBrush(QColor(255, 0, 0, 127))
+#            return QBrush(QColor(8, 8, 8, 8))
         return QVariant()
 
     def setData(self, index, value, role):
+        # calculate row and column index
         rowIndex = index.row()
         columnIndex = index.column()
         if self.headerrow:
             rowIndex = rowIndex + 1
-        if len(self.arraydata) > (rowIndex):
-            if len(self.arraydata[rowIndex]) > columnIndex:
-                self.arraydata[rowIndex][columnIndex] = value
+        # expand rows
+        if len(self.arraydata) <= rowIndex:
+            rowsMissing =  rowIndex - len(self.arraydata) + 1
+            self.arraydata.extend([[] for _ in xrange(rowsMissing) ])
+        # expand columns
+        if len(self.arraydata[rowIndex]) <= columnIndex:
+            columnsMissing = columnIndex - len(self.arraydata[rowIndex]) + 1
+            self.arraydata[rowIndex].extend(['']*columnsMissing)
+        # set value
+        self.arraydata[rowIndex][columnIndex] = str(value.toString())
         return True
 
     def flags(self, index):
