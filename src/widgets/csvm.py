@@ -41,13 +41,13 @@ class MyTableModel(QAbstractTableModel):
     def setPointSize(self, pointSize):
         self.pointSize = pointSize
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=QModelIndex()):
         if self.headerrow:
             return len(self.arraydata)-1 + 20
         else:
             return len(self.arraydata) + 20
 
-    def columnCount(self, parent):
+    def columnCount(self, parent=QModelIndex()):
         return len(self.arraydata[0]) + 20
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
@@ -72,7 +72,7 @@ class MyTableModel(QAbstractTableModel):
             rowIndex = index.row()
             columnIndex = index.column()
             if self.headerrow:
-                rowIndex = rowIndex + 1              
+                rowIndex = rowIndex + 1
             if len(self.arraydata) > (rowIndex):
                 if len(self.arraydata[rowIndex]) > columnIndex:
                     return QVariant(self.arraydata[rowIndex][columnIndex])
@@ -279,6 +279,39 @@ class QCsv(QTableView):
                     header = headerRows[minColumn:maxColumn+1]
                     result.insert(0, header)
         return result
+
+    def rectangularAreaToSelectedIndex(self, matrix):
+        selectionRanges = self.selectionModel().selection()
+        if len(selectionRanges)==1:
+            numRows = len(matrix)
+            if numRows > 0:
+                numCols = len(matrix[0])
+                if numCols > 0:
+                    topLeftIndex = selectionRanges[0].topLeft()
+                    selColumn = topLeftIndex.column()
+                    selRow = topLeftIndex.row()
+                    modelNumCols = self.tablemodel.columnCount()
+                    modelNumRows = self.tablemodel.rowCount()
+                    if selColumn+numCols > modelNumCols:                                                 # the number of columns we have to paste, starting at the selected cell,
+                        self.tablemodel.insertColumns(modelNumCols, numCols-(modelNumCols-selColumn))    # go beyond how many columns exist. insert the amount of columns we need
+                                                                                                         # to accomodate the paste
+
+
+                    if selRow+numRows > modelNumRows:                                                    # the number of rows we have to paste, starting at the selected cell,
+                        self.tablemodel.insertRows(modelNumRows, numRows-(modelNumRows-selRow))          # go beyond how many rows exist. insert the amount of rows we need to
+                                                                                                         # accomodate the paste
+
+
+                    self.tablemodel.blockSignals(True)     # block signals so that the "dataChanged" signal from setData doesn't
+                                                           # update the view for every cell we set
+                    for rowIndex, row in enumerate(matrix):
+                        for colIndex, value in enumerate(row):
+                            index = self.tablemodel.createIndex(selRow+rowIndex, selColumn+colIndex)
+                            self.tablemodel.setData(index, QVariant(value), Qt.EditRole)
+                    self.tablemodel.blockSignals(False)    # unblock the signal and emit dataChangesd ourselves to update all
+                                                           # the view at once
+                    index = self.tablemodel.createIndex(selRow+numRows, selColumn+numCols)
+                    self.tablemodel.dataChanged.emit(topLeftIndex, index)
 
     def loadRequested(self):
         self.tablemodel = MyTableModel(self.document.data, config.config_headerrow)

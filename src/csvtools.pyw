@@ -329,14 +329,14 @@ class MainWindow(QMainWindow):
             elif action == self.pasteFromClipboard:
                 clipboard = QApplication.clipboard()
                 textClip2 = clipboard.text() 
-                print textClip2
+                ##print textClip2
 ####            http://python.6.x6.nabble.com/Paste-entire-column-into-QTableView-from-Excel-td5016995.html
 ####            necesito una funcion que pase el clipboard a un matrix
 ####            matrix = lib.import.ClipboardFormat.toMatrix(textClip2)
 ####            para probar
-                matrix = [['1','2','3'],['4','5','6'],['','','7']]
+                matrix = [['1','2','3'],['4','5','6'],['7','8','9']]
 ####            otra que a partir de la matriz haga el paste
-####            csv.rectangularAreaToSelectedIndex(matrix)
+                csv.rectangularAreaToSelectedIndex(matrix)
 
             # at last copy result to clipboard
             if textClip:
