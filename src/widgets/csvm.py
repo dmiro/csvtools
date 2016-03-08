@@ -43,12 +43,12 @@ class MyTableModel(QAbstractTableModel):
 
     def rowCount(self, parent=QModelIndex()):
         if self.headerrow:
-            return len(self.arraydata)-1 + 20
+            return len(self.arraydata)-1
         else:
-            return len(self.arraydata) + 20
+            return len(self.arraydata)
 
     def columnCount(self, parent=QModelIndex()):
-        return len(self.arraydata[0]) + 20
+        return len(self.arraydata[0])
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if self.headerrow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
@@ -80,26 +80,46 @@ class MyTableModel(QAbstractTableModel):
 #            return QBrush(QColor(8, 8, 8, 8))
         return QVariant()
 
-    def setData(self, index, value, role):
-        # calculate row and column index
-        rowIndex = index.row()
-        columnIndex = index.column()
-        if self.headerrow:
-            rowIndex = rowIndex + 1
-        # expand rows
-        if len(self.arraydata) <= rowIndex:
-            rowsMissing =  rowIndex - len(self.arraydata) + 1
-            self.arraydata.extend([[] for _ in xrange(rowsMissing) ])
-        # expand columns
-        if len(self.arraydata[rowIndex]) <= columnIndex:
-            columnsMissing = columnIndex - len(self.arraydata[rowIndex]) + 1
-            self.arraydata[rowIndex].extend(['']*columnsMissing)
-        # set value
-        self.arraydata[rowIndex][columnIndex] = str(value.toString())
-        return True
+    def setData(self, index, value, role=Qt.EditRole):
+        if role == Qt.EditRole:
+            # calculate row and column index
+            rowIndex = index.row()
+            columnIndex = index.column()
+            if self.headerrow:
+                rowIndex = rowIndex + 1
+            # expand rows
+            if len(self.arraydata) <= rowIndex:
+                rowsMissing =  rowIndex - len(self.arraydata) + 1
+                self.arraydata.extend([[] for _ in xrange(rowsMissing) ])
+            # expand columns
+            if len(self.arraydata[rowIndex]) <= columnIndex:
+                columnsMissing = columnIndex - len(self.arraydata[rowIndex]) + 1
+                self.arraydata[rowIndex].extend(['']*columnsMissing)
+            # set value
+            self.arraydata[rowIndex][columnIndex] = str(value.toString())
+            # emit data changed
+            bottomRight = self.createIndex(self.rowCount(), self.columnCount())
+            self.dataChanged.emit(index, bottomRight)
+            return True
+        return False
 
     def flags(self, index):
         return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
+
+    def insertRows(self, row, count, parent = QModelIndex()):
+        self.beginInsertRows(parent, row, row+count)
+        for i in xrange(count):
+            self.arraydata.insert(row,[])
+        self.endInsertRows()
+        topLeft = self.createIndex(row, 0)
+        bottomRight = self.createIndex(self.rowCount(), self.columnCount())
+
+      #  self.dataChanged.emit(topLeft, bottomRight)
+
+        return True
+
+    def insertRow (self, row, parent = QModelIndex()):
+        return self.insertRows(row, 1, parent)
 
 class QCsv(QTableView):
 
@@ -107,6 +127,17 @@ class QCsv(QTableView):
     # private
     #
 
+    # http://stackoverflow.com/questions/11352523/qt-and-pyqt-tablewidget-growing-row-count
+    # http://stackoverflow.com/questions/19993898/dynamically-add-data-to-qtableview
+    # http://permalink.gmane.org/gmane.comp.python.pyqt-pykde/25792
+    def scrollbarChangedEvent(self, val):
+#        bar = self.verticalScrollBar()
+#        minVal, maxVal = bar.minimum(), bar.maximum()
+#        bar = self.horizontalScrollBar()
+#        minVal, maxVal = bar.minimum(), bar.maximum()
+        model = self.model()
+        model.insertRow(model.rowCount())
+        
     def selectionChanged (self, selected, deselected):
         self.selectionChanged_.emit()
         return QTableView.selectionChanged (self, selected, deselected)
@@ -117,7 +148,7 @@ class QCsv(QTableView):
 
     def _getHeaderRows(self):
         result = []
-        model = self.tablemodel
+        model = self.model()
         columnCount = model.columnCount(None)
         for column in xrange(columnCount):
             data = model.headerData(column, orientation = Qt.Horizontal)
@@ -178,10 +209,11 @@ class QCsv(QTableView):
         return len(self.selectedIndexes())
 
     def setPointSize(self, pointSize):
-        self.tablemodel.setPointSize(pointSize)
+        model = self.model()
+        model.setPointSize(pointSize)
 
     def setSelectCell(self, row, column):
-        model = self.tablemodel
+        model = self.model()
         column = column - 1
         row = row - 1
         index = model.index(row, column)
@@ -201,7 +233,7 @@ class QCsv(QTableView):
     def search(self, text, matchMode, matchCaseOption):
         """search data in CSV"""
         result = []
-        model = self.tablemodel
+        model = self.model()
 
         # set regular expression pattern
         if matchMode == MatchModeEnum.WholeWord:
@@ -287,56 +319,60 @@ class QCsv(QTableView):
             if numRows > 0:
                 numCols = len(matrix[0])
                 if numCols > 0:
+                    model = self.model()
                     topLeftIndex = selectionRanges[0].topLeft()
                     selColumn = topLeftIndex.column()
                     selRow = topLeftIndex.row()
-                    modelNumCols = self.tablemodel.columnCount()
-                    modelNumRows = self.tablemodel.rowCount()
-                    if selColumn+numCols > modelNumCols:                                                 # the number of columns we have to paste, starting at the selected cell,
-                        self.tablemodel.insertColumns(modelNumCols, numCols-(modelNumCols-selColumn))    # go beyond how many columns exist. insert the amount of columns we need
-                                                                                                         # to accomodate the paste
+                    modelNumCols = model.columnCount()
+                    modelNumRows = model.rowCount()
+                    if selColumn+numCols > modelNumCols:                                       # the number of columns we have to paste, starting at the selected cell,
+                        model.insertColumns(modelNumCols, numCols-(modelNumCols-selColumn))    # go beyond how many columns exist. insert the amount of columns we need
+                                                                                               # to accomodate the paste
 
 
-                    if selRow+numRows > modelNumRows:                                                    # the number of rows we have to paste, starting at the selected cell,
-                        self.tablemodel.insertRows(modelNumRows, numRows-(modelNumRows-selRow))          # go beyond how many rows exist. insert the amount of rows we need to
-                                                                                                         # accomodate the paste
+                    if selRow+numRows > modelNumRows:                                          # the number of rows we have to paste, starting at the selected cell,
+                        model.insertRows(modelNumRows, numRows-(modelNumRows-selRow))          # go beyond how many rows exist. insert the amount of rows we need to
+                                                                                               # accomodate the paste
 
 
-                    self.tablemodel.blockSignals(True)     # block signals so that the "dataChanged" signal from setData doesn't
-                                                           # update the view for every cell we set
+                    model.blockSignals(True)     # block signals so that the "dataChanged" signal from setData doesn't
+                                                 # update the view for every cell we set
                     for rowIndex, row in enumerate(matrix):
                         for colIndex, value in enumerate(row):
-                            index = self.tablemodel.createIndex(selRow+rowIndex, selColumn+colIndex)
-                            self.tablemodel.setData(index, QVariant(value), Qt.EditRole)
-                    self.tablemodel.blockSignals(False)    # unblock the signal and emit dataChangesd ourselves to update all
-                                                           # the view at once
-                    index = self.tablemodel.createIndex(selRow+numRows, selColumn+numCols)
-                    self.tablemodel.dataChanged.emit(topLeftIndex, index)
+                            index = model.createIndex(selRow+rowIndex, selColumn+colIndex)
+                            model.setData(index, QVariant(value))
+                    model.blockSignals(False)    # unblock the signal and emit dataChangesd ourselves to update all
+                                                 # the view at once
+                    index = model.createIndex(selRow+numRows, selColumn+numCols)
+                    model.dataChanged.emit(topLeftIndex, index)
 
     def loadRequested(self):
-        self.tablemodel = MyTableModel(self.document.data, config.config_headerrow)
-        self.setModel(self.tablemodel)
+        model = MyTableModel(self.document.data, config.config_headerrow)
+        self.setModel(model)
 
     def setDocument(self, document):
         self.document = document
         self.document.loadRequested.connect(self.loadRequested)
-        self.tablemodel = MyTableModel(self.document.data, config.config_headerrow)
-        self.setModel(self.tablemodel)
+        model = MyTableModel(self.document.data, config.config_headerrow)
+        self.setModel(model)
     #
     # init
     #
-
+        
     def __init__(self, document, *args):
         QTableView.__init__(self, *args)
-#        self.setSortingEnabled(True)
+        
+        vBar = self.verticalScrollBar()
+        vBar.valueChanged.connect(self.scrollbarChangedEvent)
+        hBar = self.horizontalScrollBar()
+        hBar.valueChanged.connect(self.scrollbarChangedEvent)
+
+        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel) #?
 
         # set data
         self.setDocument(document)
-#       self.filename = filename
-#        self.data = data
 
-        # table model
-#        self.tablemodel = MyTableModel(self.data, config.config_headerrow)
+#       self.setSortingEnabled(True)
 
         # table model proxy
 #        proxy = StringSortModel()
@@ -346,8 +382,6 @@ class QCsv(QTableView):
 #       self.setModel(self.tablemodel)#(proxy)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._customContextMenuRequestedEvent)
-
-
 
 ##    def slider_value_changed(self, value):
 ##        print self.tablemodel.normalFontSize()
