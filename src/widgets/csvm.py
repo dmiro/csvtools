@@ -37,18 +37,42 @@ class MyTableModel(QAbstractTableModel):
         self.headerrow= headerrow
         self.arraydata= datain
         self.pointSize= QFont().pointSize()
+        self.columnCorner = 0
+        self.rowCorner = 0
 
+    def setRowCorner(self, value):
+       self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
+       self.rowCorner = value
+       self.endInsertRows()
+
+    def setColumnCorner(self, value):
+       self.beginInsertColumns(QModelIndex(), self.columnCount(), self.columnCount())
+       self.columnCorner = value
+       self.endInsertColumns()
+       
     def setPointSize(self, pointSize):
         self.pointSize = pointSize
-
-    def rowCount(self, parent=QModelIndex()):
+        
+    def rowDataCount(self, parent=QModelIndex()):
         if self.headerrow:
             return len(self.arraydata)-1
         else:
             return len(self.arraydata)
 
-    def columnCount(self, parent=QModelIndex()):
+    def columnDataCount(self, parent=QModelIndex()):
         return len(self.arraydata[0])
+    
+    def rowCount(self, parent=QModelIndex()):
+        row = self.rowCorner + 500
+        if row < self.rowDataCount():
+            return self.rowDataCount()
+        return row
+
+    def columnCount(self, parent=QModelIndex()):
+        column = self.columnCorner + 500
+        if column < self.columnDataCount():
+            return self.columnDataCount()
+        return column
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if self.headerrow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
@@ -113,9 +137,6 @@ class MyTableModel(QAbstractTableModel):
         self.endInsertRows()
         topLeft = self.createIndex(row, 0)
         bottomRight = self.createIndex(self.rowCount(), self.columnCount())
-
-      #  self.dataChanged.emit(topLeft, bottomRight)
-
         return True
 
     def insertRow (self, row, parent = QModelIndex()):
@@ -131,12 +152,14 @@ class QCsv(QTableView):
     # http://stackoverflow.com/questions/19993898/dynamically-add-data-to-qtableview
     # http://permalink.gmane.org/gmane.comp.python.pyqt-pykde/25792
     def scrollbarChangedEvent(self, val):
-#        bar = self.verticalScrollBar()
-#        minVal, maxVal = bar.minimum(), bar.maximum()
-#        bar = self.horizontalScrollBar()
-#        minVal, maxVal = bar.minimum(), bar.maximum()
+        indexCorner = self.indexAt(QPoint(1,1))
+        print 'column', indexCorner.column()
+        print 'row', indexCorner.row()
         model = self.model()
-        model.insertRow(model.rowCount())
+        model.setColumnCorner(indexCorner.column())
+        model.setRowCorner(indexCorner.row())
+        print 'rowcount', model.rowCount()
+        print 'columncount', model.columnCount()
         
     def selectionChanged (self, selected, deselected):
         self.selectionChanged_.emit()
@@ -171,13 +194,15 @@ class QCsv(QTableView):
         return unicode(strDateTime)
 
     def linesValue(self):
-        if config.config_headerrow:
-            return len(self.document.data)-1
-        return len(self.document.data)
+        model = self.model()
+        if model:
+            return model.columnDataCount()
+        return 0
 
     def columnsValue(self):
-        if len(self.document.data) > 0:
-            return len(self.document.data[0])
+        model = self.model()
+        if model:
+            return model.rowDataCount();
         return 0
 
     def averageValue(self):
@@ -367,7 +392,7 @@ class QCsv(QTableView):
         hBar = self.horizontalScrollBar()
         hBar.valueChanged.connect(self.scrollbarChangedEvent)
 
-        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel) #?
+#        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel) #?
 
         # set data
         self.setDocument(document)
