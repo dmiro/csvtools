@@ -30,49 +30,85 @@ class MyTableView(QTableView):
         self.sum_ = sum_
         self.setSortingEnabled(True)
 
+class QItemDataBorderDelegate(QStyledItemDelegate):
+    def __init__ (self, parent = None):
+        super(QItemDataBorderDelegate, self).__init__ (parent)
+
+    def paint(self, painter, option, index):
+        if index:
+            model = index.model()
+            if model:
+                rowIndex = index.row()
+                columnIndex = index.column()
+                columnDataCount = model.columnDataCount()-1
+                rowDataCount = model.rowDataCount()-1
+                if (rowDataCount == rowIndex) and (columnIndex <= columnDataCount):
+                    painter.setPen(QPen(Qt.red, 1, style=Qt.DotLine))
+                    painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
+                if (columnDataCount == columnIndex) and (rowIndex <= rowDataCount):
+                    painter.setPen(QPen(Qt.red, 1, style=Qt.DotLine))
+                    painter.drawLine(option.rect.topRight(), option.rect.bottomRight())
+        super(QItemDataBorderDelegate, self).paint(painter, option, index)
+
 
 class MyTableModel(QAbstractTableModel):
-    def __init__(self, datain, headerrow=False, parent=None, *args):
-        QAbstractTableModel.__init__(self, parent, *args)
-        self.headerrow= headerrow
-        self.arraydata= datain
-        self.pointSize= QFont().pointSize()
-        self.columnCorner = 0
-        self.rowCorner = 0
+
+    #
+    # private
+    #
+
+    def _getMaxDataColumn(self):
+        return max(len(row) for row in self.arraydata)
+
+    #
+    # public
+    #
 
     def setRowCorner(self, value):
-       self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
-       self.rowCorner = value
-       self.endInsertRows()
+        """specify the row of the cell visible at top-left corner.
+        The value is set by QTableView"""
+        rowCount = self.rowCount()
+        self.beginInsertRows(QModelIndex(), rowCount, rowCount+1)
+        self.rowCorner = value
+        self.endInsertRows()
 
     def setColumnCorner(self, value):
-       self.beginInsertColumns(QModelIndex(), self.columnCount(), self.columnCount())
-       self.columnCorner = value
-       self.endInsertColumns()
-       
-    def setPointSize(self, pointSize):
-        self.pointSize = pointSize
-        
+        """specify the column of the cell visible at top-left corner.
+        The value is set by QTableView"""
+        columnCount = self.columnCount()
+        self.beginInsertColumns(QModelIndex(), columnCount, columnCount+1)
+        self.columnCorner = value
+        self.endInsertColumns()
+
     def rowDataCount(self, parent=QModelIndex()):
+        """get row count real data"""
         if self.headerrow:
             return len(self.arraydata)-1
         else:
             return len(self.arraydata)
 
     def columnDataCount(self, parent=QModelIndex()):
-        return len(self.arraydata[0])
-    
+        """get column count real data"""
+        return self._maxDataColumn
+
     def rowCount(self, parent=QModelIndex()):
-        row = self.rowCorner + 500
+        """get the total virtual rows calculated based on the number of actual
+        rows and the visible row in the top-left corner"""
+        row = self.rowCorner + 100
         if row < self.rowDataCount():
             return self.rowDataCount()
         return row
 
     def columnCount(self, parent=QModelIndex()):
-        column = self.columnCorner + 500
+        """get the total virtual columns calculated based on the number of actual
+        rows and the visible column in the top-left corner"""
+        column = self.columnCorner + 100
         if column < self.columnDataCount():
             return self.columnDataCount()
         return column
+
+    def setPointSize(self, pointSize):
+        self.pointSize = pointSize
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if self.headerrow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
@@ -102,6 +138,12 @@ class MyTableModel(QAbstractTableModel):
                     return QVariant(self.arraydata[rowIndex][columnIndex])
 #        elif role == Qt.BackgroundRole:
 #            return QBrush(QColor(8, 8, 8, 8))
+##        elif role == Qt.BackgroundRole:
+##            rowIndex = index.row()
+##            columnIndex = index.column()
+##            if self.rowDataCount() > rowIndex:
+##                if self.columnDataCount() > columnIndex:
+##                    return QBrush(QColor(8, 8, 8, 8))
         return QVariant()
 
     def setData(self, index, value, role=Qt.EditRole):
@@ -121,6 +163,9 @@ class MyTableModel(QAbstractTableModel):
                 self.arraydata[rowIndex].extend(['']*columnsMissing)
             # set value
             self.arraydata[rowIndex][columnIndex] = str(value.toString())
+            # update max data column
+            if len(self.arraydata[rowIndex]) > self._maxDataColumn:
+                self._maxDataColumn = len(self.arraydata[rowIndex])
             # emit data changed
             bottomRight = self.createIndex(self.rowCount(), self.columnCount())
             self.dataChanged.emit(index, bottomRight)
@@ -134,13 +179,25 @@ class MyTableModel(QAbstractTableModel):
         self.beginInsertRows(parent, row, row+count)
         for i in xrange(count):
             self.arraydata.insert(row,[])
+        self._maxDataColumn = self._getMaxDataColumn()
         self.endInsertRows()
-        topLeft = self.createIndex(row, 0)
-        bottomRight = self.createIndex(self.rowCount(), self.columnCount())
         return True
 
     def insertRow (self, row, parent = QModelIndex()):
         return self.insertRows(row, 1, parent)
+
+    #
+    # init
+    #
+
+    def __init__(self, datain, headerrow=False, parent=None, *args):
+        QAbstractTableModel.__init__(self, parent, *args)
+        self.headerrow= headerrow
+        self.arraydata= datain
+        self.pointSize= QFont().pointSize()
+        self.columnCorner = 0
+        self.rowCorner = 0
+        self._maxDataColumn = self._getMaxDataColumn()
 
 class QCsv(QTableView):
 
@@ -151,16 +208,12 @@ class QCsv(QTableView):
     # http://stackoverflow.com/questions/11352523/qt-and-pyqt-tablewidget-growing-row-count
     # http://stackoverflow.com/questions/19993898/dynamically-add-data-to-qtableview
     # http://permalink.gmane.org/gmane.comp.python.pyqt-pykde/25792
-    def scrollbarChangedEvent(self, val):
+    def _scrollbarChangedEvent(self, val):
         indexCorner = self.indexAt(QPoint(1,1))
-        print 'column', indexCorner.column()
-        print 'row', indexCorner.row()
         model = self.model()
         model.setColumnCorner(indexCorner.column())
         model.setRowCorner(indexCorner.row())
-        print 'rowcount', model.rowCount()
-        print 'columncount', model.columnCount()
-        
+
     def selectionChanged (self, selected, deselected):
         self.selectionChanged_.emit()
         return QTableView.selectionChanged (self, selected, deselected)
@@ -196,13 +249,13 @@ class QCsv(QTableView):
     def linesValue(self):
         model = self.model()
         if model:
-            return model.columnDataCount()
+            return model.rowDataCount()
         return 0
 
     def columnsValue(self):
         model = self.model()
         if model:
-            return model.rowDataCount();
+            return model.columnDataCount();
         return 0
 
     def averageValue(self):
@@ -383,19 +436,25 @@ class QCsv(QTableView):
     #
     # init
     #
-        
+
     def __init__(self, document, *args):
         QTableView.__init__(self, *args)
-        
-        vBar = self.verticalScrollBar()
-        vBar.valueChanged.connect(self.scrollbarChangedEvent)
-        hBar = self.horizontalScrollBar()
-        hBar.valueChanged.connect(self.scrollbarChangedEvent)
 
-#        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel) #?
+        # config and connect scrollbars
+        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        verticalScrollBar = self.verticalScrollBar()
+        verticalScrollBar.valueChanged.connect(self._scrollbarChangedEvent)
+        horizontalScrollBar = self.horizontalScrollBar()
+        horizontalScrollBar.valueChanged.connect(self._scrollbarChangedEvent)
+
+        # set delegate
+        self.setItemDelegate(QItemDataBorderDelegate())
 
         # set data
         self.setDocument(document)
+
+
 
 #       self.setSortingEnabled(True)
 
