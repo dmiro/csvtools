@@ -12,7 +12,8 @@ from widgets.search import QSearch
 from widgets.opencsvfiledialog import QOpenCsvFileDialog
 from widgets.csvwiz import QCsvWiz
 import lib.document
-import lib.export
+import lib.exports
+import lib.imports
 from lib.config import config
 from lib.helper import waiting, get_excel_sheets
 import lib.images_rc
@@ -268,80 +269,76 @@ class MainWindow(QMainWindow):
             if action == self.copyToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=False)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toClipboard(matrix)
+                    textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
             # copy with Column Name(s) action
             elif action == self.copyWithHeaderColumnsToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toClipboard(matrix)
+                    textClip = lib.exporst.ClipboardFormat.toClipboard(matrix)
             # copy Column Name(s) action
             elif action == self.copyHeaderColumnsToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toClipboard([matrix[0]])
+                    textClip = lib.exports.ClipboardFormat.toClipboard([matrix[0]])
             # copy As JSON action
             elif action == self.copyAsJSON:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toJSON(matrix)
+                    textClip = lib.exports.ClipboardFormat.toJSON(matrix)
             # copy As Delimited action
             elif action == self.copyAsDelimited:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toDelimitied(matrix)
+                    textClip = lib.exports.ClipboardFormat.toDelimitied(matrix)
             # copy As Delimited action
             elif action == self.copyAsXML:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toXML(matrix)
+                    textClip = lib.exports.ClipboardFormat.toXML(matrix)
             # copy As Text action
             elif action == self.copyAsText:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toText(matrix)
+                    textClip = lib.exports.ClipboardFormat.toText(matrix)
             # copy As HTML action
             elif action == self.copyAsHTML:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toHTML(matrix)
+                    textClip = lib.exports.ClipboardFormat.toHTML(matrix)
             # copy Python Source Code As TEXT action
             elif action == self.copyPythonAsText:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toPythonText(matrix)
+                    textClip = lib.exports.ClipboardFormat.toPythonText(matrix)
             # copy Python Source Code As TUPLE action
             elif action == self.copyPythonAsTuple:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toPythonTuple(matrix)
+                    textClip = lib.exports.ClipboardFormat.toPythonTuple(matrix)
             # copy Python Source Code As LIST action
             elif action == self.copyPythonAsList:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toPythonList(matrix)
+                    textClip = lib.exports.ClipboardFormat.toPythonList(matrix)
             # copy Python Source Code As DICT action
             elif action == self.copyPythonAsDict:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.export.ClipboardFormat.toPythonDict(matrix)
-
-            # paste from clipboard action
-            elif action == self.pasteFromClipboard:
-                clipboard = QApplication.clipboard()
-                textClip2 = clipboard.text() 
-                ##print textClip2
-####            http://python.6.x6.nabble.com/Paste-entire-column-into-QTableView-from-Excel-td5016995.html
-####            necesito una funcion que pase el clipboard a un matrix
-####            matrix = lib.import.ClipboardFormat.toMatrix(textClip2)
-####            para probar
-                matrix = [['1','2','3'],['4','5','6'],['7','8','9']]
-####            otra que a partir de la matriz haga el paste
-                csv.rectangularAreaToSelectedIndex(matrix)
+                    textClip = lib.exports.ClipboardFormat.toPythonDict(matrix)
 
             # at last copy result to clipboard
             if textClip:
-                    clipboard = QApplication.clipboard()
-                    clipboard.setText(textClip, mode=QClipboard.Clipboard)
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+                return
+            
+            # paste from clipboard action
+            if action == self.pasteFromClipboard:
+                clipboard = QApplication.clipboard()
+                textClip = clipboard.text()
+                matrix = lib.imports.ClipboardFormat.toMatrix(textClip)
+                csv.rectangularAreaToSelectedIndex(matrix)
+
 
     #
     # tool menu action methods
