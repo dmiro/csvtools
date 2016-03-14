@@ -15,7 +15,7 @@ import lib.document
 import lib.exports
 import lib.imports
 from lib.config import config
-from lib.helper import waiting, get_excel_sheets
+from lib.helper import waiting, get_excel_sheets, QStringToUnicode
 import lib.images_rc
 import sys
 import os
@@ -274,7 +274,7 @@ class MainWindow(QMainWindow):
             elif action == self.copyWithHeaderColumnsToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
                 if matrix:
-                    textClip = lib.exporst.ClipboardFormat.toClipboard(matrix)
+                    textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
             # copy Column Name(s) action
             elif action == self.copyHeaderColumnsToClipboard:
                 matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)

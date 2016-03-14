@@ -261,7 +261,7 @@ class QCsv(QTableView):
         columnCount = model.columnCount(None)
         for column in xrange(columnCount):
             data = model.headerData(column, orientation = Qt.Horizontal)
-            result.append(str(data.toString()))
+            result.append(data.toString())
         return result
 
     #
@@ -413,7 +413,7 @@ class QCsv(QTableView):
                 column = selectedIndex.column()
                 row = selectedIndex.row()
                 data = selectedIndex.data()
-                text = str(data.toString())                          ## data.toString()???
+                text = data.toString()
                 result[row-minRow][column-minColumn] = text
             # add header rows
             if includeHeaderRows:

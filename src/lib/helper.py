@@ -44,6 +44,15 @@ def get_excel_sheets(filename):
         sh.append([sheet.number, sheet.name, sheet.nrows, sheet.ncols])
     return sh
 
+def QStringToUnicode(qstring):
+    return unicode(qstring.toUtf8(), encoding="UTF-8")
+
+def QStringListToUnicode(qstringlist):
+    return [QStringToUnicode(value) for value in qstringlist]
+
+def QStringMatrixToUnicode(qstringmatrix):
+    return [[QStringToUnicode(value) for value in row] for row in qstringmatrix]
+
 # por ahora sin uso
 #def isSelectedRectangle(selectedIndexes):
     #"""determine if list-of-QModelIndex selection is a rectangular area"""

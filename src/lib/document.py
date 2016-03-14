@@ -107,6 +107,8 @@ class Csv(Document):
         self.quoting= quoting
         self.skipinitialspace= skipinitialspace
 
+    # http://stackoverflow.com/questions/17245415/read-and-write-csv-files-including-unicode-with-python-2-7
+    # https://github.com/jdunck/python-unicodecsv
     def load(self, linesToLoad=-1):
         self.data_ = []
         with open(self.filename, 'rb') as csvFile:
