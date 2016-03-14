@@ -60,6 +60,25 @@ class MyTableModel(QAbstractTableModel):
     def _getMaxDataColumn(self):
         return max(len(row) for row in self.arraydata)
 
+    def _rowIsEmpty(self, rowIndex):
+        if len(self.arraydata[rowIndex]) == 0:
+            return True
+        if max(len(cell) for cell in self.arraydata[rowIndex]) == 0:
+            return True
+        return False
+
+    def _columnIsEmpty(self, columnIndex):
+        for row in self.arraydata:
+            if len(row) > columnIndex:
+                if len(row[columnIndex]) > 0:
+                    return False
+        return True
+
+    def _deleteColumn(self, columnIndex):
+        for row in self.arraydata:
+            if len(row) > columnIndex:
+                del(row[columnIndex])
+
     #
     # public
     #
@@ -162,10 +181,24 @@ class MyTableModel(QAbstractTableModel):
                 columnsMissing = columnIndex - len(self.arraydata[rowIndex]) + 1
                 self.arraydata[rowIndex].extend(['']*columnsMissing)
             # set value
-            self.arraydata[rowIndex][columnIndex] = str(value.toString())
+            self.arraydata[rowIndex][columnIndex] = value.toString()
+            # if required, constraint rows
+            if len(self.arraydata) - 1 == rowIndex:
+                if value.toString().isEmpty():
+                    while rowIndex > 0 and self._rowIsEmpty(-1):
+                        self.arraydata.pop()
+                        rowIndex = rowIndex - 1
+            # if required, constraint columns
+            if len(self.arraydata[rowIndex]) - 1 == columnIndex:
+                if value.toString().isEmpty():
+                    while columnIndex > 0 and self._columnIsEmpty(columnIndex):
+                       self._deleteColumn(columnIndex)
+                       columnIndex = columnIndex - 1
             # update max data column
             if len(self.arraydata[rowIndex]) > self._maxDataColumn:
                 self._maxDataColumn = len(self.arraydata[rowIndex])
+            elif len(self.arraydata[rowIndex]) < self._maxDataColumn:
+                self._maxDataColumn =  self._getMaxDataColumn()
             # emit data changed
             bottomRight = self.createIndex(self.rowCount(), self.columnCount())
             self.dataChanged.emit(index, bottomRight)
@@ -380,7 +413,7 @@ class QCsv(QTableView):
                 column = selectedIndex.column()
                 row = selectedIndex.row()
                 data = selectedIndex.data()
-                text = str(data.toString())
+                text = str(data.toString())                          ## data.toString()???
                 result[row-minRow][column-minColumn] = text
             # add header rows
             if includeHeaderRows:
