@@ -271,6 +271,9 @@ class QCsv(QTableView):
     selectionChanged_ = pyqtSignal()
     contextMenuRequested = pyqtSignal(list, QPoint)
 
+    def encodingValue(self):
+        return self.document.encoding
+
     def sizeValue(self):
         return get_size(self.document.filename)
 

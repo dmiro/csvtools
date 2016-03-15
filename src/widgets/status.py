@@ -66,11 +66,13 @@ class QStatus(QStatusBar):
 
     changedFontSize = pyqtSignal(int)
 
-    def setValues(self, linesValue, columnsValue, sizeValue, modifiedValue, itemsValue, averageValue, sum_Value):
+    def setValues(self, linesValue, columnsValue, sizeValue, encodingValue,
+                  modifiedValue, itemsValue, averageValue, sum_Value):
         self.sliderWidget.setEnabled(False)
         self._setLabelValue(self.lines, '  Lines={0:d}  ', linesValue)
         self._setLabelValue(self.columns, '  Columns={0:d}  ', columnsValue)
         self._setLabelValue(self.size, '  Size={0:s}  ', sizeValue)
+        self._setLabelValue(self.encoding, '  Encoding={0:s}  ', encodingValue)
         self._setLabelValue(self.modified, '  Modified={0:s}  ', modifiedValue)
         self._setLabelValue(self.average, '  Average={0:.2f}  ', averageValue)
         self._setLabelToolTip(self.average, 'Average={0:f}', averageValue)
@@ -120,6 +122,7 @@ class QStatus(QStatusBar):
         self.lines= QElidedLabel('', width=0)
         self.columns= QElidedLabel('', width=0)
         self.size= QElidedLabel('', width=0)
+        self.encoding = QElidedLabel('', width=0)
         self.modified= QElidedLabel('', width=0)
         self.items= QElidedLabel('', width=0)
         self.sum_= QElidedLabel('', width=0)
@@ -127,6 +130,7 @@ class QStatus(QStatusBar):
         self.addWidget(self.lines)
         self.addWidget(self.columns)
         self.addWidget(self.size)
+        self.addWidget(self.encoding)
         self.addWidget(self.modified)
         self.addWidget(self.items)
         self.addWidget(self.sum_)
@@ -142,4 +146,4 @@ class QStatus(QStatusBar):
         self.setContentsMargins(0, 0, 0, 0)
 
         # init
-        self.setValues(None, None, None, None, None, None, None)
+        self.setValues(None, None, None, None, None, None, None, None)

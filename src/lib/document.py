@@ -1,10 +1,11 @@
 from abc import *
 from json import *
 from inspect import *
-import csv
+from backports import csv
 import xlrd
 from PyQt4.QtCore import *
-
+import io
+import cchardet
 
 class QABCMeta(pyqtWrapperType, ABCMeta):   # problem in your case is that the classes you try to inherit from
     pass                                    # have different metaclasses:
@@ -23,6 +24,7 @@ class Document(QObject):
         super(Document, self).__init__()
         self.filename = filename
         self.data_ = []
+        self.encoding_ = ''
         self.canLoad = True
         self.canSave = False
         self.dataModified = False
@@ -43,6 +45,10 @@ class Document(QObject):
     def data(self, value):
         self.dataModified = True
         self.data_ = value
+
+    @property
+    def encoding(self):
+        return self.encoding_
 
     def toJson(self):
         """Convert Document object to json string.
@@ -109,9 +115,17 @@ class Csv(Document):
 
     # http://stackoverflow.com/questions/17245415/read-and-write-csv-files-including-unicode-with-python-2-7
     # https://github.com/jdunck/python-unicodecsv
+    # https://nelsonslog.wordpress.com/2015/02/26/python-csv-benchmarks/
     def load(self, linesToLoad=-1):
+        # detect encoding
+        with io.open(self.filename, mode="rb") as f:
+            data = f.read()
+        detect = cchardet.detect(data)
+        self.encoding_ = detect['encoding']
+        # retrieve data
         self.data_ = []
-        with open(self.filename, 'rb') as csvFile:
+        with io.open(self.filename, encoding=self.encoding_) as csvFile:       # Since Python 2.6, a good practice is to use io.open(),
+                                                                               # which also takes an encoding argument.
             reader = csv.reader(csvFile,
                                 delimiter=self.delimiter,
                                 doublequote=self.doublequote,
@@ -153,17 +167,3 @@ class Xsl(Document):
 
     def save(self):
         pass
-
-
-if __name__ == "__main__":
-    d = Csv('..\\..\\testdocs\\demo3.csv', delimiter =';')
-    d.load()
-    print d.data
-    js = d.toJson()
-    print js
-    d2 = Document.fromJson(json_=js)
-    print dir(d2)
-    print d2.__class__.__name__
-    print d2.filename
-    print d2.skipinitialspace
-    #print d2.load()

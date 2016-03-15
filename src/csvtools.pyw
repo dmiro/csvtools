@@ -385,11 +385,11 @@ class MainWindow(QMainWindow):
         if csv:
             self.setEditMenuDisabled(len(csv.selectedIndexes()) == 0)
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
-                                    csv.modifiedValue(), csv.itemsValue(), csv.averageValue(),
-                                    csv.sumValue())
+                                     csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
+                                     csv.averageValue(), csv.sumValue())
         else:
             self.setEditMenuDisabled(True)
-            self.statusBar.setValues(None, None, None, None, None, None, None)
+            self.statusBar.setValues(None, None, None, None, None, None, None, None)
 
     def csvcontextMenuRequestedEvent(self, selectedIndexes, globalPoint):
         self.editMenu.exec_(globalPoint)
@@ -420,8 +420,8 @@ class MainWindow(QMainWindow):
             self.allFilePathsToClipboard.setDisabled(False)
             self.setEditMenuDisabled(len(csv.selectedIndexes()) == 0)
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
-                                     csv.modifiedValue(), csv.itemsValue(), csv.averageValue(),
-                                     csv.sumValue())
+                                     csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
+                                     csv.averageValue(), csv.sumValue())
 
         else:
             self.closeAllButThis.setDisabled(True)
@@ -430,7 +430,7 @@ class MainWindow(QMainWindow):
             self.filePathToClipboard.setDisabled(True)
             self.allFilePathsToClipboard.setDisabled(True)
             self.setEditMenuDisabled(True)
-            self.statusBar.setValues(None, None, None, None, None, None, None)
+            self.statusBar.setValues(None, None, None, None, None, None, None, None)
 
     def tabBarcustomContextMenuRequestedEvent(self, point):
         tab = self.tab.tabBar()
