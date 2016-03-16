@@ -338,6 +338,16 @@ class MainWindow(QMainWindow):
                 textClip = clipboard.text()
                 matrix = lib.imports.ClipboardFormat.toMatrix(textClip)
                 csv.rectangularAreaToSelectedIndex(matrix)
+                return
+
+            if action == self.insertFromClipboard:
+                csv.insertRows()
+                #csv.insertColumns()
+                return
+
+            if action == self.selectAllEdit:
+                csv.selectAll()
+                return
 
 
     #
@@ -568,10 +578,21 @@ class MainWindow(QMainWindow):
         # edit menu
         menubar = self.menuBar()
         self.editMenu = menubar.addMenu(self.tr('Edit'))
+        self.undoEdit = self.editMenu.addAction(self.tr('Undo'))
+        self.undoEdit.setShortcut('Ctrl+Z')
+        self.redoEdit = self.editMenu.addAction(self.tr('Redo'))
+        self.redoEdit.setShortcut('Ctrl+Y')
+        self.editMenu.addSeparator()
         self.copyToClipboard = self.editMenu.addAction(self.tr('&Copy'))
         self.copyToClipboard.setShortcut('Ctrl+C')
         self.pasteFromClipboard = self.editMenu.addAction(self.tr('Paste'))
         self.pasteFromClipboard.setShortcut('Ctrl+V')
+        self.insertFromClipboard = self.editMenu.addAction(self.tr('Insert'))
+        self.insertFromClipboard.setShortcut('Ctrl+Ins')
+        self.deleteEdit = self.editMenu.addAction(self.tr('Delete'))
+        self.deleteEdit.setShortcut('DEL')
+        self.selectAllEdit = self.editMenu.addAction(self.tr('Select All'))
+        self.selectAllEdit.setShortcut('Ctrl+A')
         self.editMenu.addSeparator()
         self.copySpecialMenu = self.editMenu.addMenu(self.tr('Copy Special'))
         self.copyToSourceCodeMenu = self.editMenu.addMenu(self.tr('Copy to Source Code'))

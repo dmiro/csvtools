@@ -210,14 +210,27 @@ class MyTableModel(QAbstractTableModel):
 
     def insertRows(self, row, count, parent = QModelIndex()):
         self.beginInsertRows(parent, row, row+count)
-        for i in xrange(count):
+        for _ in xrange(count):
             self.arraydata.insert(row,[])
         self._maxDataColumn = self._getMaxDataColumn()
         self.endInsertRows()
         return True
 
-    def insertRow (self, row, parent = QModelIndex()):
+    def insertRow(self, row, parent = QModelIndex()):
         return self.insertRows(row, 1, parent)
+
+    def insertColumns(self, column, count, parent = QModelIndex()):
+        self.beginInsertColumns(parent, column, column+count)
+        for row in self.arraydata:
+            if len(row) > column:
+                for _ in xrange(count):
+                    row.insert(column, '')
+        self._maxDataColumn = self._getMaxDataColumn()
+        self.endInsertColumns()
+        return True
+
+    def insertColumn(self, column, parent = QModelIndex()):
+        return self.insertColumn(column, 1, parent)
 
     #
     # init
@@ -427,6 +440,7 @@ class QCsv(QTableView):
         return result
 
     def rectangularAreaToSelectedIndex(self, matrix):
+        """paste rectangular are to selected left-upper corner"""
         selectionRanges = self.selectionModel().selection()
         if len(selectionRanges)==1:
             numRows = len(matrix)
@@ -459,6 +473,50 @@ class QCsv(QTableView):
                                                  # the view at once
                     index = model.createIndex(selRow+numRows, selColumn+numCols)
                     model.dataChanged.emit(topLeftIndex, index)
+
+    def insertRows(self, count=None):
+        selectionModel = self.selectionModel()
+        selectionRanges = selectionModel.selection()
+        if len(selectionRanges)==1:
+            model = self.model()
+            topLeftIndex = selectionRanges[0].topLeft()
+            bottomRightIndex = selectionRanges[0].bottomRight()
+            # if top-left corner selection is inside data area
+            if topLeftIndex.row() < model.rowDataCount():
+                # calculate from the selection
+                if count == None:
+                    count = bottomRightIndex.row() - topLeftIndex.row() + 1
+                # insert rows
+                if count > 0:
+                    model.insertRows(topLeftIndex.row(), count)
+        selectionModel.clear()
+
+    def insertColumns(self, count=None):
+        selectionModel = self.selectionModel()
+        selectionRanges = selectionModel.selection()
+        if len(selectionRanges)==1:
+            model = self.model()
+            topLeftIndex = selectionRanges[0].topLeft()
+            bottomRightIndex = selectionRanges[0].bottomRight()
+            # if top-left corner selection is inside data area
+            if topLeftIndex.column() < model.columnDataCount():
+                # calculate from the selection
+                if count == None:
+                    count = bottomRightIndex.column() - topLeftIndex.column() + 1
+                # insert columns
+                if count > 0:
+                    model.insertColumns(topLeftIndex.column(), count)
+        selectionModel.clear()
+
+    def selectAll(self):
+        """Selects all items in the view."""
+        model = self.model()
+        selectionModel = self.selectionModel()
+        selectionModel.clear()
+        for row in xrange(model.rowDataCount()):
+            for column in xrange(model.columnDataCount()):
+                index = model.createIndex(row, column)
+                selectionModel.setCurrentIndex(index, QItemSelectionModel.Select)
 
     def loadRequested(self):
         model = MyTableModel(self.document.data, config.config_headerrow)
