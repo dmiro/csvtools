@@ -277,6 +277,16 @@ class QCsv(QTableView):
             result.append(data.toString())
         return result
 
+    def _select(self, topLeftRow, topLeftColumn, bottomRightRow, bottomRightColumn):
+        # create item selection
+        model = self.model()
+        topLeft = model.createIndex(topLeftRow, topLeftColumn)
+        bottomRight = model.createIndex(bottomRightRow, bottomRightColumn)
+        selection = QItemSelection(topLeft, bottomRight)
+        # select items
+        selectionModel = self.selectionModel()
+        selectionModel.select(selection, QItemSelectionModel.Select)
+
     #
     # public
     #
@@ -489,7 +499,8 @@ class QCsv(QTableView):
                 # insert rows
                 if count > 0:
                     model.insertRows(topLeftIndex.row(), count)
-        selectionModel.clear()
+                    self.clearSelection()
+                    self.selectRows(topLeftIndex.row(), count)
 
     def insertColumns(self, count=None):
         selectionModel = self.selectionModel()
@@ -506,17 +517,41 @@ class QCsv(QTableView):
                 # insert columns
                 if count > 0:
                     model.insertColumns(topLeftIndex.column(), count)
-        selectionModel.clear()
-
-    def selectAll(self):
-        """Selects all items in the view."""
+                    self.clearSelection()
+                    self.selectColumns(topLeftIndex.column(), count)
+                    
+    def selectRows(self, row, count):
+        """Selects rows in the view"""
         model = self.model()
-        selectionModel = self.selectionModel()
-        selectionModel.clear()
-        for row in xrange(model.rowDataCount()):
-            for column in xrange(model.columnDataCount()):
-                index = model.createIndex(row, column)
-                selectionModel.setCurrentIndex(index, QItemSelectionModel.Select)
+        rowDataCount = model.rowDataCount()
+        bottomRightRow = row + count
+        if bottomRightRow > rowDataCount:
+            bottomRightRow = rowDataCount
+        self._select(row,
+                     0,
+                     bottomRightRow-1,
+                     model.columnDataCount()-1)
+
+    def selectColumns(self, column, count):
+        """Selects columns in the view"""
+        model = self.model()
+        columnDataCount = model.columnDataCount()
+        bottomRightColumn = column + count
+        if bottomRightColumn > columnDataCount:
+            bottomRightColumn = columnDataCount
+        self._select(0,
+                     column,
+                     model.rowDataCount()-1,
+                     bottomRightColumn-1)
+        
+    def selectAll(self):
+        """Selects all items in the view"""
+        self.clearSelection()
+        model = self.model()
+        self._select(0,
+                     0,
+                     model.rowDataCount()-1,
+                     model.columnDataCount()-1)
 
     def loadRequested(self):
         model = MyTableModel(self.document.data, config.config_headerrow)
