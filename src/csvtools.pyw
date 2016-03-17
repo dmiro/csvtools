@@ -341,8 +341,10 @@ class MainWindow(QMainWindow):
                 return
 
             if action == self.insertFromClipboard:
-                csv.insertRows()
+                #csv.insertRows()
                 #csv.insertColumns()
+                #csv.removeRows()
+                csv.removeColumns()
                 return
 
             if action == self.selectAllEdit:

@@ -232,6 +232,31 @@ class MyTableModel(QAbstractTableModel):
     def insertColumn(self, column, parent = QModelIndex()):
         return self.insertColumn(column, 1, parent)
 
+    def removeRows(self, row, count, parent = QModelIndex()):
+        self.beginRemoveRows(parent, row, row+count)
+        for _ in xrange(count):
+            self.arraydata.pop(row)
+        self._maxDataColumn = self._getMaxDataColumn()
+        self.endRemoveRows()
+        return True
+
+    def removeRow(self, row, parent = QModelIndex()):
+        return self.removeRows(row, 1, parent)
+
+    def removeColumns(self, column, count, parent = QModelIndex()):
+        self.beginRemoveColumns(parent, column, column+count)
+        for row in self.arraydata:
+            for _ in xrange(count):
+                if len(row) > column:
+                    row.pop(column)
+        self._maxDataColumn = self._getMaxDataColumn()
+        self.endRemoveColumns()
+        return True
+
+    def removeColumn(self, column, parent = QModelIndex()):
+        return self.removeColumns(column, 1, parent)
+
+
     #
     # init
     #
@@ -276,6 +301,34 @@ class QCsv(QTableView):
             data = model.headerData(column, orientation = Qt.Horizontal)
             result.append(data.toString())
         return result
+
+    def _getValidRowsSelection(self, count=None):
+        selectionModel = self.selectionModel()
+        selectionRanges = selectionModel.selection()
+        if len(selectionRanges)==1:
+            model = self.model()
+            topLeftIndex = selectionRanges[0].topLeft()
+            bottomRightIndex = selectionRanges[0].bottomRight()
+            # if top-left corner selection is inside data area
+            if topLeftIndex.row() < model.rowDataCount():
+                # calculate from the selection
+                if count == None:
+                    count = bottomRightIndex.row() - topLeftIndex.row() + 1
+        return topLeftIndex.row(), count
+
+    def _getValidColumnsSelection(self, count=None):
+        selectionModel = self.selectionModel()
+        selectionRanges = selectionModel.selection()
+        if len(selectionRanges)==1:
+            model = self.model()
+            topLeftIndex = selectionRanges[0].topLeft()
+            bottomRightIndex = selectionRanges[0].bottomRight()
+            # if top-left corner selection is inside data area
+            if topLeftIndex.column() < model.columnDataCount():
+                # calculate from the selection
+                if count == None:
+                    count = bottomRightIndex.column() - topLeftIndex.column() + 1
+        return topLeftIndex.column(), count
 
     def _select(self, topLeftRow, topLeftColumn, bottomRightRow, bottomRightColumn):
         # create item selection
@@ -485,41 +538,49 @@ class QCsv(QTableView):
                     model.dataChanged.emit(topLeftIndex, index)
 
     def insertRows(self, count=None):
-        selectionModel = self.selectionModel()
-        selectionRanges = selectionModel.selection()
-        if len(selectionRanges)==1:
+        row, count = self._getValidRowsSelection(count)
+        # insert rows
+        if count > 0:
             model = self.model()
-            topLeftIndex = selectionRanges[0].topLeft()
-            bottomRightIndex = selectionRanges[0].bottomRight()
-            # if top-left corner selection is inside data area
-            if topLeftIndex.row() < model.rowDataCount():
-                # calculate from the selection
-                if count == None:
-                    count = bottomRightIndex.row() - topLeftIndex.row() + 1
-                # insert rows
-                if count > 0:
-                    model.insertRows(topLeftIndex.row(), count)
-                    self.clearSelection()
-                    self.selectRows(topLeftIndex.row(), count)
+            model.insertRows(row, count)
+            currentIndex = model.createIndex(row, 0)
+            self.setCurrentIndex(currentIndex)
+            self.clearSelection()
+            self.selectRows(row, count)
+
+    def removeRows(self, count=None):
+        row, count = self._getValidRowsSelection(count)
+        # remove rows
+        if count > 0:
+            model = self.model()
+            model.removeRows(row, count)
+            currentIndex = model.createIndex(row, 0)
+            self.setCurrentIndex(currentIndex)
+            self.clearSelection()
+            self.selectRows(row, 1) ## deberia seleccionar mismo rango, acabar
 
     def insertColumns(self, count=None):
-        selectionModel = self.selectionModel()
-        selectionRanges = selectionModel.selection()
-        if len(selectionRanges)==1:
+        column, count = self._getValidColumnsSelection(count)
+        # insert columns
+        if count > 0:
             model = self.model()
-            topLeftIndex = selectionRanges[0].topLeft()
-            bottomRightIndex = selectionRanges[0].bottomRight()
-            # if top-left corner selection is inside data area
-            if topLeftIndex.column() < model.columnDataCount():
-                # calculate from the selection
-                if count == None:
-                    count = bottomRightIndex.column() - topLeftIndex.column() + 1
-                # insert columns
-                if count > 0:
-                    model.insertColumns(topLeftIndex.column(), count)
-                    self.clearSelection()
-                    self.selectColumns(topLeftIndex.column(), count)
-                    
+            model.insertColumns(column, count)
+            currentIndex = model.createIndex(0, column)
+            self.setCurrentIndex(currentIndex)
+            self.clearSelection()
+            self.selectColumns(column, count)
+
+    def removeColumns(self, count=None):
+        column, count = self._getValidColumnsSelection(count)
+        # remove columns
+        if count > 0:
+            model = self.model()
+            model.removeColumns(column, count)
+            currentIndex = model.createIndex(0, column)
+            self.setCurrentIndex(currentIndex)
+            self.clearSelection()
+            self.selectColumns(column, 1) ## deberia seleccionar mismo rango, acabar
+
     def selectRows(self, row, count):
         """Selects rows in the view"""
         model = self.model()
@@ -543,7 +604,7 @@ class QCsv(QTableView):
                      column,
                      model.rowDataCount()-1,
                      bottomRightColumn-1)
-        
+
     def selectAll(self):
         """Selects all items in the view"""
         self.clearSelection()
