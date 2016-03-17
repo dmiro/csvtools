@@ -314,7 +314,8 @@ class QCsv(QTableView):
                 # calculate from the selection
                 if count == None:
                     count = bottomRightIndex.row() - topLeftIndex.row() + 1
-        return topLeftIndex.row(), count
+            return topLeftIndex.row(), count
+        return 0, 0
 
     def _getValidColumnsSelection(self, count=None):
         selectionModel = self.selectionModel()
@@ -328,7 +329,8 @@ class QCsv(QTableView):
                 # calculate from the selection
                 if count == None:
                     count = bottomRightIndex.column() - topLeftIndex.column() + 1
-        return topLeftIndex.column(), count
+            return topLeftIndex.column(), count
+        return 0, 0
 
     def _select(self, topLeftRow, topLeftColumn, bottomRightRow, bottomRightColumn):
         # create item selection
