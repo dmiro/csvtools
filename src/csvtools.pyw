@@ -16,6 +16,7 @@ import lib.exports
 import lib.imports
 from lib.config import config
 from lib.helper import waiting, get_excel_sheets, QStringToUnicode
+from lib.enums import InsertDirection
 import lib.images_rc
 import sys
 import os
@@ -341,10 +342,10 @@ class MainWindow(QMainWindow):
                 return
 
             if action == self.insertFromClipboard:
-                #csv.insertRows()
-                #csv.insertColumns()
+                #csv.insertRows(insert=InsertDirection.AfterInsert)
+                csv.insertColumns(insert=InsertDirection.AfterInsert)
                 #csv.removeRows()
-                csv.removeColumns()
+                #csv.removeColumns()
                 return
 
             if action == self.selectAllEdit:

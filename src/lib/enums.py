@@ -4,3 +4,7 @@ class MatchModeEnum(object):
     StartsWidth = 2
     EndsWith = 3
     RegularExpression = 4
+
+class InsertDirection(object):
+    AfterInsert = 0
+    BeforeInsert = 1
