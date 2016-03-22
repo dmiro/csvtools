@@ -567,7 +567,7 @@ class QCsv(QTableView):
                 model.insertRows(row, count)
                 # new selection            
                 currentIndex = model.createIndex(row, topLeftIndex.column())
-                self.setCurrentIndex(currentIndex)              
+                self.setCurrentIndex(currentIndex)
                 self.clearSelection()
                 self._select(row,
                      topLeftIndex.column(),
@@ -575,15 +575,22 @@ class QCsv(QTableView):
                      bottomRightIndex.column())
 
     def removeRows(self, count=None):
-        row, count = self._getValidRowsSelection(count)
-        # remove rows
-        if count > 0:
-            model = self.model()
-            model.removeRows(row, count)
-            currentIndex = model.createIndex(row, 0)
-            self.setCurrentIndex(currentIndex)
-            self.clearSelection()
-            self.selectRows(row, 1) ## deberia seleccionar mismo rango, acabar
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        if isValid:
+            if count == None:
+                count = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if count > 0:
+                # remove rows
+                row = topLeftIndex.row()
+                model = self.model()
+                model.removeRows(row, count)
+                # new selection
+                self.setCurrentIndex(topLeftIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             topLeftIndex.column(),
+                             bottomRightIndex.row(),
+                             bottomRightIndex.column())
 
     def insertColumns(self, insert=InsertDirection.BeforeInsert, count=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
@@ -598,9 +605,9 @@ class QCsv(QTableView):
                     column = column + count
                 model = self.model()
                 model.insertColumns(column, count)
-                # new selection            
+                # new selection
                 currentIndex = model.createIndex(topLeftIndex.row(), column)
-                self.setCurrentIndex(currentIndex)              
+                self.setCurrentIndex(currentIndex)
                 self.clearSelection()
                 self._select(topLeftIndex.row(),
                              column,
@@ -608,15 +615,23 @@ class QCsv(QTableView):
                              column+count-1)
 
     def removeColumns(self, count=None):
-        column, count = self._getValidColumnsSelection(count)
-        # remove columns
-        if count > 0:
-            model = self.model()
-            model.removeColumns(column, count)
-            currentIndex = model.createIndex(0, column)
-            self.setCurrentIndex(currentIndex)
-            self.clearSelection()
-            self.selectColumns(column, 1) ## deberia seleccionar mismo rango, acabar
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if count == None:
+                count = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if count > 0:
+                # remove columns
+                column = topLeftIndex.column()
+                model = self.model()
+                model.removeColumns(column, count)
+                # new selection
+                self.setCurrentIndex(topLeftIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             topLeftIndex.column(),
+                             bottomRightIndex.row(),
+                             bottomRightIndex.column())
 
     def moveRows(self, to, from_, count=None):
         #row, count = self._getValidRowsSelection(count)
