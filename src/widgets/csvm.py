@@ -5,6 +5,8 @@ from lib.config import config
 from lib.helper import get_size
 from lib.enums import MatchModeEnum, InsertDirection
 from datetime import datetime
+import lib.exports
+import lib.imports
 import os
 import re
 
@@ -276,22 +278,19 @@ class QCsv(QTableView):
     # private
     #
 
-    # http://stackoverflow.com/questions/11352523/qt-and-pyqt-tablewidget-growing-row-count
-    # http://stackoverflow.com/questions/19993898/dynamically-add-data-to-qtableview
-    # http://permalink.gmane.org/gmane.comp.python.pyqt-pykde/25792
-    def _scrollbarChangedEvent(self, val):
-        indexCorner = self.indexAt(QPoint(1,1))
-        model = self.model()
-        model.setColumnCorner(indexCorner.column())
-        model.setRowCorner(indexCorner.row())
+    def _setMenuDisabled(self, menu, disabled):
+        for action in menu.actions():
+            if not action.menu():
+                action.setDisabled(disabled)
+
+    def _setEditMenuDisabled(self, disabled):
+        self._setMenuDisabled(self._editMenu, disabled)
+        self._setMenuDisabled(self.copySpecialMenu, disabled)
+        self._setMenuDisabled(self.copyToPythonMenu, disabled)
 
     def selectionChanged (self, selected, deselected):
         self.selectionChanged_.emit()
         return QTableView.selectionChanged (self, selected, deselected)
-
-    def _customContextMenuRequestedEvent(self, point):
-        if len(self.selectedIndexes()) > 0:
-            self.contextMenuRequested.emit(self.selectedIndexes(), self.mapToGlobal(point))
 
     def _getHeaderRows(self):
         result = []
@@ -315,36 +314,6 @@ class QCsv(QTableView):
                     return True, topLeftIndex, bottomRightIndex
         return False, None, None
 
-##    def _getValidRowsSelection(self, count=None):
-##        selectionModel = self.selectionModel()
-##        selectionRanges = selectionModel.selection()
-##        if len(selectionRanges)==1:
-##            model = self.model()
-##            topLeftIndex = selectionRanges[0].topLeft()
-##            bottomRightIndex = selectionRanges[0].bottomRight()
-##            # if top-left corner selection is inside data area
-##            if topLeftIndex.row() < model.rowDataCount():
-##                # calculate from the selection
-##                if count == None:
-##                    count = bottomRightIndex.row() - topLeftIndex.row() + 1
-##            return topLeftIndex.row(), count
-##        return 0, 0
-##
-##    def _getValidColumnsSelection(self, count=None):
-##        selectionModel = self.selectionModel()
-##        selectionRanges = selectionModel.selection()
-##        if len(selectionRanges)==1:
-##            model = self.model()
-##            topLeftIndex = selectionRanges[0].topLeft()
-##            bottomRightIndex = selectionRanges[0].bottomRight()
-##            # if top-left corner selection is inside data area
-##            if topLeftIndex.column() < model.columnDataCount():
-##                # calculate from the selection
-##                if count == None:
-##                    count = bottomRightIndex.column() - topLeftIndex.column() + 1
-##            return topLeftIndex.column(), count
-##        return 0, 0
-
     def _select(self, topLeftRow, topLeftColumn, bottomRightRow, bottomRightColumn):
         # create item selection
         model = self.model()
@@ -354,6 +323,174 @@ class QCsv(QTableView):
         # select items
         selectionModel = self.selectionModel()
         selectionModel.select(selection, QItemSelectionModel.Select)
+
+    def _editAction(self, action):
+        textClip = None
+        # copy to clipboard action
+        if action == self.copyToClipboard:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=False)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
+        # copy with Column Name(s) action
+        elif action == self.copyWithHeaderColumnsToClipboard:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
+        # copy Column Name(s) action
+        elif action == self.copyHeaderColumnsToClipboard:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toClipboard([matrix[0]])
+        # copy As JSON action
+        elif action == self.copyAsJSON:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toJSON(matrix)
+        # copy As Delimited action
+        elif action == self.copyAsDelimited:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toDelimitied(matrix)
+        # copy As Delimited action
+        elif action == self.copyAsXML:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toXML(matrix)
+        # copy As Text action
+        elif action == self.copyAsText:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toText(matrix)
+        # copy As HTML action
+        elif action == self.copyAsHTML:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toHTML(matrix)
+        # copy Python Source Code As TEXT action
+        elif action == self.copyPythonAsText:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toPythonText(matrix)
+        # copy Python Source Code As TUPLE action
+        elif action == self.copyPythonAsTuple:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toPythonTuple(matrix)
+        # copy Python Source Code As LIST action
+        elif action == self.copyPythonAsList:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toPythonList(matrix)
+        # copy Python Source Code As DICT action
+        elif action == self.copyPythonAsDict:
+            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toPythonDict(matrix)
+
+        # at last copy result to clipboard
+        if textClip:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
+        # paste from clipboard action
+        if action == self.pasteFromClipboard:
+            clipboard = QApplication.clipboard()
+            textClip = clipboard.text()
+            matrix = lib.imports.ClipboardFormat.toMatrix(textClip)
+            self.rectangularAreaToSelectedIndex(matrix)
+            return
+
+        if action == self.insertFromClipboard:
+            #csv.insertRows(insert=InsertDirection.AfterInsert)
+            #csv.insertColumns(insert=InsertDirection.AfterInsert)
+            #csv.removeRows()
+            self.removeColumns()
+            return
+
+        if action == self.selectAllEdit:
+            self.selectAll()
+            return
+
+    def _addEditMenu(self):
+        """add EDIT menu"""
+        # edit menu
+        self._editMenu = QMenu(self.tr('Edit'))
+        self.undoEdit = self._editMenu.addAction(self.tr('Undo'))
+        self.undoEdit.setShortcut('Ctrl+Z')
+        self.redoEdit = self._editMenu.addAction(self.tr('Redo'))
+        self.redoEdit.setShortcut('Ctrl+Y')
+        self._editMenu.addSeparator()
+        self.copyToClipboard = self._editMenu.addAction(self.tr('&Copy'))
+        self.copyToClipboard.setShortcut('Ctrl+C')
+        self.pasteFromClipboard = self._editMenu.addAction(self.tr('Paste'))
+        self.pasteFromClipboard.setShortcut('Ctrl+V')
+        self.insertFromClipboard = self._editMenu.addAction(self.tr('Insert'))
+        self.insertFromClipboard.setShortcut('Ctrl+Ins')
+        self.deleteEdit = self._editMenu.addAction(self.tr('Delete'))
+        self.deleteEdit.setShortcut('DEL')
+        self.selectAllEdit = self._editMenu.addAction(self.tr('Select All'))
+        self.selectAllEdit.setShortcut('Ctrl+A')
+        self._editMenu.addSeparator()
+        self.copySpecialMenu = self._editMenu.addMenu(self.tr('Copy Special'))
+        self.copyToSourceCodeMenu = self._editMenu.addMenu(self.tr('Copy to Source Code'))
+        self.copyToPythonMenu = self.copyToSourceCodeMenu.addMenu(self.tr('Python'))
+        # copy special submenu
+        self.copyWithHeaderColumnsToClipboard = self.copySpecialMenu.addAction(self.tr('Copy with Column Name(s)'))
+        self.copyHeaderColumnsToClipboard = self.copySpecialMenu.addAction(self.tr('Copy Column Name(s)'))
+        self.copyAsText = self.copySpecialMenu.addAction(self.tr('Copy As Text'))
+        self.copyAsDelimited = self.copySpecialMenu.addAction(self.tr('Copy As Delimited'))
+        self.copyAsJSON = self.copySpecialMenu.addAction(self.tr('Copy As JSON'))
+        self.copyAsXML = self.copySpecialMenu.addAction(self.tr('Copy As XML'))
+        self.copyAsHTML = self.copySpecialMenu.addAction(self.tr('Copy As HTML'))
+        # copy to Python source code sub-submenu
+        self.copyPythonAsText = self.copyToPythonMenu.addAction(self.tr('As Text'))
+        self.copyPythonAsTuple = self.copyToPythonMenu.addAction(self.tr('As Tuple'))
+        self.copyPythonAsList = self.copyToPythonMenu.addAction(self.tr('As List'))
+        self.copyPythonAsDict = self.copyToPythonMenu.addAction(self.tr('As Dict'))
+        # connect menu action
+        self._editMenu.triggered.connect(self._editAction)
+        #### #copy to source code submenu
+        #### self.copyToSourceCodeMenu.addAction(QAction('C++', self)) ## acabar
+        #### self.copyToSourceCodeMenu.addAction(QAction('C#', self)) ## acabar
+        #### self.copyToSourceCodeMenu.addAction(QAction('Delphi', self)) ## acabar
+        #### self.copyToSourceCodeMenu.addAction(QAction('Java', self)) ## acabar
+        #### self.copyToSourceCodeMenu.addAction(QAction('Python', self)) ## acabar
+        #### #ideas
+        #### algo del estilo llamadas RESTFUL con datos del CSV...
+
+    #
+    # event
+    #
+
+    def _csvSelectionChangedEvent(self):
+        """enable or disable menu options depending on the status"""
+        numSelectedIndexes = len(self.selectedIndexes())
+        self._setEditMenuDisabled(numSelectedIndexes == 0)
+
+    def _csvcontextMenuRequestedEvent(self, selectedIndexes, globalPoint):
+        """show popup edit menu"""
+        self._editMenu.exec_(globalPoint)
+
+    def _clipboardDataChangedEvent(self):
+        clipboard = QApplication.clipboard()
+        print 'clipboard!'
+        print 'ownsClipboard:',clipboard.ownsClipboard()
+        print 'ownsFindBuffer:',clipboard.ownsFindBuffer()
+        print 'ownsSelection:',clipboard.ownsSelection()
+
+    # http://stackoverflow.com/questions/11352523/qt-and-pyqt-tablewidget-growing-row-count
+    # http://stackoverflow.com/questions/19993898/dynamically-add-data-to-qtableview
+    # http://permalink.gmane.org/gmane.comp.python.pyqt-pykde/25792
+    def _scrollbarChangedEvent(self, val):
+        indexCorner = self.indexAt(QPoint(1,1))
+        model = self.model()
+        model.setColumnCorner(indexCorner.column())
+        model.setRowCorner(indexCorner.row())
+
+    def _customContextMenuRequestedEvent(self, point):
+        if len(self.selectedIndexes()) > 0:
+            self.contextMenuRequested.emit(self.selectedIndexes(), self.mapToGlobal(point))
 
     #
     # public
@@ -554,7 +691,7 @@ class QCsv(QTableView):
 
     def insertRows(self, insert=InsertDirection.BeforeInsert, count=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        # it's a valid selection 
+        # it's a valid selection
         if isValid:
             if count == None:
                 count = bottomRightIndex.row() - topLeftIndex.row() + 1
@@ -565,7 +702,7 @@ class QCsv(QTableView):
                     row = row + count
                 model = self.model()
                 model.insertRows(row, count)
-                # new selection            
+                # new selection
                 currentIndex = model.createIndex(row, topLeftIndex.column())
                 self.setCurrentIndex(currentIndex)
                 self.clearSelection()
@@ -633,9 +770,13 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def moveRows(self, to, from_, count=None):
-        #row, count = self._getValidRowsSelection(count)
-        # move rows
+    def moveRows(self, from_, count=None):
+        # esta seleccion es el DESTINO, en el portapapeles estará el origen
+        # y una vez "pegado" hay que eliminar el origen
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # insert row
+        # copy data
+        # remove row
         pass
 
     def moveColumns(self, to, from_, count=None):
@@ -683,6 +824,21 @@ class QCsv(QTableView):
         self.document.loadRequested.connect(self.loadRequested)
         model = MyTableModel(self.document.data, config.config_headerrow)
         self.setModel(model)
+
+    def editMenu(self):
+        return self._editMenu
+
+    #
+    # del
+    #
+
+    def __del__(self):
+        try:
+            clipboard = QApplication.clipboard()
+            clipboard.dataChanged.disconnect(self._clipboardDataChangedEvent)
+        except:
+            pass
+
     #
     # init
     #
@@ -698,24 +854,39 @@ class QCsv(QTableView):
         horizontalScrollBar = self.horizontalScrollBar()
         horizontalScrollBar.valueChanged.connect(self._scrollbarChangedEvent)
 
-        # set delegate
+        # set item delegate
         self.setItemDelegate(QItemDataBorderDelegate())
 
-        # set data
+        # set document
         self.setDocument(document)
 
-
-
-#       self.setSortingEnabled(True)
-
-        # table model proxy
-#        proxy = StringSortModel()
-#        proxy.setSourceModel(self.tablemodel)
-
         # tableview
-#       self.setModel(self.tablemodel)#(proxy)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._customContextMenuRequestedEvent)
+
+        # clipboard
+        clipboard = QApplication.clipboard()
+        clipboard.dataChanged.connect(self._clipboardDataChangedEvent)
+
+        # edit menu
+        self._addEditMenu()
+        self.contextMenuRequested.connect(self._csvcontextMenuRequestedEvent)
+        self.selectionChanged_.connect(self._csvSelectionChangedEvent)
+
+
+##       self.setSortingEnabled(True)
+##        # table model proxy
+##       proxy = StringSortModel()
+##        proxy.setSourceModel(self.tablemodel)
+##
+##        # tableview
+##       self.setModel(self.tablemodel)#(proxy)
+
+##        #prueba
+##        actt = QAction(self)
+##        actt.setShortcut('Ctrl+P')
+##        actt.triggered.connect(self.actt)
+##        self.addAction(actt)
 
 ##    def slider_value_changed(self, value):
 ##        print self.tablemodel.normalFontSize()

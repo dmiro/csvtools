@@ -12,8 +12,6 @@ from widgets.search import QSearch
 from widgets.opencsvfiledialog import QOpenCsvFileDialog
 from widgets.csvwiz import QCsvWiz
 import lib.document
-import lib.exports
-import lib.imports
 from lib.config import config
 from lib.helper import waiting, get_excel_sheets, QStringToUnicode
 from lib.enums import InsertDirection
@@ -47,7 +45,6 @@ class MainWindow(QMainWindow):
             csvDoc.load()
             csv = QCsv(csvDoc)
         csv.selectionChanged_.connect(self.csvSelectionChangedEvent)
-        csv.contextMenuRequested.connect(self.csvcontextMenuRequestedEvent)
         filename = os.path.basename(file_)
         if insertIndex > -1:
             index = self.tab.insertTab(insertIndex, csv, filename)
@@ -107,7 +104,7 @@ class MainWindow(QMainWindow):
 
     def addRecentFile(self, file_):
         """add in config file the last opened file"""
-        file_recent = config.file_recent 
+        file_recent = config.file_recent
         if file_ in file_recent:
             file_recent.remove(file_)
         file_recent.insert(0, file_)
@@ -124,16 +121,6 @@ class MainWindow(QMainWindow):
         result = csv.search(text, matchMode, matchCaseOption)
         if len(result) > 0:
             return {'tabText':tabText, 'tabToolTip': tabToolTip, 'result':result}
-
-    def setMenuDisabled(self, menu, disabled):
-        for action in menu.actions():
-            if not action.menu():
-                action.setDisabled(disabled)
-  
-    def setEditMenuDisabled(self, disabled):
-        self.setMenuDisabled(self.editMenu, disabled)
-        self.setMenuDisabled(self.copySpecialMenu, disabled)
-        self.setMenuDisabled(self.copyToPythonMenu, disabled)
 
     #
     # drag and drop events
@@ -214,19 +201,17 @@ class MainWindow(QMainWindow):
 
     def closeAllFilesAction(self):
         """close all files"""
-        self.tab.clear()
-        self.saveSessionFile()
+        while self.tab.count() > 0:
+            self.tabCloseRequestedEvent(0)
 
     def closeAllButThisFilesAction(self):
         """close all files except current file"""
-        csv = self.tab.currentWidget()
-        index = self.tab.currentIndex()
-        tabToolTip = self.tab.tabToolTip(index)
-        tabText = self.tab.tabText(index)
-        self.tab.clear()
-        index = self.tab.addTab(csv, tabText)
-        self.tab.setTabToolTip(index, tabToolTip)
-        self.saveSessionFile()
+        thisCsv = self.tab.currentWidget()
+        while self.tab.count() > 1:
+            if self.tab.widget(0) != thisCsv:
+                self.tabCloseRequestedEvent(0)
+            else:
+                self.tabCloseRequestedEvent(1)
 
     def reloadFileAction(self):
         """reload current file"""
@@ -258,110 +243,18 @@ class MainWindow(QMainWindow):
         clipboard.setText('\n'.join(files))
 
     #
-    # edit menu action methods
-    #
-
-    def editAction(self, action):
-        csv = self.tab.currentWidget()
-        if csv:
-            textClip = None
-
-            # copy to clipboard action
-            if action == self.copyToClipboard:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=False)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
-            # copy with Column Name(s) action
-            elif action == self.copyWithHeaderColumnsToClipboard:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
-            # copy Column Name(s) action
-            elif action == self.copyHeaderColumnsToClipboard:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toClipboard([matrix[0]])
-            # copy As JSON action
-            elif action == self.copyAsJSON:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toJSON(matrix)
-            # copy As Delimited action
-            elif action == self.copyAsDelimited:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toDelimitied(matrix)
-            # copy As Delimited action
-            elif action == self.copyAsXML:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toXML(matrix)
-            # copy As Text action
-            elif action == self.copyAsText:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toText(matrix)
-            # copy As HTML action
-            elif action == self.copyAsHTML:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toHTML(matrix)
-            # copy Python Source Code As TEXT action
-            elif action == self.copyPythonAsText:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toPythonText(matrix)
-            # copy Python Source Code As TUPLE action
-            elif action == self.copyPythonAsTuple:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toPythonTuple(matrix)
-            # copy Python Source Code As LIST action
-            elif action == self.copyPythonAsList:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toPythonList(matrix)
-            # copy Python Source Code As DICT action
-            elif action == self.copyPythonAsDict:
-                matrix = csv.selectedIndexesToRectangularArea(includeHeaderRows=True)
-                if matrix:
-                    textClip = lib.exports.ClipboardFormat.toPythonDict(matrix)
-
-            # at last copy result to clipboard
-            if textClip:
-                clipboard = QApplication.clipboard()
-                clipboard.setText(textClip, mode=QClipboard.Clipboard)
-                return
-            
-            # paste from clipboard action
-            if action == self.pasteFromClipboard:
-                clipboard = QApplication.clipboard()
-                textClip = clipboard.text()
-                matrix = lib.imports.ClipboardFormat.toMatrix(textClip)
-                csv.rectangularAreaToSelectedIndex(matrix)
-                return
-
-            if action == self.insertFromClipboard:
-                #csv.insertRows(insert=InsertDirection.AfterInsert)
-                #csv.insertColumns(insert=InsertDirection.AfterInsert)
-                #csv.removeRows()
-                csv.removeColumns()
-                return
-
-            if action == self.selectAllEdit:
-                csv.selectAll()
-                return
-
-
-    #
     # tool menu action methods
     #
 
-    def explorerToolAction(self):
-        self.toolTab.setCurrentIndex(0)
+    def _toolsAction(self, action):
 
-    def searchToolAction(self):
-        self.toolTab.setCurrentIndex(1)
+        if action == self.explorerTool:
+            self.toolTab.setCurrentIndex(0)
+
+        if action == self.searchTool:
+            self.toolTab.setCurrentIndex(1)
+
+        return
 
     #
     # config menu action methods
@@ -396,16 +289,11 @@ class MainWindow(QMainWindow):
     def csvSelectionChangedEvent(self):
         csv = self.tab.currentWidget()
         if csv:
-            self.setEditMenuDisabled(len(csv.selectedIndexes()) == 0)
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
                                      csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
                                      csv.averageValue(), csv.sumValue())
         else:
-            self.setEditMenuDisabled(True)
             self.statusBar.setValues(None, None, None, None, None, None, None, None)
-
-    def csvcontextMenuRequestedEvent(self, selectedIndexes, globalPoint):
-        self.editMenu.exec_(globalPoint)
 
     def statusBarChangedFontSizeEvent(self, fontSize):
         for index in range(self.tab.count()):
@@ -418,7 +306,10 @@ class MainWindow(QMainWindow):
 
     def tabCloseRequestedEvent(self, index):
         """event when a tab is closed: remove tab & update config"""
-        file_ = self.tab.tabToolTip(index)
+        csv = self.tab.widget(index)
+        if csv:
+            csv.deleteLater()                       # Schedules this object for deletion.
+                                                    # It's very important to release your resources.
         self.tab.removeTab(index)
         self.saveSessionFile()
 
@@ -426,23 +317,33 @@ class MainWindow(QMainWindow):
         """event when a selected tab is changed"""
         csv = self.tab.currentWidget()
         if csv:
+            menubar = self.menuBar()
+            editMenuAction = self.editMenu.menuAction()
+            toolsMenuAction = self.toolsMenu.menuAction()
+            try:
+                menubar.removeAction(editMenuAction)
+            except: pass
+            self.editMenu = csv.editMenu()
+            menubar.insertMenu(toolsMenuAction, self.editMenu)
             self.closeAllButThis.setDisabled(False)
             self.closeAllFiles.setDisabled(False)
             self.closeFile.setDisabled(False)
             self.filePathToClipboard.setDisabled(False)
             self.allFilePathsToClipboard.setDisabled(False)
-            self.setEditMenuDisabled(len(csv.selectedIndexes()) == 0)
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
                                      csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
                                      csv.averageValue(), csv.sumValue())
 
         else:
+            try:
+                self.editMenu.clear()
+                self.editMenu.menuAction().setEnabled(False)
+            except: pass
             self.closeAllButThis.setDisabled(True)
             self.closeAllFiles.setDisabled(True)
             self.closeFile.setDisabled(True)
             self.filePathToClipboard.setDisabled(True)
             self.allFilePathsToClipboard.setDisabled(True)
-            self.setEditMenuDisabled(True)
             self.statusBar.setValues(None, None, None, None, None, None, None, None)
 
     def tabBarcustomContextMenuRequestedEvent(self, point):
@@ -557,19 +458,19 @@ class MainWindow(QMainWindow):
 
         #file menu
         menubar = self.menuBar()
-        fileMenu = menubar.addMenu(self.tr('&File'))
-        fileMenu.addAction(self.openFile)
-        fileMenu.addAction(self.importFile)
-        fileMenu.addAction(self.reloadFile)
-        fileMenu.addAction(self.closeFile)
-        fileMenu.addAction(self.closeAllFiles)
-        fileMenu.addAction(self.closeAllButThis)
-        self.recent = fileMenu.addMenu(self.tr('Recent Files'))
+        self.fileMenu = menubar.addMenu(self.tr('&File'))
+        self.fileMenu.addAction(self.openFile)
+        self.fileMenu.addAction(self.importFile)
+        self.fileMenu.addAction(self.reloadFile)
+        self.fileMenu.addAction(self.closeFile)
+        self.fileMenu.addAction(self.closeAllFiles)
+        self.fileMenu.addAction(self.closeAllButThis)
+        self.recent = self.fileMenu.addMenu(self.tr('Recent Files'))
         self.refreshRecentFileActions()
-        fileMenu.addSeparator()
-        self.copyToClipboardMenu = fileMenu.addMenu(self.tr('Copy to Clipboard'))
-        fileMenu.addSeparator()
-        fileMenu.addAction(self.exitApp)
+        self.fileMenu.addSeparator()
+        self.copyToClipboardMenu = self.fileMenu.addMenu(self.tr('Copy to Clipboard'))
+        self.fileMenu.addSeparator()
+        self.fileMenu.addAction(self.exitApp)
 
         #clipboard submenu
         self.copyToClipboardMenu.addAction(self.filePathToClipboard)
@@ -578,106 +479,59 @@ class MainWindow(QMainWindow):
     def addEditMenu(self):
         """add EDIT menu"""
 
-        # edit menu
+        #edit menu
         menubar = self.menuBar()
         self.editMenu = menubar.addMenu(self.tr('Edit'))
-        self.undoEdit = self.editMenu.addAction(self.tr('Undo'))
-        self.undoEdit.setShortcut('Ctrl+Z')
-        self.redoEdit = self.editMenu.addAction(self.tr('Redo'))
-        self.redoEdit.setShortcut('Ctrl+Y')
-        self.editMenu.addSeparator()
-        self.copyToClipboard = self.editMenu.addAction(self.tr('&Copy'))
-        self.copyToClipboard.setShortcut('Ctrl+C')
-        self.pasteFromClipboard = self.editMenu.addAction(self.tr('Paste'))
-        self.pasteFromClipboard.setShortcut('Ctrl+V')
-        self.insertFromClipboard = self.editMenu.addAction(self.tr('Insert'))
-        self.insertFromClipboard.setShortcut('Ctrl+Ins')
-        self.deleteEdit = self.editMenu.addAction(self.tr('Delete'))
-        self.deleteEdit.setShortcut('DEL')
-        self.selectAllEdit = self.editMenu.addAction(self.tr('Select All'))
-        self.selectAllEdit.setShortcut('Ctrl+A')
-        self.editMenu.addSeparator()
-        self.copySpecialMenu = self.editMenu.addMenu(self.tr('Copy Special'))
-        self.copyToSourceCodeMenu = self.editMenu.addMenu(self.tr('Copy to Source Code'))
-        self.copyToPythonMenu = self.copyToSourceCodeMenu.addMenu(self.tr('Python'))
-
-        # copy special submenu
-        self.copyWithHeaderColumnsToClipboard = self.copySpecialMenu.addAction(self.tr('Copy with Column Name(s)'))
-        self.copyHeaderColumnsToClipboard = self.copySpecialMenu.addAction(self.tr('Copy Column Name(s)'))
-        self.copyAsText = self.copySpecialMenu.addAction(self.tr('Copy As Text'))
-        self.copyAsDelimited = self.copySpecialMenu.addAction(self.tr('Copy As Delimited'))
-        self.copyAsJSON = self.copySpecialMenu.addAction(self.tr('Copy As JSON'))
-        self.copyAsXML = self.copySpecialMenu.addAction(self.tr('Copy As XML'))
-        self.copyAsHTML = self.copySpecialMenu.addAction(self.tr('Copy As HTML'))
-
-        # copy to Python source code sub-submenu
-        self.copyPythonAsText = self.copyToPythonMenu.addAction(self.tr('As Text'))
-        self.copyPythonAsTuple = self.copyToPythonMenu.addAction(self.tr('As Tuple'))
-        self.copyPythonAsList = self.copyToPythonMenu.addAction(self.tr('As List'))
-        self.copyPythonAsDict = self.copyToPythonMenu.addAction(self.tr('As Dict'))
-
-        self.editMenu.triggered.connect(self.editAction)
-
-##        #copy to source code submenu
-##        self.copyToSourceCodeMenu.addAction(QAction('C++', self)) ## acabar
-##        self.copyToSourceCodeMenu.addAction(QAction('C#', self)) ## acabar
-##        self.copyToSourceCodeMenu.addAction(QAction('Delphi', self)) ## acabar
-##        self.copyToSourceCodeMenu.addAction(QAction('Java', self)) ## acabar
-##        self.copyToSourceCodeMenu.addAction(QAction('Python', self)) ## acabar
-
-##        # ideas
-##        algo del estilo llamadas RESTFUL con datos del CSV...
+        self.editMenu.menuAction().setEnabled(False)
 
     def addToolsMenu(self):
         """add TOOLS menu"""
 
-        #explorer action
-        self.explorer = QAction(QIcon(':images/explorer.png'), self.tr('Explorer'), self)
-        self.explorer.setShortcut('Ctrl+E')
-        self.explorer.setStatusTip(self.tr('Explorer'))
-        self.explorer.triggered.connect(self.explorerToolAction)
-
-        #search action
-        self.search = QAction(QIcon(':images/search.png'), self.tr('Search'), self)
-        self.search.setShortcut('Ctrl+F')
-        self.search.setStatusTip(self.tr('Search'))
-        self.search.triggered.connect(self.searchToolAction)
-
         #tools menu
         menubar = self.menuBar()
-        toolsMenu = menubar.addMenu(self.tr('Tools'))
-        toolsMenu.addAction(self.explorer)
-        toolsMenu.addAction(self.search)
+        self.toolsMenu = menubar.addMenu(self.tr('Tools'))
+
+        #explorer action
+        self.explorerTool = self.toolsMenu.addAction(QIcon(':images/explorer.png'), self.tr('Explorer'))
+        self.explorerTool.setShortcut('Ctrl+E')
+        self.explorerTool.setStatusTip(self.tr('Explorer'))
+
+        #search action
+        self.searchTool = self.toolsMenu.addAction(QIcon(':images/search.png'), self.tr('Search'))
+        self.searchTool.setShortcut('Ctrl+F')
+        self.searchTool.setStatusTip(self.tr('Search'))
+
+        # connect tools action
+        self.toolsMenu.triggered.connect(self._toolsAction)
 
     def addConfigMenu(self):
         """add CONFIG menu"""
 
+        #config menu
+        menubar = self.menuBar()
+        self.configMenu = menubar.addMenu(self.tr('Config'))
+
         #restore session action
-        self.restoreSession = QAction(self.tr('Restore Session'), self)
+        self.restoreSession = self.configMenu.addAction(self.tr('Restore Session'))
         self.restoreSession.setCheckable(True)
         self.restoreSession.setChecked(config.config_restore)
         self.restoreSession.setStatusTip(self.tr('Restore Session'))
         self.restoreSession.changed.connect(self.restoreSessionConfigAction)
 
         #header row action
-        self.headerRow = QAction(self.tr('Header Row'), self)
+        self.headerRow = self.configMenu.addAction(self.tr('Header Row'))
         self.headerRow.setCheckable(True)
         self.headerRow.setChecked(config.config_headerrow)
         self.headerRow.setStatusTip(self.tr('Header Row'))
         self.headerRow.changed.connect(self.headerRowConfigAction)
 
+        #separator
+        self.configMenu.addSeparator()
+
         #options action
-        self.settings = QAction(QIcon(':images/options.png'), self.tr('Options...'), self)
+        self.settings = self.configMenu.addAction(QIcon(':images/options.png'), self.tr('Options...'))
         self.settings.setStatusTip(self.tr('Options'))
         self.settings.triggered.connect(self.optionsDialogAction)
-
-        #config menu
-        menubar = self.menuBar()
-        configMenu = menubar.addMenu(self.tr('Config'))
-        configMenu.addAction(self.restoreSession)
-        configMenu.addAction(self.headerRow)
-        configMenu.addSeparator()
-        configMenu.addAction(self.settings)
 
     def addHelpMenu(self):
         """add HELP menu"""
