@@ -36,10 +36,35 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
     def __init__ (self, parent = None):
         super(QItemDataBorderDelegate, self).__init__ (parent)
 
+    def _drawLinesBorderSelectionRanges(self, index):
+        tableView = self.parent()
+        if tableView:
+            lastSelectionRanges = tableView.lastSelectionRanges
+            if lastSelectionRanges:
+                rowIndex = index.row()
+                columnIndex = index.column()
+                for lastSelectionRange in lastSelectionRanges:
+                    drawLeft = (columnIndex == lastSelectionRange.topLeft().column() and
+                                rowIndex >= lastSelectionRange.topLeft().row() and
+                                rowIndex <= lastSelectionRange.bottomRight().row())
+                    drawRight = (columnIndex == lastSelectionRange.bottomRight().column() and
+                                rowIndex >= lastSelectionRange.topLeft().row() and
+                                rowIndex <= lastSelectionRange.bottomRight().row())
+                    drawTop = (rowIndex == lastSelectionRange.topLeft().row() and
+                                columnIndex >= lastSelectionRange.topLeft().column() and
+                                columnIndex <= lastSelectionRange.bottomRight().column())
+                    drawBottom = (rowIndex == lastSelectionRange.bottomRight().row() and
+                                columnIndex >= lastSelectionRange.topLeft().column() and
+                                columnIndex <= lastSelectionRange.bottomRight().column())
+                    if drawLeft or drawRight or drawTop or drawBottom:
+                        return drawLeft, drawRight, drawTop, drawBottom
+        return False, False, False, False
+
     def paint(self, painter, option, index):
         if index:
             model = index.model()
             if model:
+                # set border data area
                 rowIndex = index.row()
                 columnIndex = index.column()
                 columnDataCount = model.columnDataCount()-1
@@ -50,6 +75,21 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
                 if (columnDataCount == columnIndex) and (rowIndex <= rowDataCount):
                     painter.setPen(QPen(Qt.red, 1, style=Qt.DotLine))
                     painter.drawLine(option.rect.topRight(), option.rect.bottomRight())
+                # set border 'copy to clipboard'
+                drawLeft, drawRight, drawTop, drawBottom = self._drawLinesBorderSelectionRanges(index)
+                if drawLeft:
+                    painter.setPen(QPen(Qt.green, 3, style=Qt.DotLine))
+                    painter.drawLine(option.rect.topLeft(), option.rect.bottomLeft())
+                if drawRight:
+                    painter.setPen(QPen(Qt.green, 2, style=Qt.DotLine))
+                    painter.drawLine(option.rect.topRight(), option.rect.bottomRight())
+                if drawTop:
+                    painter.setPen(QPen(Qt.green, 3, style=Qt.DotLine))
+                    painter.drawLine(option.rect.topLeft(), option.rect.topRight())
+                if drawBottom:
+                    painter.setPen(QPen(Qt.green, 2, style=Qt.DotLine))
+                    painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
+
         super(QItemDataBorderDelegate, self).paint(painter, option, index)
 
 
@@ -328,62 +368,73 @@ class QCsv(QTableView):
         textClip = None
         # copy to clipboard action
         if action == self.copyToClipboard:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=False)
+            matrix, topLeftIndex, bottomRightIndex = self.selectedIndexesToRectangularArea(includeHeaderRows=False)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
+                # set clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+                # update last selection range
+                self.lastSelectionRanges = self.selectionModel().selection()
+                self.lastTopLeftIndex = topLeftIndex
+                self.lastBottomRightIndex = bottomRightIndex
+                # update view
+                model = self.model()
+                model.dataChanged.emit(topLeftIndex, bottomRightIndex)
+                return
         # copy with Column Name(s) action
         elif action == self.copyWithHeaderColumnsToClipboard:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
         # copy Column Name(s) action
         elif action == self.copyHeaderColumnsToClipboard:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toClipboard([matrix[0]])
         # copy As JSON action
         elif action == self.copyAsJSON:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toJSON(matrix)
         # copy As Delimited action
         elif action == self.copyAsDelimited:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toDelimitied(matrix)
         # copy As Delimited action
         elif action == self.copyAsXML:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toXML(matrix)
         # copy As Text action
         elif action == self.copyAsText:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toText(matrix)
         # copy As HTML action
         elif action == self.copyAsHTML:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toHTML(matrix)
         # copy Python Source Code As TEXT action
         elif action == self.copyPythonAsText:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonText(matrix)
         # copy Python Source Code As TUPLE action
         elif action == self.copyPythonAsTuple:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonTuple(matrix)
         # copy Python Source Code As LIST action
         elif action == self.copyPythonAsList:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonList(matrix)
         # copy Python Source Code As DICT action
         elif action == self.copyPythonAsDict:
-            matrix = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonDict(matrix)
 
@@ -472,12 +523,43 @@ class QCsv(QTableView):
         """show popup edit menu"""
         self._editMenu.exec_(globalPoint)
 
+    def _getMinMaxCoordinates(self, selectedIndexes):
+        """get min and max coordinates from selected indexes"""
+        minColumn = selectedIndexes[0].column()
+        minRow = selectedIndexes[0].row()
+        maxColumn = selectedIndexes[0].column()
+        maxRow = selectedIndexes[0].row()
+        for selectedIndex in selectedIndexes:
+            if selectedIndex.column() < minColumn:
+                minColumn = selectedIndex.column()
+            if selectedIndex.row() < minRow:
+                minRow = selectedIndex.row()
+            if selectedIndex.column() > maxColumn:
+                maxColumn = selectedIndex.column()
+            if selectedIndex.row() > maxRow:
+                maxRow = selectedIndex.row()
+        model = self.model()
+        topLeftIndex = model.createIndex(minRow, minColumn)
+        bottomRightIndex = model.createIndex(maxRow, maxColumn)
+        return topLeftIndex, bottomRightIndex
+
     def _clipboardDataChangedEvent(self):
-        clipboard = QApplication.clipboard()
-        print 'clipboard!'
-        print 'ownsClipboard:',clipboard.ownsClipboard()
-        print 'ownsFindBuffer:',clipboard.ownsFindBuffer()
-        print 'ownsSelection:',clipboard.ownsSelection()
+        if self.lastSelectionRanges:
+            # lastSelectionRanges to None and refresh view
+            self.lastSelectionRanges = None
+            # refresh view
+            model = self.model()
+            model.dataChanged.emit(self.lastTopLeftIndex, self.lastBottomRightIndex)
+            #
+            self.lastTopLeftIndex = None
+            self.lastBottomRightIndex = None
+            ##
+            ##        clipboard = QApplication.clipboard()
+            ##        print 'clipboard!'
+            ##        print 'ownsClipboard:',clipboard.ownsClipboard()
+            ##        print 'ownsFindBuffer:',clipboard.ownsFindBuffer()
+            ##        print 'ownsSelection:',clipboard.ownsSelection()
+            ##
 
     # http://stackoverflow.com/questions/11352523/qt-and-pyqt-tablewidget-growing-row-count
     # http://stackoverflow.com/questions/19993898/dynamically-add-data-to-qtableview
@@ -506,8 +588,8 @@ class QCsv(QTableView):
         return get_size(self.document.filename)
 
     def modifiedValue(self):
-        modifiedDateime = QDateTime(datetime.fromtimestamp(os.path.getmtime(self.document.filename)))
-        strDateTime = modifiedDateime.toString(Qt.SystemLocaleShortDate)
+        modifiedDateTime = QDateTime(datetime.fromtimestamp(os.path.getmtime(self.document.filename)))
+        strDateTime = modifiedDateTime.toString(Qt.SystemLocaleShortDate)
         return unicode(strDateTime)
 
     def linesValue(self):
@@ -615,29 +697,24 @@ class QCsv(QTableView):
                         result.append([numRow+1, numCol+1, dataCell])
         return result
 
+
     def selectedIndexesToRectangularArea(self, includeHeaderRows=False):
         """convert selected indexes to string matrix"""
         result = None
+        topLeftIndex = None
+        bottomRightIndex = None
         selectedIndexes = self.selectedIndexes()
         if selectedIndexes:
-            # get min and max coordinates
-            minColumn = selectedIndexes[0].column()
-            minRow = selectedIndexes[0].row()
-            maxColumn = selectedIndexes[0].column()
-            maxRow = selectedIndexes[0].row()
-            for selectedIndex in selectedIndexes:
-                if  selectedIndex.column() < minColumn:
-                    minColumn = selectedIndex.column()
-                if  selectedIndex.row() < minRow:
-                    minRow = selectedIndex.row()
-                if  selectedIndex.column() > maxColumn:
-                    maxColumn = selectedIndex.column()
-                if  selectedIndex.row() > maxRow:
-                    maxRow = selectedIndex.row()
+            # get mix&max coordinates area from selected indexes
+            topLeftIndex, bottomRightIndex = self._getMinMaxCoordinates(selectedIndexes)
+            minColumn = topLeftIndex.column()
+            minRow = topLeftIndex.row()
+            maxColumn = bottomRightIndex.column()
+            maxRow = bottomRightIndex.row()
             # get a two dimension matrix with default value ''
             result = []
             for _ in range(maxRow-minRow+1):
-                row = ['' for _ in range(maxColumn-minColumn+1)]
+                row = [QString('') for _ in range(maxColumn-minColumn+1)]
                 result.append(row)
             # set values in two dimension matrix
             for selectedIndex in selectedIndexes:
@@ -652,7 +729,7 @@ class QCsv(QTableView):
                 if headerRows:
                     header = headerRows[minColumn:maxColumn+1]
                     result.insert(0, header)
-        return result
+        return result, topLeftIndex, bottomRightIndex
 
     def rectangularAreaToSelectedIndex(self, matrix):
         """paste rectangular are to selected left-upper corner"""
@@ -855,7 +932,7 @@ class QCsv(QTableView):
         horizontalScrollBar.valueChanged.connect(self._scrollbarChangedEvent)
 
         # set item delegate
-        self.setItemDelegate(QItemDataBorderDelegate())
+        self.setItemDelegate(QItemDataBorderDelegate(parent=self))
 
         # set document
         self.setDocument(document)
@@ -867,6 +944,9 @@ class QCsv(QTableView):
         # clipboard
         clipboard = QApplication.clipboard()
         clipboard.dataChanged.connect(self._clipboardDataChangedEvent)
+        self.lastSelectionRanges = None
+        self.lastTopLeftIndex = None
+        self.lastBottomRightIndex = None
 
         # edit menu
         self._addEditMenu()
