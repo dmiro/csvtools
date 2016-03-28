@@ -4,6 +4,7 @@ from PyQt4.QtGui import *
 from widgets.helpers.qcomboboxenter import QComboBoxEnter
 from lib.enums import MatchModeEnum
 from lib.config import config
+from lib.helper import QStringToUnicode
 import lib.images_rc
 import sys
 
@@ -99,7 +100,7 @@ class QSearch(QWidget):
 
     def _saveConfig(self):
         # text search
-        items = [str(self.textSearch.itemText(i)) for i in range(self.textSearch.count())]
+        items = [QStringToUnicode(self.textSearch.itemText(i)) for i in range(self.textSearch.count())]
         config.tools_searches = items
         # match mode
         config.tools_matchMode = self.matchMode.currentIndex()
@@ -110,8 +111,8 @@ class QSearch(QWidget):
 
     def _textSearchAddText(self):
         """update list of recent searches"""
-        text = str(self.textSearch.currentText())
-        items = [str(self.textSearch.itemText(i)) for i in range(self.textSearch.count())]
+        text = self.textSearch.currentText()
+        items = [self.textSearch.itemText(i) for i in range(self.textSearch.count())]
         if text in items:
             items.remove(text)
         items.insert(0, text)

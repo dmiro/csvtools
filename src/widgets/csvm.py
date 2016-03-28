@@ -2,7 +2,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from lib.config import config
-from lib.helper import get_size
+from lib.helper import get_size, QStringToUnicode
 from lib.enums import MatchModeEnum, InsertDirection
 from datetime import datetime
 import lib.exports
@@ -60,6 +60,10 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
                         return drawLeft, drawRight, drawTop, drawBottom
         return False, False, False, False
 
+ #   def timerEvent(self, timerEvent):
+ #       print 'timer event'
+ #       self.killTimer(timerEvent.timerId())
+
     def paint(self, painter, option, index):
         if index:
             model = index.model()
@@ -78,16 +82,17 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
                 # set border 'copy to clipboard'
                 drawLeft, drawRight, drawTop, drawBottom = self._drawLinesBorderSelectionRanges(index)
                 if drawLeft:
-                    painter.setPen(QPen(Qt.green, 3, style=Qt.DotLine))
+                    painter.setPen(QPen(Qt.green, 3, style=Qt.DashLine))
                     painter.drawLine(option.rect.topLeft(), option.rect.bottomLeft())
+  #                  self.startTimer (1000)
                 if drawRight:
-                    painter.setPen(QPen(Qt.green, 2, style=Qt.DotLine))
+                    painter.setPen(QPen(Qt.green, 2, style=Qt.DashLine))
                     painter.drawLine(option.rect.topRight(), option.rect.bottomRight())
                 if drawTop:
-                    painter.setPen(QPen(Qt.green, 3, style=Qt.DotLine))
+                    painter.setPen(QPen(Qt.green, 3, style=Qt.DashLine))
                     painter.drawLine(option.rect.topLeft(), option.rect.topRight())
                 if drawBottom:
-                    painter.setPen(QPen(Qt.green, 2, style=Qt.DotLine))
+                    painter.setPen(QPen(Qt.green, 2, style=Qt.DashLine))
                     painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
 
         super(QItemDataBorderDelegate, self).paint(painter, option, index)
@@ -221,7 +226,7 @@ class MyTableModel(QAbstractTableModel):
             # expand columns
             if len(self.arraydata[rowIndex]) <= columnIndex:
                 columnsMissing = columnIndex - len(self.arraydata[rowIndex]) + 1
-                self.arraydata[rowIndex].extend(['']*columnsMissing)
+                self.arraydata[rowIndex].extend([QString('')]*columnsMissing)
             # set value
             self.arraydata[rowIndex][columnIndex] = value.toString()
             # if required, constraint rows
@@ -266,7 +271,7 @@ class MyTableModel(QAbstractTableModel):
         for row in self.arraydata:
             if len(row) >= column:
                 for _ in xrange(count):
-                    row.insert(column, '')
+                    row.insert(column, QString(''))
         self._maxDataColumn = self._getMaxDataColumn()
         self.endInsertColumns()
         return True
@@ -659,23 +664,26 @@ class QCsv(QTableView):
         result = []
         model = self.model()
 
+        # need convert to unicode formst
+        text = QStringToUnicode(text)
+
         # set regular expression pattern
         if matchMode == MatchModeEnum.WholeWord:
-            pattern = r'\b{0}\b'.format(str(text))
+            pattern = ur'\b{0}\b'.format(text)           #  ur = unicode + raw string
         elif matchMode == MatchModeEnum.StartsWidth:
-            pattern = r'^{0}'.format(str(text))
+            pattern = ur'^{0}'.format(text)
         elif matchMode == MatchModeEnum.EndsWith:
-            pattern = r'{0}$'.format(str(text))
+            pattern = ur'{0}$'.format(text)
         elif matchMode == MatchModeEnum.RegularExpression:
-            pattern = r'{0}'.format(str(text))
+            pattern = ur'{0}'.format(text)
         else:
-            pattern = ''
+            pattern = ur''
 
         # compile regular expression
         if matchCaseOption:
-            rePattern = re.compile(pattern, flags=re.IGNORECASE|re.DOTALL)
+            rePattern = re.compile(pattern, flags=re.DOTALL|re.UNICODE)
         else:
-            rePattern = re.compile(pattern, flags=re.DOTALL)
+            rePattern = re.compile(pattern, flags=re.IGNORECASE|re.DOTALL|re.UNICODE)
 
         # search
         for numRow, dataRow in enumerate(self.document.data):
@@ -685,9 +693,9 @@ class QCsv(QTableView):
                 find = False
                 if matchMode == MatchModeEnum.Contains:
                     if matchCaseOption:
-                        find = QString(dataCell).contains(text, Qt.CaseInsensitive)
+                        find = dataCell.contains(text, Qt.CaseSensitive)
                     else:
-                        find = dataCell.find(text) > -1
+                        find = dataCell.contains(text, Qt.CaseInsensitive)
                 else:
                     find = rePattern.search(dataCell)
                 if find:

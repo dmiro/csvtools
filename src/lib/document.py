@@ -138,10 +138,10 @@ class Csv(Document):
                 for line, row in enumerate(reader):
                     if line > linesToLoad:
                         break
-                    self.data_.append(row)
+                    self.data_.append([QString(value) for value in row])
             else:
                 for row in reader:
-                    self.data_.append(row)
+                    self.data_.append([QString(value) for value in row])
         super(Csv, self).load()
 
     def save(self):
@@ -162,7 +162,7 @@ class Xsl(Document):
         wb = xlrd.open_workbook(self.filename)
         sh = wb.sheet_by_name(self.sheetname)
         for rownum in xrange(sh.nrows):
-            self.data_.append(sh.row_values(rownum))
+            self.data_.append([QString(value) for value in sh.row_values(rownum)])
         super(Xsl, self).load()
 
     def save(self):
