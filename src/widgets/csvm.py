@@ -60,10 +60,6 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
                         return drawLeft, drawRight, drawTop, drawBottom
         return False, False, False, False
 
- #   def timerEvent(self, timerEvent):
- #       print 'timer event'
- #       self.killTimer(timerEvent.timerId())
-
     def paint(self, painter, option, index):
         if index:
             model = index.model()
@@ -81,20 +77,18 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
                     painter.drawLine(option.rect.topRight(), option.rect.bottomRight())
                 # set border 'copy to clipboard'
                 drawLeft, drawRight, drawTop, drawBottom = self._drawLinesBorderSelectionRanges(index)
+                tableView = self.parent()
+                pen = QPen(Qt.gray, 3, style=Qt.DashLine)
+                pen.setDashOffset(tableView.lastSelectionRangesDashOffset)
+                painter.setPen(pen)
                 if drawLeft:
-                    painter.setPen(QPen(Qt.green, 3, style=Qt.DashLine))
-                    painter.drawLine(option.rect.topLeft(), option.rect.bottomLeft())
-  #                  self.startTimer (1000)
+                    painter.drawLine(option.rect.bottomLeft(), option.rect.topLeft())
                 if drawRight:
-                    painter.setPen(QPen(Qt.green, 2, style=Qt.DashLine))
                     painter.drawLine(option.rect.topRight(), option.rect.bottomRight())
                 if drawTop:
-                    painter.setPen(QPen(Qt.green, 3, style=Qt.DashLine))
                     painter.drawLine(option.rect.topLeft(), option.rect.topRight())
                 if drawBottom:
-                    painter.setPen(QPen(Qt.green, 2, style=Qt.DashLine))
-                    painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
-
+                    painter.drawLine(option.rect.bottomRight(), option.rect.bottomLeft())
         super(QItemDataBorderDelegate, self).paint(painter, option, index)
 
 
@@ -369,6 +363,35 @@ class QCsv(QTableView):
         selectionModel = self.selectionModel()
         selectionModel.select(selection, QItemSelectionModel.Select)
 
+    def _rectangularAreaToTopLeftIndex(self, matrix, topLeftIndexRow, topLeftIndexColumn):
+        """paste rectangular are to selected left-upper corner"""
+        numRows = len(matrix)
+        numColumns = len(matrix[0])
+        model = self.model()
+        modelNumRows = model.rowCount()
+        modelNumCols = model.columnCount()
+        if topLeftIndexColumn+numColumns > modelNumCols:                                    # the number of columns we have to paste, starting at the selected cell,
+            model.insertColumns(modelNumCols, numColumns-(modelNumCols-topLeftIndexColumn)) # go beyond how many columns exist. insert the amount of columns we need
+                                                                                            # to accomodate the paste
+
+
+        if topLeftIndexRow+numRows > modelNumRows:                                          # the number of rows we have to paste, starting at the selected cell,
+            model.insertRows(modelNumRows, numRows-(modelNumRows-topLeftIndexRow))          # go beyond how many rows exist. insert the amount of rows we need to
+                                                                                            # accomodate the paste
+
+
+        model.blockSignals(True)                                                            # block signals so that the "dataChanged" signal from setData doesn't
+                                                                                            # update the view for every cell we set
+        for rowIndex, row in enumerate(matrix):
+            for colIndex, value in enumerate(row):
+                index = model.createIndex(topLeftIndexRow+rowIndex, topLeftIndexColumn+colIndex)
+                model.setData(index, QVariant(value))
+        model.blockSignals(False)                                                           # unblock the signal and emit dataChangesd ourselves to update all
+                                                                                            # the view at once
+        topLeftIndex = model.createIndex(topLeftIndexRow, topLeftIndexColumn)
+        bottomRightIndex = model.createIndex(topLeftIndexRow+numRows, topLeftIndexColumn+numColumns)
+        model.dataChanged.emit(topLeftIndex, bottomRightIndex)
+
     def _editAction(self, action):
         textClip = None
         # copy to clipboard action
@@ -579,6 +602,18 @@ class QCsv(QTableView):
         if len(self.selectedIndexes()) > 0:
             self.contextMenuRequested.emit(self.selectedIndexes(), self.mapToGlobal(point))
 
+    def timerEvent(self, timerEvent):
+        timerId = timerEvent.timerId()
+        if self.lastSelectionRangesTimerId == timerId:
+            if self.lastSelectionRanges and self.lastTopLeftIndex and self.lastBottomRightIndex:
+                # update view
+                if self.lastSelectionRangesDashOffset > 4:
+                    self.lastSelectionRangesDashOffset = 0
+                else:
+                    self.lastSelectionRangesDashOffset = self.lastSelectionRangesDashOffset + 1
+                model = self.model()
+                model.dataChanged.emit(self.lastTopLeftIndex, self.lastBottomRightIndex)
+
     #
     # public
     #
@@ -743,36 +778,36 @@ class QCsv(QTableView):
         """paste rectangular are to selected left-upper corner"""
         selectionRanges = self.selectionModel().selection()
         if len(selectionRanges)==1:
-            numRows = len(matrix)
-            if numRows > 0:
-                numCols = len(matrix[0])
-                if numCols > 0:
-                    model = self.model()
-                    topLeftIndex = selectionRanges[0].topLeft()
-                    selColumn = topLeftIndex.column()
-                    selRow = topLeftIndex.row()
-                    modelNumCols = model.columnCount()
-                    modelNumRows = model.rowCount()
-                    if selColumn+numCols > modelNumCols:                                       # the number of columns we have to paste, starting at the selected cell,
-                        model.insertColumns(modelNumCols, numCols-(modelNumCols-selColumn))    # go beyond how many columns exist. insert the amount of columns we need
-                                                                                               # to accomodate the paste
-
-
-                    if selRow+numRows > modelNumRows:                                          # the number of rows we have to paste, starting at the selected cell,
-                        model.insertRows(modelNumRows, numRows-(modelNumRows-selRow))          # go beyond how many rows exist. insert the amount of rows we need to
-                                                                                               # accomodate the paste
-
-
-                    model.blockSignals(True)     # block signals so that the "dataChanged" signal from setData doesn't
-                                                 # update the view for every cell we set
-                    for rowIndex, row in enumerate(matrix):
-                        for colIndex, value in enumerate(row):
-                            index = model.createIndex(selRow+rowIndex, selColumn+colIndex)
-                            model.setData(index, QVariant(value))
-                    model.blockSignals(False)    # unblock the signal and emit dataChangesd ourselves to update all
-                                                 # the view at once
-                    index = model.createIndex(selRow+numRows, selColumn+numCols)
-                    model.dataChanged.emit(topLeftIndex, index)
+            selectionRange = selectionRanges[0]
+            numRowsData = len(matrix)
+            if numRowsData > 0:
+                numColumnsData = len(matrix[0])
+                if numColumnsData > 0:
+                    # get size of selection
+                    topLeftIndex = selectionRange.topLeft()
+                    topLeftIndexRow = topLeftIndex.row()
+                    topLeftIndexColumn = topLeftIndex.column()
+                    numRowsSelection = selectionRange.bottomRight().row() - topLeftIndexRow + 1
+                    numColumnsSelection = selectionRange.bottomRight().column() - topLeftIndexColumn + 1
+                    # repeat paste
+                    repeatInSelection = ((numRowsSelection % numRowsData) + (numColumnsSelection % numColumnsData) == 0)
+                    if repeatInSelection:
+                        for numRow in xrange(numRowsSelection / numRowsData):
+                            for numColumn in xrange(numColumnsSelection / numColumnsData):
+                                self._rectangularAreaToTopLeftIndex(matrix,
+                                                                    topLeftIndexRow + (numRowsData * numRow),
+                                                                    topLeftIndexColumn = topLeftIndexColumn + (numColumnsData * numColumn))
+                    # single paste
+                    else:
+                        self._rectangularAreaToTopLeftIndex(matrix,
+                                                            topLeftIndexRow,
+                                                            topLeftIndexColumn)
+                        self.setCurrentIndex(topLeftIndex)
+                        self.clearSelection()
+                        self._select(topLeftIndexRow,
+                                     topLeftIndexColumn,
+                                     topLeftIndexRow + numRowsData - 1,
+                                     topLeftIndexColumn + numColumnsData - 1)
 
     def insertRows(self, insert=InsertDirection.BeforeInsert, count=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
@@ -955,6 +990,8 @@ class QCsv(QTableView):
         self.lastSelectionRanges = None
         self.lastTopLeftIndex = None
         self.lastBottomRightIndex = None
+        self.lastSelectionRangesTimerId = self.startTimer(100)
+        self.lastSelectionRangesDashOffset = 0
 
         # edit menu
         self._addEditMenu()
