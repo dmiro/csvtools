@@ -396,7 +396,7 @@ class QCsv(QTableView):
         textClip = None
         # copy to clipboard action
         if action == self.copyToClipboard:
-            matrix, topLeftIndex, bottomRightIndex = self.selectedIndexesToRectangularArea(includeHeaderRows=False)
+            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=False)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
                 # set clipboard
@@ -404,11 +404,9 @@ class QCsv(QTableView):
                 clipboard.setText(textClip, mode=QClipboard.Clipboard)
                 # update last selection range
                 self.lastSelectionRanges = self.selectionModel().selection()
-                self.lastTopLeftIndex = topLeftIndex
-                self.lastBottomRightIndex = bottomRightIndex
-                # update view
-                model = self.model()
-                model.dataChanged.emit(topLeftIndex, bottomRightIndex)
+                # updates the area occupied by the given indexes in selection
+                for index in self.lastSelectionRanges.indexes():
+                    self.update(index)
                 return
         # copy with Column Name(s) action
         elif action == self.copyWithHeaderColumnsToClipboard:
@@ -574,13 +572,11 @@ class QCsv(QTableView):
     def _clipboardDataChangedEvent(self):
         if self.lastSelectionRanges:
             # lastSelectionRanges to None and refresh view
+            selectionRanges = self.lastSelectionRanges
             self.lastSelectionRanges = None
-            # refresh view
-            model = self.model()
-            model.dataChanged.emit(self.lastTopLeftIndex, self.lastBottomRightIndex)
-            #
-            self.lastTopLeftIndex = None
-            self.lastBottomRightIndex = None
+            # updates the area occupied by the given indexes in selection
+            for index in selectionRanges.indexes():
+                self.update(index)
             ##
             ##        clipboard = QApplication.clipboard()
             ##        print 'clipboard!'
@@ -603,16 +599,19 @@ class QCsv(QTableView):
             self.contextMenuRequested.emit(self.selectedIndexes(), self.mapToGlobal(point))
 
     def timerEvent(self, timerEvent):
+        """override the method 'timerEvent' to give effect to the borders around
+        the areas copied to clipboard"""
         timerId = timerEvent.timerId()
         if self.lastSelectionRangesTimerId == timerId:
-            if self.lastSelectionRanges and self.lastTopLeftIndex and self.lastBottomRightIndex:
-                # update view
+            if self.lastSelectionRanges:
+                # set dash offset to get movement effect
                 if self.lastSelectionRangesDashOffset > 4:
                     self.lastSelectionRangesDashOffset = 0
                 else:
                     self.lastSelectionRangesDashOffset = self.lastSelectionRangesDashOffset + 1
-                model = self.model()
-                model.dataChanged.emit(self.lastTopLeftIndex, self.lastBottomRightIndex)
+                # updates the area occupied by the given indexes in selection
+                for index in self.lastSelectionRanges.indexes():
+                    self.update(index)
 
     #
     # public
@@ -963,6 +962,20 @@ class QCsv(QTableView):
     # init
     #
 
+
+    def edit (self, index, trigger, event):
+        """override the method 'edit' to cancel the area copied to the clipboard if
+        the user edits inside the area"""
+        editing = QTableView.edit(self, index, trigger, event)
+        # view's state is now EditingState
+        if editing:
+            if self.lastSelectionRanges:
+                if self.lastSelectionRanges.contains(index):
+                    self.lastSelectionRanges = None
+                    clipboard = QApplication.clipboard()
+                    clipboard.clear()
+        return editing
+
     def __init__(self, document, *args):
         QTableView.__init__(self, *args)
 
@@ -988,9 +1001,7 @@ class QCsv(QTableView):
         clipboard = QApplication.clipboard()
         clipboard.dataChanged.connect(self._clipboardDataChangedEvent)
         self.lastSelectionRanges = None
-        self.lastTopLeftIndex = None
-        self.lastBottomRightIndex = None
-        self.lastSelectionRangesTimerId = self.startTimer(100)
+        self.lastSelectionRangesTimerId = self.startTimer(200)
         self.lastSelectionRangesDashOffset = 0
 
         # edit menu
