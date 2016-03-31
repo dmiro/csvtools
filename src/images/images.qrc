@@ -28,4 +28,14 @@
 	<file alias="home.png">icons/glyphicons-21-home.png</file>
 	<file alias="addfolder.png">flaticon/folderadd.png</file>
 </qresource>
+<qresource prefix="/tools">
+    <file alias="removecolumn.png">tools/removecolumn.png</file>
+	<file alias="removerow.png">tools/removerow.png</file>
+	<file alias="addcolumnleft.png">tools/addcolumnleft.png</file>
+	<file alias="addcolumnright.png">tools/addcolumnright.png</file>
+	<file alias="addrowbottom.png">tools/addrowbottom.png</file>
+	<file alias="addrowtop.png">tools/addrowtop.png</file>
+	<file alias="mergerows.png">tools/mergerows.png</file>
+	<file alias="mergecolumns.png">tools/mergecolumns.png</file>
+</qresource>
 </RCC>
