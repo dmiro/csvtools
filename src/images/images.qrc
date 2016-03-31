@@ -36,6 +36,10 @@
 	<file alias="addrowbottom.png">tools/addrowbottom.png</file>
 	<file alias="addrowtop.png">tools/addrowtop.png</file>
 	<file alias="mergerows.png">tools/mergerows.png</file>
-	<file alias="mergecolumns.png">tools/mergecolumns.png</file>
+	<file alias="mergecolumns.png">tools/mergecolumns.png</file>	
+	<file alias="movecolumnleft.png">tools/movecolumnleft.png</file>
+	<file alias="movecolumnright.png">tools/movecolumnright.png</file>
+	<file alias="moverowbottom.png">tools/moverowbottom.png</file>
+	<file alias="moverowtop.png">tools/moverowtop.png</file>
 </qresource>
 </RCC>
