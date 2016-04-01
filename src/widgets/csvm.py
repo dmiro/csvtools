@@ -7,6 +7,7 @@ from lib.enums import MatchModeEnum, InsertDirection
 from datetime import datetime
 import lib.exports
 import lib.imports
+import lib.images_rc
 import os
 import re
 
@@ -408,6 +409,7 @@ class QCsv(QTableView):
                 for index in self.lastSelectionRanges.indexes():
                     self.update(index)
                 return
+
         # copy with Column Name(s) action
         elif action == self.copyWithHeaderColumnsToClipboard:
             matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
@@ -478,11 +480,32 @@ class QCsv(QTableView):
             self.rectangularAreaToSelectedIndex(matrix)
             return
 
-        if action == self.insertFromClipboard:
-            #csv.insertRows(insert=InsertDirection.AfterInsert)
-            #csv.insertColumns(insert=InsertDirection.AfterInsert)
-            #csv.removeRows()
+        if action == self.insertColumnLeftAction:
+            self.insertColumns(insert=InsertDirection.BeforeInsert)
+            return
+
+        if action == self.insertColumnRightAction:
+            self.insertColumns(insert=InsertDirection.AfterInsert)
+            return
+
+        if action == self.insertRowTopAction:
+            self.insertRows(insert=InsertDirection.BeforeInsert)
+            return
+
+        if action == self.insertRowBottomAction:
+            self.insertRows(insert=InsertDirection.AfterInsert)
+            return
+
+        if action == self.removeRowsAction:
+            self.removeRows()
+            return
+
+        if action == self.removeColumnsAction:
             self.removeColumns()
+            return
+
+        if action == self.insertFromClipboard:
+            pass
             return
 
         if action == self.selectAllEdit:
@@ -493,42 +516,52 @@ class QCsv(QTableView):
         """add EDIT menu"""
         # edit menu
         self._editMenu = QMenu(self.tr('Edit'))
-        self.undoEdit = self._editMenu.addAction(self.tr('Undo'))
-        self.undoEdit.setShortcut('Ctrl+Z')
-        self.redoEdit = self._editMenu.addAction(self.tr('Redo'))
-        self.redoEdit.setShortcut('Ctrl+Y')
+        self.undoEdit = self._editMenu.addAction(QIcon(':images/undo.png'), self.tr('Undo'))
+        self.undoEdit.setShortcut(QKeySequence.Undo)
+        self.redoEdit = self._editMenu.addAction(QIcon(':images/redo.png'), self.tr('Redo'))
+        self.redoEdit.setShortcut(QKeySequence.Redo)
         self._editMenu.addSeparator()
-        self.copyToClipboard = self._editMenu.addAction(self.tr('&Copy'))
-        self.copyToClipboard.setShortcut('Ctrl+C')
-        self.pasteFromClipboard = self._editMenu.addAction(self.tr('Paste'))
-        self.pasteFromClipboard.setShortcut('Ctrl+V')
+        self.cuteToClipboard = self._editMenu.addAction(QIcon(':images/cut.png'), self.tr('Cut'))
+        self.cuteToClipboard.setShortcut(QKeySequence.Cut)
+        self.copyToClipboard = self._editMenu.addAction(QIcon(':images/copy.png'), self.tr('&Copy'))
+        self.copyToClipboard.setShortcut(QKeySequence.Copy)
+        self.pasteFromClipboard = self._editMenu.addAction(QIcon(':images/paste.png'), self.tr('Paste'))
+        self.pasteFromClipboard.setShortcut(QKeySequence.Paste)
         self.insertFromClipboard = self._editMenu.addAction(self.tr('Insert'))
         self.insertFromClipboard.setShortcut('Ctrl+Ins')
         self.deleteEdit = self._editMenu.addAction(self.tr('Delete'))
-        self.deleteEdit.setShortcut('DEL')
-        self.selectAllEdit = self._editMenu.addAction(self.tr('Select All'))
-        self.selectAllEdit.setShortcut('Ctrl+A')
+        self.deleteEdit.setShortcut(QKeySequence.Delete)
+        self.selectAllEdit = self._editMenu.addAction(QIcon(':images/all.png'), self.tr('Select All'))
+        self.selectAllEdit.setShortcut(QKeySequence.SelectAll)
         self._editMenu.addSeparator()
         # columns submenu
         self.editColumnsMenu = self._editMenu.addMenu(self.tr('Columns'))
-        self.addColumnLeft = self.editColumnsMenu.addAction(QIcon(':tools/addcolumnleft.png'), self.tr('Add left'))
-        self.addColumnRight = self.editColumnsMenu.addAction(QIcon(':tools/addcolumnright.png'), self.tr('Add right'))
+        self.insertColumnLeftAction = self.editColumnsMenu.addAction(QIcon(':tools/addcolumnleft.png'), self.tr('Insert left'))
+ 	self.insertColumnLeftAction.setShortcut('Ctrl+L, Left')
+        self.insertColumnRightAction = self.editColumnsMenu.addAction(QIcon(':tools/addcolumnright.png'), self.tr('Insert right'))
+ 	self.insertColumnRightAction.setShortcut('Ctrl+L, Right')
         self.editColumnsMenu.addSeparator()
-        self.moveColumnRight = self.editColumnsMenu.addAction(QIcon(':tools/movecolumnleft.png'), self.tr('Move left'))
-        self.moveColumnRight = self.editColumnsMenu.addAction(QIcon(':tools/movecolumnright.png'), self.tr('Move right'))
+        self.moveColumnRightAction = self.editColumnsMenu.addAction(QIcon(':tools/movecolumnleft.png'), self.tr('Move left'))
+        self.moveColumnRightAction.setShortcut('Ctrl+M, Left')
+        self.moveColumnRightAction = self.editColumnsMenu.addAction(QIcon(':tools/movecolumnright.png'), self.tr('Move right'))
+        self.moveColumnRightAction.setShortcut('Ctrl+M, Right')
         self.editColumnsMenu.addSeparator()
-        self.removeColumn = self.editColumnsMenu.addAction(QIcon(':tools/removecolumn.png'), self.tr('Remove'))
-        self.mergeColumns = self.editColumnsMenu.addAction(QIcon(':tools/mergecolumns.png'), self.tr('Merge'))
+        self.removeColumnsAction = self.editColumnsMenu.addAction(QIcon(':tools/removecolumn.png'), self.tr('Remove'))
+        self.mergeColumnsAction = self.editColumnsMenu.addAction(QIcon(':tools/mergecolumns.png'), self.tr('Merge'))
         # rows submenu
         self.editRowsMenu = self._editMenu.addMenu(self.tr('Rows'))
-        self.addRowTop = self.editRowsMenu.addAction(QIcon(':tools/addrowtop.png'), self.tr('Add top'))
-        self.addRowBottom = self.editRowsMenu.addAction(QIcon(':tools/addrowbottom.png'), self.tr('Add bottom'))
+        self.insertRowTopAction = self.editRowsMenu.addAction(QIcon(':tools/addrowtop.png'), self.tr('Insert top'))
+        self.insertRowTopAction.setShortcut('Ctrl+L, Up')
+        self.insertRowBottomAction = self.editRowsMenu.addAction(QIcon(':tools/addrowbottom.png'), self.tr('Insert bottom'))
+        self.insertRowBottomAction.setShortcut('Ctrl+L, Down')
         self.editRowsMenu.addSeparator()
-        self.moveRowTop = self.editRowsMenu.addAction(QIcon(':tools/moverowtop.png'), self.tr('Move top'))
-        self.moveRowBottom = self.editRowsMenu.addAction(QIcon(':tools/moverowbottom.png'), self.tr('Move bottom'))
+        self.moveRowTopAction = self.editRowsMenu.addAction(QIcon(':tools/moverowtop.png'), self.tr('Move top'))
+        self.moveRowTopAction.setShortcut('Ctrl+M, Up')
+        self.moveRowBottomAction = self.editRowsMenu.addAction(QIcon(':tools/moverowbottom.png'), self.tr('Move bottom'))
+        self.moveRowBottomAction.setShortcut('Ctrl+M, Down')
         self.editRowsMenu.addSeparator()
-        self.removeRow = self.editRowsMenu.addAction(QIcon(':tools/removerow.png'), self.tr('Remove'))
-        self.mergeRows = self.editRowsMenu.addAction(QIcon(':tools/mergerows.png'), self.tr('Merge'))
+        self.removeRowsAction = self.editRowsMenu.addAction(QIcon(':tools/removerow.png'), self.tr('Remove'))
+        self.mergeRowsAction = self.editRowsMenu.addAction(QIcon(':tools/mergerows.png'), self.tr('Merge'))
         self._editMenu.addSeparator()
         # copy special submenu
         self.copySpecialMenu = self._editMenu.addMenu(self.tr('Copy Special'))

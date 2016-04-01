@@ -1,6 +1,7 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
 <qresource prefix="/images">
+	<file alias="new.png">flaticon/cross.png</file>
     <file alias="open.png">flaticon/folders.png</file>
     <file alias="import.png">icons/glyphicons-359-file-import.png</file>
     <file alias="exit.png">icons/glyphicons-389-exit.png</file>
@@ -27,6 +28,12 @@
 	<file alias="folder.png">flaticon/folders.png</file>
 	<file alias="home.png">icons/glyphicons-21-home.png</file>
 	<file alias="addfolder.png">flaticon/folderadd.png</file>
+	<file alias="copy.png">icons/glyphicons-512-copy.png</file>
+	<file alias="paste.png">icons/glyphicons-513-paste.png</file>
+	<file alias="undo.png">icons/glyphicons-222-unshare.png</file>
+	<file alias="redo.png">icons/glyphicons-223-share.png</file>
+	<file alias="cut.png">icons/glyphicons-599-scissors-alt.png</file>
+	<file alias="all.png">flaticon/interface.png</file>
 </qresource>
 <qresource prefix="/tools">
     <file alias="removecolumn.png">tools/removecolumn.png</file>

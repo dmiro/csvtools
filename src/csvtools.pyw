@@ -406,9 +406,15 @@ class MainWindow(QMainWindow):
     def addFileMenu(self):
         """add FILE menu"""
 
+        #new file action
+        self.newFile = QAction(QIcon(':images/new.png'), self.tr('&New'), self)
+        self.newFile.setShortcut(QKeySequence.New)
+        self.newFile.setStatusTip(self.tr('New Csv File'))
+        #self.openFile.triggered.connect(self.openDialogAction)
+
         #open file action
         self.openFile = QAction(QIcon(':images/open.png'), self.tr('&Open'), self)
-        self.openFile.setShortcut('Ctrl+O')
+        self.openFile.setShortcut(QKeySequence.Open)
         self.openFile.setStatusTip(self.tr('Open Csv File'))
         self.openFile.triggered.connect(self.openDialogAction)
 
@@ -426,7 +432,7 @@ class MainWindow(QMainWindow):
 
         #close file action
         self.closeFile = QAction(QIcon(':images/close.png'), self.tr('Close'), self)
-        self.closeFile.setShortcut('Ctrl+W')
+        self.closeFile.setShortcut(QKeySequence.Close)
         self.closeFile.setStatusTip(self.tr('Close File'))
         self.closeFile.triggered.connect(self.closeFileAction)
 
@@ -452,13 +458,14 @@ class MainWindow(QMainWindow):
 
         #exit action
         self.exitApp = QAction(QIcon(':images/exit.png'), self.tr('E&xit'), self)
-        self.exitApp.setShortcut('Ctrl+X')
+        self.exitApp.setShortcut(QKeySequence.Quit)
         self.exitApp.setStatusTip(self.tr('Exit'))
         self.exitApp.triggered.connect(self.exitDialogAction)
 
         #file menu
         menubar = self.menuBar()
         self.fileMenu = menubar.addMenu(self.tr('&File'))
+        self.fileMenu.addAction(self.newFile)
         self.fileMenu.addAction(self.openFile)
         self.fileMenu.addAction(self.importFile)
         self.fileMenu.addAction(self.reloadFile)
