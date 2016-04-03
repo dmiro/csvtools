@@ -8,3 +8,7 @@ class MatchModeEnum(object):
 class InsertDirection(object):
     AfterInsert = 0
     BeforeInsert = 1
+
+class MoveDirection(object):
+    AfterMove = 0
+    BeforeMove = 1

@@ -3,7 +3,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from lib.config import config
 from lib.helper import get_size, QStringToUnicode
-from lib.enums import MatchModeEnum, InsertDirection
+from lib.enums import MatchModeEnum, InsertDirection, MoveDirection
 from datetime import datetime
 import lib.exports
 import lib.imports
@@ -298,6 +298,19 @@ class MyTableModel(QAbstractTableModel):
     def removeColumn(self, column, parent = QModelIndex()):
         return self.removeColumns(column, 1, parent)
 
+    def moveRows(self, sourceRow, count, destinationRow, parent = QModelIndex()):
+        #self.beginMoveRows (parent, sourceRow, sourceRow+count, parent, destinationRow)
+        # expand rows
+        if len(self.arraydata) <= destinationRow:
+            rowsMissing =  destinationRow - len(self.arraydata) + 1
+            self.arraydata.extend([[] for _ in xrange(rowsMissing) ])
+        # insert
+        for index in xrange(sourceRow+count-1, sourceRow-1, -1):
+            self.arraydata.insert(destinationRow+1, self.arraydata[index])
+        # delete
+        for _ in xrange(sourceRow, sourceRow+count):
+            del(self.arraydata[sourceRow])
+        #self.endMoveRows()
 
     #
     # init
@@ -508,6 +521,14 @@ class QCsv(QTableView):
             pass
             return
 
+        if action == self.moveRowTopAction:
+            self.moveRows(move=MoveDirection.BeforeMove)
+            return
+
+        if action == self.moveRowBottomAction:
+            self.moveRows(move=MoveDirection.AfterMove)
+            return
+
         if action == self.selectAllEdit:
             self.selectAll()
             return
@@ -537,9 +558,9 @@ class QCsv(QTableView):
         # columns submenu
         self.editColumnsMenu = self._editMenu.addMenu(self.tr('Columns'))
         self.insertColumnLeftAction = self.editColumnsMenu.addAction(QIcon(':tools/addcolumnleft.png'), self.tr('Insert left'))
- 	self.insertColumnLeftAction.setShortcut('Ctrl+L, Left')
+        self.insertColumnLeftAction.setShortcut('Ctrl+L, Left')
         self.insertColumnRightAction = self.editColumnsMenu.addAction(QIcon(':tools/addcolumnright.png'), self.tr('Insert right'))
- 	self.insertColumnRightAction.setShortcut('Ctrl+L, Right')
+        self.insertColumnRightAction.setShortcut('Ctrl+L, Right')
         self.editColumnsMenu.addSeparator()
         self.moveColumnRightAction = self.editColumnsMenu.addAction(QIcon(':tools/movecolumnleft.png'), self.tr('Move left'))
         self.moveColumnRightAction.setShortcut('Ctrl+M, Left')
@@ -556,9 +577,9 @@ class QCsv(QTableView):
         self.insertRowBottomAction.setShortcut('Ctrl+L, Down')
         self.editRowsMenu.addSeparator()
         self.moveRowTopAction = self.editRowsMenu.addAction(QIcon(':tools/moverowtop.png'), self.tr('Move top'))
-        self.moveRowTopAction.setShortcut('Ctrl+M, Up')
+        self.moveRowTopAction.setShortcut('Ctrl+Shift+Up')
         self.moveRowBottomAction = self.editRowsMenu.addAction(QIcon(':tools/moverowbottom.png'), self.tr('Move bottom'))
-        self.moveRowBottomAction.setShortcut('Ctrl+M, Down')
+        self.moveRowBottomAction.setShortcut('Ctrl+Shift+Down')
         self.editRowsMenu.addSeparator()
         self.removeRowsAction = self.editRowsMenu.addAction(QIcon(':tools/removerow.png'), self.tr('Remove'))
         self.mergeRowsAction = self.editRowsMenu.addAction(QIcon(':tools/mergerows.png'), self.tr('Merge'))
@@ -943,14 +964,30 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def moveRows(self, from_, count=None):
+    def moveRows(self, move=MoveDirection.AfterMove, count=None):
         # esta seleccion es el DESTINO, en el portapapeles estará el origen
         # y una vez "pegado" hay que eliminar el origen
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        # insert row
-        # copy data
-        # remove row
-        pass
+        if isValid:
+            if count == None:
+                count = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if count > 0:
+                # move row
+                row = topLeftIndex.row()
+                destinationRow = row + count
+                if move == MoveDirection.BeforeMove:
+                    destinationRow = row - 2
+                model = self.model()
+                model.moveRows(row, count, destinationRow)
+                # new selection
+                topLeftIndex = model.createIndex(topLeftIndex.row()+1, topLeftIndex.column())
+                bottomRightIndex = model.createIndex(bottomRightIndex.row()+1, topLeftIndex.column())
+                self.setCurrentIndex(topLeftIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             topLeftIndex.column(),
+                             bottomRightIndex.row(),
+                             bottomRightIndex.column())
 
     def moveColumns(self, to, from_, count=None):
         pass
