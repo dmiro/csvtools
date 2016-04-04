@@ -783,10 +783,26 @@ if __name__ == '__main__':
             # test 2
             #
             sh = Sheet(arraydataIn=arrayData)
-            sh.moveRows(1, 1, 2)
+            sh.moveRows(0, 2, 3)
             print arrayData
             print sh.arrayData()
-            self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],['6','7','8','9','10'],['a','e','i','o','u'],['11','12','13','14','15']])
+            self.assertEqual(sh.arrayData(), [['6','7','8','9','10'],['1','2','3','4','5'],['a','e','i','o','u'],['11','12','13','14','15']])
+            #
+            # test 3
+            #
+            sh = Sheet(arraydataIn=arrayData)
+            sh.moveRows(0, 2, 2)
+            print arrayData
+            print sh.arrayData()
+            self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],['a','e','i','o','u'],['6','7','8','9','10'],['11','12','13','14','15']])
+            #
+            # test 4
+            #
+            sh = Sheet(arraydataIn=arrayData)
+            sh.moveRows(3, 1, 0)
+            print arrayData
+            print sh.arrayData()
+            self.assertEqual(sh.arrayData(), [['11','12','13','14','15'],['1','2','3','4','5'],['a','e','i','o','u'],['6','7','8','9','10']])
 
     unittest.main()
 
