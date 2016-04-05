@@ -50,11 +50,11 @@ class Sheet(object):
 
     def _expand(self, row, column):
         # rows
-        rowsMissing =  row - len(self._arraydata) + 1
-        self._arraydata.extend([[] for _ in xrange(rowsMissing)])
+        missingRows =  row - len(self._arraydata) + 1
+        self._arraydata.extend([[] for _ in xrange(missingRows)])
         # columns
-        columnsMissing = column - len(self._arraydata[row]) + 1
-        self._arraydata[row].extend([self._valueClass('')]*columnsMissing)
+        missingColumns = column - len(self._arraydata[row]) + 1
+        self._arraydata[row].extend([self._valueClass('')]*missingColumns)
 
     def _constraint(self):
         # rows
@@ -99,7 +99,7 @@ class Sheet(object):
         if column < 0:
             raise IndexError('column index must be positive')
         if not isinstance(cellValue, self._valueClass):
-            raise TypeError('cellValue != '+self._valueClass.__class__.__name__)
+            raise TypeError('cellValue != ' + self._valueClass.__class__.__name__)
         # expand rows & columns
         self._expand(row, column)
         # set value
@@ -184,7 +184,10 @@ class Sheet(object):
     def insertEmptyRow(self, row):
         self.insertEmptyRows(row, 1)
 
-    def insertColumns(self, startColumn, count):
+    #def insertColumns(self, startColumn, columns):
+    #    pass
+
+    def insertEmptyColumns(self, startColumn, count):
         if startColumn < 0:
             raise IndexError('column index must be positive')
         if count < 1:
@@ -200,8 +203,8 @@ class Sheet(object):
             # constraint rows & columns
             self._constraint()
 
-    def insertColumn(self, startColumn):
-        self.insertColumns(startColumn, 1)
+    def insertEmptyColumn(self, startColumn):
+        self.insertEmptyColumns(startColumn, 1)
 
     def moveRows(self, originRow, count, destinationRow):
         # checks
@@ -212,25 +215,61 @@ class Sheet(object):
         if count < 1:
             raise IndexError('count must be higher than zero')
         if destinationRow in range(originRow, originRow+count):
-            raise IndexError('destination row cannot be within rows to move')
+            raise IndexError('destinationRow cannot be within rows to move')
         # calculate source rows empty and missing
         if originRow >= self.rowCount():
-            rowsData = 0
-            rowsMissing = count
+            dataRows = 0
+            missingRows = count
         else:
-            rowsData = min(self.rowCount() - originRow, count)
-            rowsMissing = count - rowsData
+            dataRows = min(self.rowCount() - originRow, count)
+            missingRows = count - dataRows
         # move
         self.insertRows(destinationRow,
-                        self._arraydata[originRow: originRow + rowsData] + [[] for _ in xrange(rowsMissing)])
-        if rowsData > 0:
+                        self._arraydata[originRow: originRow + dataRows] + [[] for _ in xrange(missingRows)])
+        if dataRows > 0:
             if destinationRow < originRow:
                 self.removeRows(originRow + count,
-                                originRow + count + rowsData - 1)
+                                originRow + count + dataRows - 1)
             else:
                 self.removeRows(originRow,
-                                originRow+rowsData-1)
+                                originRow + dataRows - 1)
 
+    def moveRow(self, originRow, destinationRow):
+        self.moveRows(originRow, 1, destinationRow)
+
+    def moveColumns(self, originColumn, count, destinationColumn):
+        pass
+##        # checks
+##        if originColumn < 0:
+##            raise IndexError('originColumn index must be positive')
+##        if destinationColumn < 0:
+##            raise IndexError('destinationColumn index must be positive')
+##        if count < 1:
+##            raise IndexError('count must be higher than zero')
+##        if destinationColumn in range(originColumn, originColumn+count):
+##            raise IndexError('destinationColumn cannot be within columns to move')
+##        #
+##        self.insertEmptyColumns(destinationColumn, count)
+##        # loop rows
+##        for index, row in enumerate(self._arraydata):
+##            # calculate source columns empty and missing
+##            columnCount = len(row)
+##            if originColumn >= columnCount:
+##                dataColumns = 0
+##                missingColumns = count
+##            else:
+##                dataColumns = min(columnCount - originColumn, count)
+##                missingColumns = count - dataColumns
+##            # move       
+##            self.setValue( 
+##            row[originColumn: originColumn + dataColumns] + [self._valueClass('')] * for _ in xrange(missingColumns)])
+##            if dataColumns > 0:
+##                if destinationColumn < originColumn:
+##                    self.removeColumns(originColumn + count,
+##                                       originColumn + count + dataColumns - 1)
+##                else:
+##                    self.removeColumns(originColumn,
+##                                       originColumn + dataColumns - 1)
 
 #
 # test
@@ -685,7 +724,7 @@ if __name__ == '__main__':
             with self.assertRaises(IndexError):
                 sh.insertEmptyRows(2, 0)
 
-        def test_insert_column(self):
+        def test_insert_empty_column(self):
             arrayData = [[],
                          [QString('1-0'), QString('1-1')],
                          ['',             QString('2-1'), QString('2-2')],
@@ -694,7 +733,7 @@ if __name__ == '__main__':
             # test 1: insert one column to the middle
             #
             sh = Sheet(valueClass=QString, arraydataIn=arrayData)
-            sh.insertColumn(2)
+            sh.insertEmptyColumn(2)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 4)
             self.assertEqual(sh.value(0,0), '')
@@ -711,7 +750,7 @@ if __name__ == '__main__':
             # test 2: insert column in tenth position it has not effect.
             #
             sh = Sheet(valueClass=QString, arraydataIn=arrayData)
-            sh.insertColumn(10)
+            sh.insertEmptyColumn(10)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             self.assertEqual(sh.value(0,0), '')
@@ -727,7 +766,7 @@ if __name__ == '__main__':
             # test 3
             #
             sh = Sheet(valueClass=QString, arraydataIn=arrayData)
-            sh.insertColumn(0)
+            sh.insertEmptyColumn(0)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 4)
             self.assertEqual(sh.value(0,0), '')
@@ -747,11 +786,11 @@ if __name__ == '__main__':
             # test 4
             #
             sh = Sheet(valueClass=QString)
-            sh.insertColumn(2)
+            sh.insertEmptyColumn(2)
             self.assertEqual(sh.rowCount(), 0)
             self.assertEqual(sh.columnCount(), 0)
 
-        def test_insert_columns(self):
+        def test_insert_empty_columns(self):
             arrayData = [[],
                          [QString('1-0'), QString('1-1')],
                          ['',             QString('2-1'), QString('2-2')],
@@ -760,28 +799,28 @@ if __name__ == '__main__':
             # test 1
             #
             sh = Sheet(valueClass=QString, arraydataIn=arrayData)
-            sh.insertColumns(2, 3)
+            sh.insertEmptyColumns(2, 3)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 6)
             #
             # test 2: insert three columns to column tenth position it has no effect
             #
             sh = Sheet(valueClass=QString, arraydataIn=arrayData)
-            sh.insertColumns(10, 3)
+            sh.insertEmptyColumns(10, 3)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
             # test 3: insert three columns to the top
             #
             sh = Sheet(valueClass=QString, arraydataIn=arrayData)
-            sh.insertColumns(0, 3)
+            sh.insertEmptyColumns(0, 3)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 6)
             #
             # test 4: insert columns in empty sheet results a empty sheet
             #
             sh = Sheet(valueClass=QString)
-            sh.insertColumns(2, 10)
+            sh.insertEmptyColumns(2, 10)
             self.assertEqual(sh.rowCount(), 0)
             self.assertEqual(sh.columnCount(), 0)
             #
@@ -789,7 +828,7 @@ if __name__ == '__main__':
             #
             sh = Sheet(valueClass=QString)
             with self.assertRaises(IndexError):
-                sh.insertColumns(2, 0)
+                sh.insertEmptyColumns(2, 0)
 
         def test_insert_rows(self):
             arrayData = [['1','2'], ['a','e'], ['6','7'], ['11','12']]
@@ -823,6 +862,25 @@ if __name__ == '__main__':
             sh = Sheet(arraydataIn=arrayData)
             sh.insertRows(6, arrayData[0:2])
             self.assertEqual(sh.arrayData(), [['1','2'], ['a','e'], ['6','7'], ['11','12'],[],[],['1','2'], ['a','e']])
+
+        def test_move_row(self):
+            arrayData = [['1','2','3','4','5'],
+                        ['a','e','i','o','u'],
+                        ['6','7','8','9','10'],
+                        ['11','12','13','14','15']]
+            #
+            # test 1
+            #
+            sh = Sheet(arraydataIn=arrayData)
+            sh.moveRow(0, 2)
+            self.assertEqual(sh.arrayData(), [['a','e','i','o','u'], ['1','2','3','4','5'], ['6','7','8','9','10'], ['11','12','13','14','15']])
+            #
+            # test 2
+            #
+            sh = Sheet(arraydataIn=arrayData)
+            sh.moveRow(2, 5)
+            self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],['a','e','i','o','u'],['11','12','13','14','15'],[],['6','7','8','9','10']])
+
 
         def test_move_rows(self):
             arrayData = [['1','2','3','4','5'],
