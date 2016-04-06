@@ -34,6 +34,10 @@ class MyTableView(QTableView):
         self.sum_ = sum_
         self.setSortingEnabled(True)
 
+#
+# class QItemDataBorderDelegate
+#
+
 class QItemDataBorderDelegate(QStyledItemDelegate):
     def __init__ (self, parent = None):
         super(QItemDataBorderDelegate, self).__init__ (parent)
@@ -93,34 +97,23 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
                     painter.drawLine(option.rect.bottomRight(), option.rect.bottomLeft())
         super(QItemDataBorderDelegate, self).paint(painter, option, index)
 
+#
+# class MyTableModel
+#
 
 class MyTableModel(QAbstractTableModel):
 
     #
-    # private
+    # init
     #
 
-    def _getMaxDataColumn(self):
-        return max(len(row) for row in self.arraydata)
-
-##    def _rowIsEmpty(self, rowIndex):
-##        if len(self.arraydata[rowIndex]) == 0:
-##            return True
-##        if max(len(cell) for cell in self.arraydata[rowIndex]) == 0:
-##            return True
-##        return False
-
-##    def _columnIsEmpty(self, columnIndex):
-##        for row in self.arraydata:
-##            if len(row) > columnIndex:
-##                if len(row[columnIndex]) > 0:
-##                    return False
-##        return True
-
-##    def _deleteColumn(self, columnIndex):
-##        for row in self.arraydata:
-##            if len(row) > columnIndex:
-##                del(row[columnIndex])
+    def __init__(self, document, headerrow=False, parent=None, *args):
+        QAbstractTableModel.__init__(self, parent, *args)
+        self.headerrow= headerrow
+        self.document= document
+        self.pointSize= QFont().pointSize()
+        self.columnCorner = 0
+        self.rowCorner = 0
 
     #
     # public
@@ -142,16 +135,20 @@ class MyTableModel(QAbstractTableModel):
         self.columnCorner = value
         self.endInsertColumns()
 
+    def setPointSize(self, pointSize):
+        """set font size"""
+        self.pointSize = pointSize
+
     def rowDataCount(self, parent=QModelIndex()):
         """get row count real data"""
         if self.headerrow:
-            return len(self.arraydata)-1
+            return self.document.rowCount() - 1
         else:
-            return len(self.arraydata)
+            return self.document.rowCount()
 
     def columnDataCount(self, parent=QModelIndex()):
         """get column count real data"""
-        return self._maxDataColumn
+        return self.document.columnCount()
 
     def rowCount(self, parent=QModelIndex()):
         """get the total virtual rows calculated based on the number of actual
@@ -169,12 +166,9 @@ class MyTableModel(QAbstractTableModel):
             return self.columnDataCount()
         return column
 
-    def setPointSize(self, pointSize):
-        self.pointSize = pointSize
-
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if self.headerrow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return QVariant(self.arraydata[0][section])
+            return QVariant(self.document.value(0, section))
         elif role == Qt.FontRole:
             font = QFont()
             font.setPointSize(self.pointSize)
@@ -195,13 +189,7 @@ class MyTableModel(QAbstractTableModel):
             columnIndex = index.column()
             if self.headerrow:
                 rowIndex = rowIndex + 1
-            c = Sheet(valueClass=QString, arraydataIn=self.arraydata)
-            return c.value(rowIndex, columnIndex)
-
-##            if len(self.arraydata) > (rowIndex):
-##                if len(self.arraydata[rowIndex]) > columnIndex:
-##                    return QVariant(self.arraydata[rowIndex][columnIndex])
-
+            return self.document.value(rowIndex, columnIndex)
 #        elif role == Qt.BackgroundRole:
 #            return QBrush(QColor(8, 8, 8, 8))
 ##        elif role == Qt.BackgroundRole:
@@ -220,67 +208,19 @@ class MyTableModel(QAbstractTableModel):
             if self.headerrow:
                 rowIndex = rowIndex + 1
             # set data
-            c = Sheet(valueClass=QString, arraydataIn=self.arraydata)
-            c.setValue(rowIndex, columnIndex, value.toString())
-            self._maxDataColumn = c.columnCount()
+            self.document.setValue(rowIndex, columnIndex, value.toString())
             # emit data changed
             bottomRight = self.createIndex(self.rowCount(), self.columnCount())
             self.dataChanged.emit(index, bottomRight)
             return True
         return False
 
-##    def setData2(self, index, value, role=Qt.EditRole):
-##        if role == Qt.EditRole:
-##            # calculate row and column index
-##            rowIndex = index.row()
-##            columnIndex = index.column()
-##            if self.headerrow:
-##                rowIndex = rowIndex + 1
-##            # expand rows
-##            if len(self.arraydata) <= rowIndex:
-##                rowsMissing =  rowIndex - len(self.arraydata) + 1
-##                self.arraydata.extend([[] for _ in xrange(rowsMissing) ])
-##            # expand columns
-##            if len(self.arraydata[rowIndex]) <= columnIndex:
-##                columnsMissing = columnIndex - len(self.arraydata[rowIndex]) + 1
-##                self.arraydata[rowIndex].extend([QString('')]*columnsMissing)
-##            # set value
-##            self.arraydata[rowIndex][columnIndex] = value.toString()
-##            # if required, constraint rows
-##            if len(self.arraydata) - 1 == rowIndex:
-##                if value.toString().isEmpty():
-##                    while rowIndex > 0 and self._rowIsEmpty(-1):
-##                        self.arraydata.pop()
-##                        rowIndex = rowIndex - 1
-##            # if required, constraint columns
-##            if len(self.arraydata[rowIndex]) - 1 == columnIndex:
-##                if value.toString().isEmpty():
-##                    while columnIndex > 0 and self._columnIsEmpty(columnIndex):
-##                       self._deleteColumn(columnIndex)
-##                       columnIndex = columnIndex - 1
-##            # update max data column
-##            if len(self.arraydata[rowIndex]) > self._maxDataColumn:
-##                self._maxDataColumn = len(self.arraydata[rowIndex])
-##            elif len(self.arraydata[rowIndex]) < self._maxDataColumn:
-##                self._maxDataColumn =  self._getMaxDataColumn()
-##            # emit data changed
-##            bottomRight = self.createIndex(self.rowCount(), self.columnCount())
-##            self.dataChanged.emit(index, bottomRight)
-##            return True
-##        return False
-
     def flags(self, index):
         return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def insertRows(self, row, count, parent = QModelIndex()):
         self.beginInsertRows(parent, row, row+count)
-        c = Sheet(valueClass=QString, arraydataIn=self.arraydata)
-        c.insertEmptyRows(row, count)
-
-##        for _ in xrange(count):
-##            self.arraydata.insert(row,[])
-##        self._maxDataColumn = self._getMaxDataColumn()
-
+        self.document.insertEmptyRows(row, count)
         self.endInsertRows()
         return True
 
@@ -289,11 +229,7 @@ class MyTableModel(QAbstractTableModel):
 
     def insertColumns(self, column, count, parent = QModelIndex()):
         self.beginInsertColumns(parent, column, column+count)
-        for row in self.arraydata:
-            if len(row) >= column:
-                for _ in xrange(count):
-                    row.insert(column, QString(''))
-        self._maxDataColumn = self._getMaxDataColumn()
+        self.document.insertEmptyColumns(column, count)
         self.endInsertColumns()
         return True
 
@@ -302,9 +238,7 @@ class MyTableModel(QAbstractTableModel):
 
     def removeRows(self, row, count, parent = QModelIndex()):
         self.beginRemoveRows(parent, row, row+count)
-        for _ in xrange(count):
-            self.arraydata.pop(row)
-        self._maxDataColumn = self._getMaxDataColumn()
+        self.document.removeRows(row, row+count)
         self.endRemoveRows()
         return True
 
@@ -313,11 +247,7 @@ class MyTableModel(QAbstractTableModel):
 
     def removeColumns(self, column, count, parent = QModelIndex()):
         self.beginRemoveColumns(parent, column, column+count)
-        for row in self.arraydata:
-            for _ in xrange(count):
-                if len(row) > column:
-                    row.pop(column)
-        self._maxDataColumn = self._getMaxDataColumn()
+        self.document.removeColumns(column, column+count)
         self.endRemoveColumns()
         return True
 
@@ -326,44 +256,25 @@ class MyTableModel(QAbstractTableModel):
 
     def moveRows(self, sourceRow, count, destinationRow, parent = QModelIndex()):
         self.beginInsertRows(parent, sourceRow, sourceRow+count)
-        c = Sheet(valueClass=QString, arraydataIn=self.arraydata)
-        c.moveRows(sourceRow, count, destinationRow)
-        self._maxDataColumn = c.columnCount()
+        self.document.moveRows(sourceRow, count, destinationRow)
         self.endInsertRows()
+        return True
+
+    def moveRow(self, sourceRow, destinationRow, parent = QModelIndex()):
+        return self.moveRows(sourceRow, 1, destinationRow, parent)
 
     def moveColumns(self, sourceColumn, count, destinationColumn, parent = QModelIndex()):
         self.beginInsertColumns(parent, sourceColumn, sourceColumn+count)
-        c = Sheet(valueClass=QString, arraydataIn=self.arraydata)
-        c.moveColumns(sourceColumn, count, destinationColumn)
-        self._maxDataColumn = c.columnCount()
+        self.document.moveColumns(sourceColumn, count, destinationColumn)
         self.endInsertColumns()
+        return True
 
-##    def moveRows2(self, sourceRow, count, destinationRow, parent = QModelIndex()):
-##        #self.beginMoveRows (parent, sourceRow, sourceRow+count, parent, destinationRow)
-##        # expand rows
-##        if len(self.arraydata) <= destinationRow:
-##            rowsMissing =  destinationRow - len(self.arraydata) + 1
-##            self.arraydata.extend([[] for _ in xrange(rowsMissing) ])
-##        # insert
-##        for index in xrange(sourceRow+count-1, sourceRow-1, -1):
-##            self.arraydata.insert(destinationRow+1, self.arraydata[index])
-##        # delete
-##        for _ in xrange(sourceRow, sourceRow+count):
-##            del(self.arraydata[sourceRow])
-##        #self.endMoveRows()
+    def moveColumn(self, sourceColumn, destinationColumn, parent = QModelIndex()):
+        return self.moveColumns(sourceColumn, 1, destinationColumn, parent)
 
-    #
-    # init
-    #
-
-    def __init__(self, datain, headerrow=False, parent=None, *args):
-        QAbstractTableModel.__init__(self, parent, *args)
-        self.headerrow= headerrow
-        self.arraydata= datain
-        self.pointSize= QFont().pointSize()
-        self.columnCorner = 0
-        self.rowCorner = 0
-        self._maxDataColumn = self._getMaxDataColumn()
+#
+# class QCsv
+#
 
 class QCsv(QTableView):
 
@@ -1111,7 +1022,7 @@ class QCsv(QTableView):
     def setDocument(self, document):
         self.document = document
         self.document.loadRequested.connect(self.loadRequested)
-        model = MyTableModel(self.document.data, config.config_headerrow)
+        model = MyTableModel(self.document, config.config_headerrow)
         self.setModel(model)
 
     def editMenu(self):

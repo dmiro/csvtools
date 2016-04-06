@@ -6,7 +6,7 @@ class Sheet(object):
     # init
     #
 
-    def __init__(self, valueClass=str, rowClass=list, arraydataIn=None):
+    def __init__(self, valueClass=str, rowClass=list, arraydataIn=None, **kwargs):
         self._rowClass = rowClass
         self._valueClass = valueClass
         self._maxColumnCount = 0
@@ -20,12 +20,12 @@ class Sheet(object):
     # private
     #
 
-    def _getMaxColumnCount(self):
+    def __getMaxColumnCount(self):
         if self._arraydata:
             return max(len(row) for row in self._arraydata)
         return 0
 
-    def _rowIsEmpty(self, row):
+    def __rowIsEmpty(self, row):
         """check if row is empty"""
         if len(self._arraydata[row]) == 0:
             return True
@@ -33,7 +33,7 @@ class Sheet(object):
             return True
         return False
 
-    def _columnIsEmpty(self, column):
+    def __columnIsEmpty(self, column):
         """check if column is empty"""
         for row in self._arraydata:
             if len(row) > 0:
@@ -42,17 +42,17 @@ class Sheet(object):
                         return False
         return True
 
-    def _removeLastRow(self):
+    def __removeLastRow(self):
         self._arraydata.pop()
 
-    def _removeLastColumn(self):
+    def __removeLastColumn(self):
         for row in self._arraydata:
                 columnCount = len(row)
                 if columnCount == self.columnCount():
                     row.pop()
         self._maxColumnCount = self._maxColumnCount - 1
 
-    def _expand(self, row, column=-1):
+    def __expand(self, row, column=-1):
         # rows
         if row >= 0:
             missingRows =  row - len(self._arraydata) + 1
@@ -64,15 +64,15 @@ class Sheet(object):
             if missingColumns > 0:
                 self._arraydata[row].extend([self._valueClass() for _ in xrange(missingColumns)])
 
-    def _constraint(self):
+    def __constraint(self):
         # rows
-        while self.rowCount() > 0 and self._rowIsEmpty(-1):
-            self._removeLastRow()
+        while self.rowCount() > 0 and self.__rowIsEmpty(-1):
+            self.__removeLastRow()
         # columns
-        while self.columnCount() > 0 and self._columnIsEmpty(-1):
-            self._removeLastColumn()
+        while self.columnCount() > 0 and self.__columnIsEmpty(-1):
+            self.__removeLastColumn()
         # update max column count
-        self._maxColumnCount =  self._getMaxColumnCount()
+        self._maxColumnCount =  self.__getMaxColumnCount()
 
     #
     # public
@@ -84,7 +84,7 @@ class Sheet(object):
     def setArrayData(self, arraydata):
         self._arraydata = arraydata
         # constraint rows & columns
-        self._constraint()
+        self.__constraint()
 
     def rowCount(self):
         """get row count"""
@@ -109,11 +109,11 @@ class Sheet(object):
         if not isinstance(cellValue, self._valueClass):
             raise TypeError('cellValue != ' + self._valueClass.__class__.__name__)
         # expand rows & columns
-        self._expand(row, column)
+        self.__expand(row, column)
         # set value
         self._arraydata[row][column] = cellValue
         # constraint rows & columns
-        self._constraint()
+        self.__constraint()
 
     def removeColumns(self, startColumn, endColumn):
         if startColumn < 0:
@@ -135,7 +135,7 @@ class Sheet(object):
                 if len(row) > index:
                     row.pop(index)
         # constraint rows & columns
-        self._constraint()
+        self.__constraint()
 
     def removeColumn(self, column):
         self.removeColumns(column, column)
@@ -158,7 +158,7 @@ class Sheet(object):
         for _ in xrange(abs(count)):
             self._arraydata.pop(index)
         # constraint rows & columns
-        self._constraint()
+        self.__constraint()
 
     def removeRow(self, row):
         self.removeRows(row, row)
@@ -169,11 +169,11 @@ class Sheet(object):
         if not rows:
             raise IndexError('rows is mandatory ')
         # expand rows
-        self._expand(startRow)
+        self.__expand(startRow)
         # insert
         self._arraydata[startRow:startRow] = rows
         # constraint rows & columns
-        self._constraint()
+        self.__constraint()
 
     def insertEmptyRows(self, startRow, count):
         if startRow < 0:
@@ -182,12 +182,12 @@ class Sheet(object):
             raise IndexError('count must higher than zero')
         if startRow < self.rowCount():
             # expand rows
-            self._expand(startRow)
+            self.__expand(startRow)
             # insert
             for _ in xrange(count):
                 self._arraydata.insert(startRow,[])
             # constraint rows & columns
-            self._constraint()
+            self.__constraint()
 
     def insertEmptyRow(self, row):
         self.insertEmptyRows(row, 1)
@@ -202,14 +202,14 @@ class Sheet(object):
             raise IndexError('count must higher than zero')
         if startColumn < self.columnCount():
             # expand rows & columns
-            self._expand(0, startColumn-1)
+            self.__expand(0, startColumn-1)
             # insert
             for row in self._arraydata:
                 if len(row) >= startColumn:
                     for _ in xrange(count):
                         row.insert(startColumn, self._valueClass(''))
             # constraint rows & columns
-            self._constraint()
+            self.__constraint()
 
     def insertEmptyColumn(self, startColumn):
         self.insertEmptyColumns(startColumn, 1)
@@ -254,7 +254,7 @@ class Sheet(object):
                             count,
                             destinationColumn)
         # update max column count
-        self._maxColumnCount =  self._getMaxColumnCount()
+        self._maxColumnCount =  self.__getMaxColumnCount()
 
     def moveColumn(self, originColumn, destinationColumn):
         self.moveColumns(originColumn, 1, destinationColumn)
