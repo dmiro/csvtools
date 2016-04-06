@@ -14,7 +14,6 @@ from widgets.csvwiz import QCsvWiz
 import lib.document
 from lib.config import config
 from lib.helper import waiting, get_excel_sheets, QStringToUnicode
-from lib.enums import InsertDirection
 import lib.images_rc
 import sys
 import os

@@ -5,10 +5,26 @@ class MatchModeEnum(object):
     EndsWith = 3
     RegularExpression = 4
 
-class InsertDirection(object):
+
+class InsertBlockDirectionEnum(object):
     AfterInsert = 0
     BeforeInsert = 1
 
-class MoveDirection(object):
+
+class MoveBlockDirectionEnum(object):
     AfterMove = 0
     BeforeMove = 1
+
+
+class InsertDirectionEnum(object):
+    LeftMove = 0
+    RightMove = 1
+    TopMove = 2
+    BottomMove = 3
+
+
+class MoveDirectionEnum(object):
+    LeftMove = 0
+    RightMove = 1
+    TopMove = 2
+    BottomMove = 3

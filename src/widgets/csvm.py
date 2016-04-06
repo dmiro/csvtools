@@ -3,7 +3,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from lib.config import config
 from lib.helper import get_size, QStringToUnicode
-from lib.enums import MatchModeEnum, InsertDirection, MoveDirection
+from lib.enums import MatchModeEnum, InsertBlockDirectionEnum, MoveBlockDirectionEnum
 from lib.sheet import Sheet
 from datetime import datetime
 import lib.exports
@@ -445,19 +445,19 @@ class QCsv(QTableView):
             return
 
         if action == self.insertColumnLeftAction:
-            self.insertColumns(insert=InsertDirection.BeforeInsert)
+            self.insertColumns(insert=InsertBlockDirectionEnum.BeforeInsert)
             return
 
         if action == self.insertColumnRightAction:
-            self.insertColumns(insert=InsertDirection.AfterInsert)
+            self.insertColumns(insert=InsertBlockDirectionEnum.AfterInsert)
             return
 
         if action == self.insertRowTopAction:
-            self.insertRows(insert=InsertDirection.BeforeInsert)
+            self.insertRows(insert=InsertBlockDirectionEnum.BeforeInsert)
             return
 
         if action == self.insertRowBottomAction:
-            self.insertRows(insert=InsertDirection.AfterInsert)
+            self.insertRows(insert=InsertBlockDirectionEnum.AfterInsert)
             return
 
         if action == self.removeRowsAction:
@@ -473,19 +473,19 @@ class QCsv(QTableView):
             return
 
         if action == self.moveRowTopAction:
-            self.moveRows(move=MoveDirection.BeforeMove)
+            self.moveRows(move=MoveBlockDirectionEnum.BeforeMove)
             return
 
         if action == self.moveRowBottomAction:
-            self.moveRows(move=MoveDirection.AfterMove)
+            self.moveRows(move=MoveBlockDirectionEnum.AfterMove)
             return
 
         if action == self.moveColumnLeftAction:
-            self.moveColumns(move=MoveDirection.BeforeMove)
+            self.moveColumns(move=MoveBlockDirectionEnum.BeforeMove)
             return
 
         if action == self.moveColumnRightAction:
-            self.moveColumns(move=MoveDirection.AfterMove)
+            self.moveColumns(move=MoveBlockDirectionEnum.AfterMove)
             return
 
         if action == self.selectAllEdit:
@@ -842,7 +842,7 @@ class QCsv(QTableView):
                                      topLeftIndexRow + numRowsData - 1,
                                      topLeftIndexColumn + numColumnsData - 1)
 
-    def insertRows(self, insert=InsertDirection.BeforeInsert, count=None):
+    def insertRows(self, insert=InsertBlockDirectionEnum.BeforeInsert, count=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
         # it's a valid selection
         if isValid:
@@ -851,7 +851,7 @@ class QCsv(QTableView):
             if count > 0:
                 # insert rows
                 row = topLeftIndex.row()
-                if insert == InsertDirection.AfterInsert:
+                if insert == InsertBlockDirectionEnum.AfterInsert:
                     row = row + count
                 model = self.model()
                 model.insertRows(row, count)
@@ -882,7 +882,7 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def insertColumns(self, insert=InsertDirection.BeforeInsert, count=None):
+    def insertColumns(self, insert=InsertBlockDirectionEnum.BeforeInsert, count=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
         # it's a valid selection
         if isValid:
@@ -891,7 +891,7 @@ class QCsv(QTableView):
             if count > 0:
                 # insert columns
                 column = topLeftIndex.column()
-                if insert == InsertDirection.AfterInsert:
+                if insert == InsertBlockDirectionEnum.AfterInsert:
                     column = column + count
                 model = self.model()
                 model.insertColumns(column, count)
@@ -923,7 +923,7 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def moveRows(self, move=MoveDirection.AfterMove, count=None):
+    def moveRows(self, move=MoveBlockDirectionEnum.AfterMove, count=None):
         # esta seleccion es el DESTINO, en el portapapeles estará el origen
         # y una vez "pegado" hay que eliminar el origen
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
@@ -934,12 +934,12 @@ class QCsv(QTableView):
                 # move row
                 row = topLeftIndex.row()
                 destinationRow = row + count + 1
-                if move == MoveDirection.BeforeMove:
+                if move == MoveBlockDirectionEnum.BeforeMove:
                     destinationRow = row - 1
                 model = self.model()
                 model.moveRows(row, count, destinationRow)
                 # new selection
-                if move == MoveDirection.AfterMove:
+                if move == MoveBlockDirectionEnum.AfterMove:
                     topLeftIndex = model.createIndex(topLeftIndex.row()+1, topLeftIndex.column())
                     bottomRightIndex = model.createIndex(bottomRightIndex.row()+1, bottomRightIndex.column())
                 else:
@@ -952,7 +952,7 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def moveColumns(self, move=MoveDirection.AfterMove, count=None):
+    def moveColumns(self, move=MoveBlockDirectionEnum.AfterMove, count=None):
         # esta seleccion es el DESTINO, en el portapapeles estará el origen
         # y una vez "pegado" hay que eliminar el origen
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
@@ -963,12 +963,12 @@ class QCsv(QTableView):
                 # move column
                 column = topLeftIndex.column()
                 destinationColumn = column + count + 1
-                if move == MoveDirection.BeforeMove:
+                if move == MoveBlockDirectionEnum.BeforeMove:
                     destinationColumn = column - 1
                 model = self.model()
                 model.moveColumns(column, count, destinationColumn)
                 # new selection
-                if move == MoveDirection.AfterMove:
+                if move == MoveBlockDirectionEnum.AfterMove:
                     topLeftIndex = model.createIndex(topLeftIndex.row(), topLeftIndex.column()+1)
                     bottomRightIndex = model.createIndex(bottomRightIndex.row(), bottomRightIndex.column()+1)
                 else:
