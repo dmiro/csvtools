@@ -4,6 +4,7 @@ from PyQt4.QtGui import *
 from lib.config import config
 from lib.helper import get_size, QStringToUnicode
 from lib.enums import MatchModeEnum, InsertDirection, MoveDirection
+from lib.sheet import Sheet
 from datetime import datetime
 import lib.exports
 import lib.imports
@@ -102,24 +103,24 @@ class MyTableModel(QAbstractTableModel):
     def _getMaxDataColumn(self):
         return max(len(row) for row in self.arraydata)
 
-    def _rowIsEmpty(self, rowIndex):
-        if len(self.arraydata[rowIndex]) == 0:
-            return True
-        if max(len(cell) for cell in self.arraydata[rowIndex]) == 0:
-            return True
-        return False
+##    def _rowIsEmpty(self, rowIndex):
+##        if len(self.arraydata[rowIndex]) == 0:
+##            return True
+##        if max(len(cell) for cell in self.arraydata[rowIndex]) == 0:
+##            return True
+##        return False
 
-    def _columnIsEmpty(self, columnIndex):
-        for row in self.arraydata:
-            if len(row) > columnIndex:
-                if len(row[columnIndex]) > 0:
-                    return False
-        return True
+##    def _columnIsEmpty(self, columnIndex):
+##        for row in self.arraydata:
+##            if len(row) > columnIndex:
+##                if len(row[columnIndex]) > 0:
+##                    return False
+##        return True
 
-    def _deleteColumn(self, columnIndex):
-        for row in self.arraydata:
-            if len(row) > columnIndex:
-                del(row[columnIndex])
+##    def _deleteColumn(self, columnIndex):
+##        for row in self.arraydata:
+##            if len(row) > columnIndex:
+##                del(row[columnIndex])
 
     #
     # public
@@ -194,9 +195,13 @@ class MyTableModel(QAbstractTableModel):
             columnIndex = index.column()
             if self.headerrow:
                 rowIndex = rowIndex + 1
-            if len(self.arraydata) > (rowIndex):
-                if len(self.arraydata[rowIndex]) > columnIndex:
-                    return QVariant(self.arraydata[rowIndex][columnIndex])
+            c = Sheet(valueClass=QString, arraydataIn=self.arraydata)
+            return c.value(rowIndex, columnIndex)
+
+##            if len(self.arraydata) > (rowIndex):
+##                if len(self.arraydata[rowIndex]) > columnIndex:
+##                    return QVariant(self.arraydata[rowIndex][columnIndex])
+
 #        elif role == Qt.BackgroundRole:
 #            return QBrush(QColor(8, 8, 8, 8))
 ##        elif role == Qt.BackgroundRole:
@@ -214,47 +219,68 @@ class MyTableModel(QAbstractTableModel):
             columnIndex = index.column()
             if self.headerrow:
                 rowIndex = rowIndex + 1
-            # expand rows
-            if len(self.arraydata) <= rowIndex:
-                rowsMissing =  rowIndex - len(self.arraydata) + 1
-                self.arraydata.extend([[] for _ in xrange(rowsMissing) ])
-            # expand columns
-            if len(self.arraydata[rowIndex]) <= columnIndex:
-                columnsMissing = columnIndex - len(self.arraydata[rowIndex]) + 1
-                self.arraydata[rowIndex].extend([QString('')]*columnsMissing)
-            # set value
-            self.arraydata[rowIndex][columnIndex] = value.toString()
-            # if required, constraint rows
-            if len(self.arraydata) - 1 == rowIndex:
-                if value.toString().isEmpty():
-                    while rowIndex > 0 and self._rowIsEmpty(-1):
-                        self.arraydata.pop()
-                        rowIndex = rowIndex - 1
-            # if required, constraint columns
-            if len(self.arraydata[rowIndex]) - 1 == columnIndex:
-                if value.toString().isEmpty():
-                    while columnIndex > 0 and self._columnIsEmpty(columnIndex):
-                       self._deleteColumn(columnIndex)
-                       columnIndex = columnIndex - 1
-            # update max data column
-            if len(self.arraydata[rowIndex]) > self._maxDataColumn:
-                self._maxDataColumn = len(self.arraydata[rowIndex])
-            elif len(self.arraydata[rowIndex]) < self._maxDataColumn:
-                self._maxDataColumn =  self._getMaxDataColumn()
+            # set data
+            c = Sheet(valueClass=QString, arraydataIn=self.arraydata)
+            c.setValue(rowIndex, columnIndex, value.toString())
+            self._maxDataColumn = c.columnCount()
             # emit data changed
             bottomRight = self.createIndex(self.rowCount(), self.columnCount())
             self.dataChanged.emit(index, bottomRight)
             return True
         return False
 
+##    def setData2(self, index, value, role=Qt.EditRole):
+##        if role == Qt.EditRole:
+##            # calculate row and column index
+##            rowIndex = index.row()
+##            columnIndex = index.column()
+##            if self.headerrow:
+##                rowIndex = rowIndex + 1
+##            # expand rows
+##            if len(self.arraydata) <= rowIndex:
+##                rowsMissing =  rowIndex - len(self.arraydata) + 1
+##                self.arraydata.extend([[] for _ in xrange(rowsMissing) ])
+##            # expand columns
+##            if len(self.arraydata[rowIndex]) <= columnIndex:
+##                columnsMissing = columnIndex - len(self.arraydata[rowIndex]) + 1
+##                self.arraydata[rowIndex].extend([QString('')]*columnsMissing)
+##            # set value
+##            self.arraydata[rowIndex][columnIndex] = value.toString()
+##            # if required, constraint rows
+##            if len(self.arraydata) - 1 == rowIndex:
+##                if value.toString().isEmpty():
+##                    while rowIndex > 0 and self._rowIsEmpty(-1):
+##                        self.arraydata.pop()
+##                        rowIndex = rowIndex - 1
+##            # if required, constraint columns
+##            if len(self.arraydata[rowIndex]) - 1 == columnIndex:
+##                if value.toString().isEmpty():
+##                    while columnIndex > 0 and self._columnIsEmpty(columnIndex):
+##                       self._deleteColumn(columnIndex)
+##                       columnIndex = columnIndex - 1
+##            # update max data column
+##            if len(self.arraydata[rowIndex]) > self._maxDataColumn:
+##                self._maxDataColumn = len(self.arraydata[rowIndex])
+##            elif len(self.arraydata[rowIndex]) < self._maxDataColumn:
+##                self._maxDataColumn =  self._getMaxDataColumn()
+##            # emit data changed
+##            bottomRight = self.createIndex(self.rowCount(), self.columnCount())
+##            self.dataChanged.emit(index, bottomRight)
+##            return True
+##        return False
+
     def flags(self, index):
         return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def insertRows(self, row, count, parent = QModelIndex()):
         self.beginInsertRows(parent, row, row+count)
-        for _ in xrange(count):
-            self.arraydata.insert(row,[])
-        self._maxDataColumn = self._getMaxDataColumn()
+        c = Sheet(valueClass=QString, arraydataIn=self.arraydata)
+        c.insertEmptyRows(row, count)
+
+##        for _ in xrange(count):
+##            self.arraydata.insert(row,[])
+##        self._maxDataColumn = self._getMaxDataColumn()
+
         self.endInsertRows()
         return True
 
@@ -299,18 +325,32 @@ class MyTableModel(QAbstractTableModel):
         return self.removeColumns(column, 1, parent)
 
     def moveRows(self, sourceRow, count, destinationRow, parent = QModelIndex()):
-        #self.beginMoveRows (parent, sourceRow, sourceRow+count, parent, destinationRow)
-        # expand rows
-        if len(self.arraydata) <= destinationRow:
-            rowsMissing =  destinationRow - len(self.arraydata) + 1
-            self.arraydata.extend([[] for _ in xrange(rowsMissing) ])
-        # insert
-        for index in xrange(sourceRow+count-1, sourceRow-1, -1):
-            self.arraydata.insert(destinationRow+1, self.arraydata[index])
-        # delete
-        for _ in xrange(sourceRow, sourceRow+count):
-            del(self.arraydata[sourceRow])
-        #self.endMoveRows()
+        self.beginInsertRows(parent, sourceRow, sourceRow+count)
+        c = Sheet(valueClass=QString, arraydataIn=self.arraydata)
+        c.moveRows(sourceRow, count, destinationRow)
+        self._maxDataColumn = c.columnCount()
+        self.endInsertRows()
+
+    def moveColumns(self, sourceColumn, count, destinationColumn, parent = QModelIndex()):
+        self.beginInsertColumns(parent, sourceColumn, sourceColumn+count)
+        c = Sheet(valueClass=QString, arraydataIn=self.arraydata)
+        c.moveColumns(sourceColumn, count, destinationColumn)
+        self._maxDataColumn = c.columnCount()
+        self.endInsertColumns()
+
+##    def moveRows2(self, sourceRow, count, destinationRow, parent = QModelIndex()):
+##        #self.beginMoveRows (parent, sourceRow, sourceRow+count, parent, destinationRow)
+##        # expand rows
+##        if len(self.arraydata) <= destinationRow:
+##            rowsMissing =  destinationRow - len(self.arraydata) + 1
+##            self.arraydata.extend([[] for _ in xrange(rowsMissing) ])
+##        # insert
+##        for index in xrange(sourceRow+count-1, sourceRow-1, -1):
+##            self.arraydata.insert(destinationRow+1, self.arraydata[index])
+##        # delete
+##        for _ in xrange(sourceRow, sourceRow+count):
+##            del(self.arraydata[sourceRow])
+##        #self.endMoveRows()
 
     #
     # init
@@ -529,6 +569,14 @@ class QCsv(QTableView):
             self.moveRows(move=MoveDirection.AfterMove)
             return
 
+        if action == self.moveColumnLeftAction:
+            self.moveColumns(move=MoveDirection.BeforeMove)
+            return
+
+        if action == self.moveColumnRightAction:
+            self.moveColumns(move=MoveDirection.AfterMove)
+            return
+
         if action == self.selectAllEdit:
             self.selectAll()
             return
@@ -558,23 +606,23 @@ class QCsv(QTableView):
         # columns submenu
         self.editColumnsMenu = self._editMenu.addMenu(self.tr('Columns'))
         self.insertColumnLeftAction = self.editColumnsMenu.addAction(QIcon(':tools/addcolumnleft.png'), self.tr('Insert left'))
-        self.insertColumnLeftAction.setShortcut('Ctrl+L, Left')
+        self.insertColumnLeftAction.setShortcut('Ctrl+K, Left')
         self.insertColumnRightAction = self.editColumnsMenu.addAction(QIcon(':tools/addcolumnright.png'), self.tr('Insert right'))
-        self.insertColumnRightAction.setShortcut('Ctrl+L, Right')
+        self.insertColumnRightAction.setShortcut('Ctrl+K, Right')
         self.editColumnsMenu.addSeparator()
-        self.moveColumnRightAction = self.editColumnsMenu.addAction(QIcon(':tools/movecolumnleft.png'), self.tr('Move left'))
-        self.moveColumnRightAction.setShortcut('Ctrl+M, Left')
+        self.moveColumnLeftAction = self.editColumnsMenu.addAction(QIcon(':tools/movecolumnleft.png'), self.tr('Move left'))
+        self.moveColumnLeftAction.setShortcut('Ctrl+Shift+Left')
         self.moveColumnRightAction = self.editColumnsMenu.addAction(QIcon(':tools/movecolumnright.png'), self.tr('Move right'))
-        self.moveColumnRightAction.setShortcut('Ctrl+M, Right')
+        self.moveColumnRightAction.setShortcut('Ctrl+Shift+Right')
         self.editColumnsMenu.addSeparator()
         self.removeColumnsAction = self.editColumnsMenu.addAction(QIcon(':tools/removecolumn.png'), self.tr('Remove'))
         self.mergeColumnsAction = self.editColumnsMenu.addAction(QIcon(':tools/mergecolumns.png'), self.tr('Merge'))
         # rows submenu
         self.editRowsMenu = self._editMenu.addMenu(self.tr('Rows'))
         self.insertRowTopAction = self.editRowsMenu.addAction(QIcon(':tools/addrowtop.png'), self.tr('Insert top'))
-        self.insertRowTopAction.setShortcut('Ctrl+L, Up')
+        self.insertRowTopAction.setShortcut('Ctrl+K, Up')
         self.insertRowBottomAction = self.editRowsMenu.addAction(QIcon(':tools/addrowbottom.png'), self.tr('Insert bottom'))
-        self.insertRowBottomAction.setShortcut('Ctrl+L, Down')
+        self.insertRowBottomAction.setShortcut('Ctrl+K, Down')
         self.editRowsMenu.addSeparator()
         self.moveRowTopAction = self.editRowsMenu.addAction(QIcon(':tools/moverowtop.png'), self.tr('Move top'))
         self.moveRowTopAction.setShortcut('Ctrl+Shift+Up')
@@ -974,14 +1022,18 @@ class QCsv(QTableView):
             if count > 0:
                 # move row
                 row = topLeftIndex.row()
-                destinationRow = row + count
+                destinationRow = row + count + 1
                 if move == MoveDirection.BeforeMove:
-                    destinationRow = row - 2
+                    destinationRow = row - 1
                 model = self.model()
                 model.moveRows(row, count, destinationRow)
                 # new selection
-                topLeftIndex = model.createIndex(topLeftIndex.row()+1, topLeftIndex.column())
-                bottomRightIndex = model.createIndex(bottomRightIndex.row()+1, topLeftIndex.column())
+                if move == MoveDirection.AfterMove:
+                    topLeftIndex = model.createIndex(topLeftIndex.row()+1, topLeftIndex.column())
+                    bottomRightIndex = model.createIndex(bottomRightIndex.row()+1, bottomRightIndex.column())
+                else:
+                    topLeftIndex = model.createIndex(topLeftIndex.row()-1, topLeftIndex.column())
+                    bottomRightIndex = model.createIndex(bottomRightIndex.row()-1, bottomRightIndex.column())
                 self.setCurrentIndex(topLeftIndex)
                 self.clearSelection()
                 self._select(topLeftIndex.row(),
@@ -989,8 +1041,35 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def moveColumns(self, to, from_, count=None):
-        pass
+    def moveColumns(self, move=MoveDirection.AfterMove, count=None):
+        # esta seleccion es el DESTINO, en el portapapeles estará el origen
+        # y una vez "pegado" hay que eliminar el origen
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        if isValid:
+            if count == None:
+                count = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if count > 0:
+                # move column
+                column = topLeftIndex.column()
+                destinationColumn = column + count + 1
+                if move == MoveDirection.BeforeMove:
+                    destinationColumn = column - 1
+                model = self.model()
+                model.moveColumns(column, count, destinationColumn)
+                # new selection
+                if move == MoveDirection.AfterMove:
+                    topLeftIndex = model.createIndex(topLeftIndex.row(), topLeftIndex.column()+1)
+                    bottomRightIndex = model.createIndex(bottomRightIndex.row(), bottomRightIndex.column()+1)
+                else:
+                    topLeftIndex = model.createIndex(topLeftIndex.row(), topLeftIndex.column()-1)
+                    bottomRightIndex = model.createIndex(bottomRightIndex.row(), bottomRightIndex.column()-1)
+                self.setCurrentIndex(topLeftIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             topLeftIndex.column(),
+                             bottomRightIndex.row(),
+                             bottomRightIndex.column())
+
 
     def selectRows(self, row, count):
         """Selects rows in the view"""

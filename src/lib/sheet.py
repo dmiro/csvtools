@@ -6,10 +6,14 @@ class Sheet(object):
     # init
     #
 
-    def __init__(self, valueClass=str, arraydataIn=[]):
+    def __init__(self, valueClass=str, rowClass=list, arraydataIn=None):
+        self._rowClass = rowClass
         self._valueClass = valueClass
         self._maxColumnCount = 0
-        self.setArrayData(copy.deepcopy(arraydataIn))
+        if arraydataIn == None:
+            self.setArrayData([])
+        else:
+            self.setArrayData(arraydataIn)
         super(Sheet, self).__init__()
 
     #
@@ -48,13 +52,17 @@ class Sheet(object):
                     row.pop()
         self._maxColumnCount = self._maxColumnCount - 1
 
-    def _expand(self, row, column):
+    def _expand(self, row, column=-1):
         # rows
-        missingRows =  row - len(self._arraydata) + 1
-        self._arraydata.extend([[] for _ in xrange(missingRows)])
+        if row >= 0:
+            missingRows =  row - len(self._arraydata) + 1
+            if missingRows > 0:
+                self._arraydata.extend([self._rowClass() for _ in xrange(missingRows)])
         # columns
-        missingColumns = column - len(self._arraydata[row]) + 1
-        self._arraydata[row].extend([self._valueClass('')]*missingColumns)
+        if column >= 0:
+            missingColumns = column - len(self._arraydata[row]) + 1
+            if missingColumns > 0:
+                self._arraydata[row].extend([self._valueClass() for _ in xrange(missingColumns)])
 
     def _constraint(self):
         # rows
@@ -160,8 +168,8 @@ class Sheet(object):
             raise IndexError('startRow index must be positive')
         if not rows:
             raise IndexError('rows is mandatory ')
-        # expand rows & columns
-        self._expand(startRow, 0)
+        # expand rows
+        self._expand(startRow)
         # insert
         self._arraydata[startRow:startRow] = rows
         # constraint rows & columns
@@ -173,8 +181,8 @@ class Sheet(object):
         if count < 1:
             raise IndexError('count must higher than zero')
         if startRow < self.rowCount():
-            # expand rows & columns
-            self._expand(startRow, 0)
+            # expand rows
+            self._expand(startRow)
             # insert
             for _ in xrange(count):
                 self._arraydata.insert(startRow,[])
@@ -209,13 +217,13 @@ class Sheet(object):
     def moveRows(self, originRow, count, destinationRow):
         # checks
         if originRow < 0:
-            raise IndexError('originRow index must be positive')
+            raise IndexError('origin index must be positive')
         if destinationRow < 0:
-            raise IndexError('destinationRow index must be positive')
+            raise IndexError('destination index must be positive')
         if count < 1:
             raise IndexError('count must be higher than zero')
         if destinationRow in range(originRow, originRow+count):
-            raise IndexError('destinationRow cannot be within rows to move')
+            raise IndexError('destination cannot be within place to move')
         # calculate source rows empty and missing
         if originRow >= self.rowCount():
             dataRows = 0
@@ -225,7 +233,7 @@ class Sheet(object):
             missingRows = count - dataRows
         # move
         self.insertRows(destinationRow,
-                        self._arraydata[originRow: originRow + dataRows] + [[] for _ in xrange(missingRows)])
+                        self._arraydata[originRow: originRow + dataRows] + [self._rowClass() for _ in xrange(missingRows)])
         if dataRows > 0:
             if destinationRow < originRow:
                 self.removeRows(originRow + count,
@@ -238,38 +246,18 @@ class Sheet(object):
         self.moveRows(originRow, 1, destinationRow)
 
     def moveColumns(self, originColumn, count, destinationColumn):
-        pass
-##        # checks
-##        if originColumn < 0:
-##            raise IndexError('originColumn index must be positive')
-##        if destinationColumn < 0:
-##            raise IndexError('destinationColumn index must be positive')
-##        if count < 1:
-##            raise IndexError('count must be higher than zero')
-##        if destinationColumn in range(originColumn, originColumn+count):
-##            raise IndexError('destinationColumn cannot be within columns to move')
-##        #
-##        self.insertEmptyColumns(destinationColumn, count)
-##        # loop rows
-##        for index, row in enumerate(self._arraydata):
-##            # calculate source columns empty and missing
-##            columnCount = len(row)
-##            if originColumn >= columnCount:
-##                dataColumns = 0
-##                missingColumns = count
-##            else:
-##                dataColumns = min(columnCount - originColumn, count)
-##                missingColumns = count - dataColumns
-##            # move       
-##            self.setValue( 
-##            row[originColumn: originColumn + dataColumns] + [self._valueClass('')] * for _ in xrange(missingColumns)])
-##            if dataColumns > 0:
-##                if destinationColumn < originColumn:
-##                    self.removeColumns(originColumn + count,
-##                                       originColumn + count + dataColumns - 1)
-##                else:
-##                    self.removeColumns(originColumn,
-##                                       originColumn + dataColumns - 1)
+        for row in self._arraydata:
+            column = Sheet(valueClass=self._valueClass,
+                           rowClass=self._valueClass,
+                           arraydataIn=row)
+            column.moveRows(originColumn,
+                            count,
+                            destinationColumn)
+        # update max column count
+        self._maxColumnCount =  self._getMaxColumnCount()
+
+    def moveColumn(self, originColumn, destinationColumn):
+        self.moveColumns(originColumn, 1, destinationColumn)
 
 #
 # test
@@ -428,7 +416,7 @@ if __name__ == '__main__':
 
         def test_emptySetArrayData(self):
             arrayData = []
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             #
             self.assertEqual(sh.rowCount(), 0)
             self.assertEqual(sh.columnCount(), 0)
@@ -439,7 +427,7 @@ if __name__ == '__main__':
                          [QString('1-0'), QString('1-1')],
                          ['', QString('2-1'), QString('2-2')],
                          [QString('3-0'), QString('3-1')]]
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             #
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
@@ -464,7 +452,7 @@ if __name__ == '__main__':
             #
             # test 1
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -480,7 +468,7 @@ if __name__ == '__main__':
             #
             # test 2
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -489,7 +477,7 @@ if __name__ == '__main__':
             #
             # test 3
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -511,7 +499,7 @@ if __name__ == '__main__':
             #
             # test 1
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -529,7 +517,7 @@ if __name__ == '__main__':
             #
             # test 2: negative indexes is not allowed
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -538,7 +526,7 @@ if __name__ == '__main__':
             #
             # test 3: empty all
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -563,7 +551,7 @@ if __name__ == '__main__':
             #
             # test 1
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -585,7 +573,7 @@ if __name__ == '__main__':
             #
             # test 2: insert row in tenth position it has no effect
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -604,7 +592,7 @@ if __name__ == '__main__':
             #
             # test 3
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -641,7 +629,7 @@ if __name__ == '__main__':
             #
             # test 1: insert three rows to the middle
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -669,7 +657,7 @@ if __name__ == '__main__':
             #
             # test 2: insert three rows to row tenth position it has no effect
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -688,7 +676,7 @@ if __name__ == '__main__':
             #
             # test 3: insert three rows to the top
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
@@ -732,7 +720,7 @@ if __name__ == '__main__':
             #
             # test 1: insert one column to the middle
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             sh.insertEmptyColumn(2)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 4)
@@ -749,7 +737,7 @@ if __name__ == '__main__':
             #
             # test 2: insert column in tenth position it has not effect.
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             sh.insertEmptyColumn(10)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
@@ -765,7 +753,7 @@ if __name__ == '__main__':
             #
             # test 3
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             sh.insertEmptyColumn(0)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 4)
@@ -798,21 +786,21 @@ if __name__ == '__main__':
             #
             # test 1
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             sh.insertEmptyColumns(2, 3)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 6)
             #
             # test 2: insert three columns to column tenth position it has no effect
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             sh.insertEmptyColumns(10, 3)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 3)
             #
             # test 3: insert three columns to the top
             #
-            sh = Sheet(valueClass=QString, arraydataIn=arrayData)
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy(arrayData))
             sh.insertEmptyColumns(0, 3)
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 6)
@@ -831,144 +819,173 @@ if __name__ == '__main__':
                 sh.insertEmptyColumns(2, 0)
 
         def test_insert_rows(self):
-            arrayData = [['1','2'], ['a','e'], ['6','7'], ['11','12']]
+            arrayData = [['1','2'],
+                         ['a','e'],
+                         ['6','7'],
+                         ['11','12']]
             #
             # test 1
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.insertRows(0, arrayData[0:1])
             self.assertEqual(sh.arrayData(), [['1','2',], ['1','2',], ['a','e'], ['6','7'], ['11','12']])
             #
             # test 2
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.insertRows(4, arrayData[0:1])
             self.assertEqual(sh.arrayData(), [['1','2'], ['a','e'], ['6','7'], ['11','12'], ['1','2']])
             #
             # test 3
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.insertRows(0, arrayData[0:2])
             self.assertEqual(sh.arrayData(), [['1','2'],['a','e'],['1','2'], ['a','e'], ['6','7'], ['11','12']])
             #
             # test 4
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.insertRows(4, arrayData[0:2])
             self.assertEqual(sh.arrayData(), [['1','2'], ['a','e'], ['6','7'], ['11','12'], ['1','2'], ['a','e']])
             #
             # test 5
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.insertRows(6, arrayData[0:2])
             self.assertEqual(sh.arrayData(), [['1','2'], ['a','e'], ['6','7'], ['11','12'],[],[],['1','2'], ['a','e']])
 
         def test_move_row(self):
             arrayData = [['1','2','3','4','5'],
-                        ['a','e','i','o','u'],
-                        ['6','7','8','9','10'],
-                        ['11','12','13','14','15']]
+                         ['a','e','i','o','u'],
+                         ['6','7','8','9','10'],
+                         ['11','12','13','14','15']]
             #
             # test 1
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRow(0, 2)
             self.assertEqual(sh.arrayData(), [['a','e','i','o','u'], ['1','2','3','4','5'], ['6','7','8','9','10'], ['11','12','13','14','15']])
             #
             # test 2
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRow(2, 5)
             self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],['a','e','i','o','u'],['11','12','13','14','15'],[],['6','7','8','9','10']])
 
 
         def test_move_rows(self):
             arrayData = [['1','2','3','4','5'],
-                        ['a','e','i','o','u'],
-                        ['6','7','8','9','10'],
-                        ['11','12','13','14','15']]
+                         ['a','e','i','o','u'],
+                         ['6','7','8','9','10'],
+                         ['11','12','13','14','15']]
             #
             # test 1
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(0, 1, 2)
             self.assertEqual(sh.arrayData(), [['a','e','i','o','u'], ['1','2','3','4','5'], ['6','7','8','9','10'], ['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 2
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(0, 2, 3)
             self.assertEqual(sh.arrayData(), [['6','7','8','9','10'],['1','2','3','4','5'],['a','e','i','o','u'],['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 3
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(0, 2, 2)
             self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],['a','e','i','o','u'],['6','7','8','9','10'],['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 4
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(3, 1, 0)
             self.assertEqual(sh.arrayData(), [['11','12','13','14','15'],['1','2','3','4','5'],['a','e','i','o','u'],['6','7','8','9','10']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 5
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(3, 1, 6)
             self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],['a','e','i','o','u'],['6','7','8','9','10'],[],[],['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 6)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 6
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(5, 2, 1)
             self.assertEqual(sh.arrayData(), [['1', '2', '3', '4', '5'],[], [],['a', 'e', 'i', 'o', 'u'],['6', '7', '8', '9', '10'],['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 6)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 7
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(3, 2, 1)
             self.assertEqual(sh.arrayData(), [['1', '2', '3', '4', '5'], ['11','12','13','14','15'], [], ['a', 'e', 'i', 'o', 'u'], ['6', '7', '8', '9', '10']])
+            self.assertEqual(sh.rowCount(), 5)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 8
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(5, 1, 1)
             self.assertEqual(sh.arrayData(), [['1', '2', '3', '4', '5'],[],['a', 'e', 'i', 'o', 'u'],['6', '7', '8', '9', '10'],['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 5)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 9
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(5, 2, 0)
             self.assertEqual(sh.arrayData(), [[], [],['1', '2', '3', '4', '5'],['a', 'e', 'i', 'o', 'u'],['6', '7', '8', '9', '10'],['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 6)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 10
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(5, 2, 4)
             self.assertEqual(sh.arrayData(), [['1', '2', '3', '4', '5'],['a', 'e', 'i', 'o', 'u'],['6', '7', '8', '9', '10'],['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 11
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(50, 20, 40)
             self.assertEqual(sh.arrayData(), [['1', '2', '3', '4', '5'],['a', 'e', 'i', 'o', 'u'],['6', '7', '8', '9', '10'],['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 12
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(0, 1, 5)
             self.assertEqual(sh.arrayData(), [['a', 'e', 'i', 'o', 'u'],['6', '7', '8', '9', '10'],['11','12','13','14','15'],[],['1', '2', '3', '4', '5']])
+            self.assertEqual(sh.rowCount(), 5)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 13
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             sh.moveRows(0, 1, 7)
             self.assertEqual(sh.arrayData(), [['a', 'e', 'i', 'o', 'u'],['6', '7', '8', '9', '10'],['11','12','13','14','15'],[],[],[],['1', '2', '3', '4', '5']])
+            self.assertEqual(sh.rowCount(), 7)
+            self.assertEqual(sh.columnCount(), 5)
             #
             # test 14
             #
-            sh = Sheet(arraydataIn=arrayData)
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
             with self.assertRaises(IndexError):
                 sh.moveRows(0, 2, 0)
             with self.assertRaises(IndexError):
@@ -980,7 +997,56 @@ if __name__ == '__main__':
             with self.assertRaises(IndexError):
                 sh.moveRows(2, 2, 3)
 
+        def test_move_columns(self):
+            arrayData = [['1','2','3','4','5'],
+                         ['a','e','i','o','u'],
+                         ['6','7','8','9','10'],
+                         ['11','12','13','14','15']]
+            #
+            # test 1
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.moveColumns(0, 1, 2)
+            self.assertEqual(sh.arrayData(), [['2','1','3','4','5'],
+                                              ['e','a','i','o','u'],
+                                              ['7','6','8','9','10'],
+                                              ['12','11','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
+            #
+            # test 2
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.moveColumns(0, 2, 3)
+            self.assertEqual(sh.arrayData(), [['3','1','2','4','5'],
+                                              ['i','a','e','o','u'],
+                                              ['8','6','7','9','10'],
+                                              ['13','11','12','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
+            #
+            # test 3
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.moveColumns(0, 1, 6)
+            self.assertEqual(sh.arrayData(), [['2','3','4','5','','1'],
+                                              ['e','i','o','u','','a'],
+                                              ['7','8','9','10','','6'],
+                                              ['12','13','14','15','','11']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 6)
+            #
+            # test 4
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.moveColumns(50, 2, 100)
+            self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],
+                                              ['a','e','i','o','u'],
+                                              ['6','7','8','9','10'],
+                                              ['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
+
+
     unittest.main()
-
-
 
