@@ -40,7 +40,7 @@ class MyTableView(QTableView):
 
 class QItemDataBorderDelegate(QStyledItemDelegate):
     def __init__ (self, parent = None):
-        super(QItemDataBorderDelegate, self).__init__ (parent)
+        super(QItemDataBorderDelegate, self).__init__(parent)
 
     def _drawLinesBorderSelectionRanges(self, index):
         tableView = self.parent()
@@ -507,9 +507,11 @@ class QCsv(QTableView):
         self.copyToClipboard.setShortcut(QKeySequence.Copy)
         self.pasteFromClipboard = self._editMenu.addAction(QIcon(':images/paste.png'), self.tr('Paste'))
         self.pasteFromClipboard.setShortcut(QKeySequence.Paste)
-        self.insertFromClipboard = self._editMenu.addAction(self.tr('Insert'))
+        self.insertFromClipboard = self._editMenu.addAction(self.tr('Insert...'))
         self.insertFromClipboard.setShortcut('Ctrl+Ins')
-        self.deleteEdit = self._editMenu.addAction(self.tr('Delete'))
+        self.removeEdit = self._editMenu.addAction(self.tr('Remove...'))
+        self.removeEdit.setShortcut('Ctrl+Delete')
+        self.deleteEdit = self._editMenu.addAction(self.tr('Delete content'))
         self.deleteEdit.setShortcut(QKeySequence.Delete)
         self.selectAllEdit = self._editMenu.addAction(QIcon(':images/all.png'), self.tr('Select All'))
         self.selectAllEdit.setShortcut(QKeySequence.SelectAll)

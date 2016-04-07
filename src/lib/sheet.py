@@ -144,7 +144,7 @@ class Sheet(object):
         if startRow < 0:
             raise IndexError('row index must be positive')
         if endRow < 0:
-            raise IndexError('row inde must be positive')
+            raise IndexError('row index must be positive')
         if startRow >= self.rowCount():
             raise IndexError('row index out of range')
         if endRow >= self.rowCount():
@@ -165,7 +165,7 @@ class Sheet(object):
 
     def insertRows(self, startRow, rows):
         if startRow < 0:
-            raise IndexError('startRow index must be positive')
+            raise IndexError('startRow must be positive')
         if not rows:
             raise IndexError('rows is mandatory ')
         # expand rows
@@ -175,11 +175,17 @@ class Sheet(object):
         # constraint rows & columns
         self.__constraint()
 
+####    def insertEmptyRowsInColumns(self, startRow, countRow, startColumn, countColumn):
+####        pass
+####
+####    def insertEmptyRowInColumn(self, startRow, startColumn):
+####        pass
+
     def insertEmptyRows(self, startRow, count):
         if startRow < 0:
-            raise IndexError('row index must be positive')
-        if count < 1:
-            raise IndexError('count must higher than zero')
+            raise IndexError('startRow must be positive')
+        if count < 0:
+            raise IndexError('count must be greater or equal than zero')
         if startRow < self.rowCount():
             # expand rows
             self.__expand(startRow)
@@ -192,24 +198,38 @@ class Sheet(object):
     def insertEmptyRow(self, row):
         self.insertEmptyRows(row, 1)
 
-    def insertColumns(self, startColumn, columns):
-        pass
+####    def insertColumns(self, startColumn, columns):
+####        pass
 
-    def insertEmptyColumns(self, startColumn, count):
+    def insertEmptyColumnsInRows(self, startColumn, countColumn, startRow, countRow):
         if startColumn < 0:
-            raise IndexError('column index must be positive')
-        if count < 1:
-            raise IndexError('count must higher than zero')
+            raise IndexError('startColumn must be positive')
+        if countColumn < 0:
+            raise IndexError('countColumn must be greater or equal than zero')
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if countRow < 0:
+            raise IndexError('countRow must be greater or equal than zero')
         if startColumn < self.columnCount():
             # expand rows & columns
             self.__expand(0, startColumn-1)
+            # get end row
+            endRow = startRow + countRow
+            if endRow > self.rowCount():
+                endRow = self.rowCount()
             # insert
-            for row in self.__arraydata:
+            for row in self.__arraydata[startRow:endRow]:
                 if len(row) >= startColumn:
-                    for _ in xrange(count):
+                    for _ in xrange(countColumn):
                         row.insert(startColumn, self.__valueClass(''))
             # constraint rows & columns
             self.__constraint()
+
+    def insertEmptyColumnInRow(self, startColumn, startRow):
+        self.insertEmptyColumnsInRows(startColumn, 1, startRow, 1)
+
+    def insertEmptyColumns(self, startColumn, count):
+        self.insertEmptyColumnsInRows(startColumn, count, 0, self.rowCount())
 
     def insertEmptyColumn(self, startColumn):
         self.insertEmptyColumns(startColumn, 1)
@@ -259,23 +279,6 @@ class Sheet(object):
     def moveColumn(self, originColumn, destinationColumn):
         self.moveColumns(originColumn, 1, destinationColumn)
 
-    def insertCellsInRow(self, startRow, startColumn, values):
-        pass
-
-    def insertEmptyCellsInRow(self, startRow, startColumn, count):
-        pass
-
-    def insertEmptyCellInRow(self, startRow, startColumn):
-        pass
-
-    def insertCellsInColumn(self, startRow, startColumn, values):
-        pass
-
-    def insertEmptyCellsInColumn(self, startRow, startColumn, count):
-        pass
-
-    def insertEmptyCellInColumn(self, startRow, startColumn):
-        pass
 
 #
 # test
@@ -724,11 +727,18 @@ if __name__ == '__main__':
             self.assertEqual(sh.rowCount(), 0)
             self.assertEqual(sh.columnCount(), 0)
             #
-            # test 5: count higher than zero
+            # test 5
+            #
+            sh = Sheet(valueClass=QString)
+            sh.insertEmptyRows(2, 0)
+            self.assertEqual(sh.rowCount(), 0)
+            self.assertEqual(sh.columnCount(), 0)
+            #
+            # test 6: count must be greater or equal than zero
             #
             sh = Sheet(valueClass=QString)
             with self.assertRaises(IndexError):
-                sh.insertEmptyRows(2, 0)
+                sh.insertEmptyRows(2, -1)
 
         def test_insert_empty_column(self):
             arrayData = [[],
@@ -795,6 +805,12 @@ if __name__ == '__main__':
             sh.insertEmptyColumn(2)
             self.assertEqual(sh.rowCount(), 0)
             self.assertEqual(sh.columnCount(), 0)
+            #
+            # test 5
+            #
+            sh = Sheet(valueClass=QString, arraydataIn=copy.deepcopy([['1','2']]))
+            sh.insertEmptyColumn(1)
+            self.assertEqual(sh.arrayData(), [['1','','2']])
 
         def test_insert_empty_columns(self):
             arrayData = [[],
@@ -830,11 +846,18 @@ if __name__ == '__main__':
             self.assertEqual(sh.rowCount(), 0)
             self.assertEqual(sh.columnCount(), 0)
             #
-            # test 5: count higher than zero
+            # test 5
+            #
+            sh = Sheet(valueClass=QString)
+            sh.insertEmptyColumns(2, 0)
+            self.assertEqual(sh.rowCount(), 0)
+            self.assertEqual(sh.columnCount(), 0)
+            #
+            # test 6: countColumn must be greater or equal than zero
             #
             sh = Sheet(valueClass=QString)
             with self.assertRaises(IndexError):
-                sh.insertEmptyColumns(2, 0)
+                sh.insertEmptyColumns(2, -1)
 
         def test_insert_rows(self):
             arrayData = [['1','2'],
@@ -1064,6 +1087,139 @@ if __name__ == '__main__':
                                               ['11','12','13','14','15']])
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 5)
+
+        def test_move_insert_empty_columns_inrows(self):
+            arrayData = [['1','2','3','4','5'],
+                         ['a','e','i','o','u'],
+                         ['6','7','8','9','10'],
+                         ['11','12','13','14','15']]
+            #
+            # test 1: insert a new cell in row zero
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.insertEmptyColumnsInRows(startColumn=2,
+                                        countColumn=1,
+                                        startRow=0,
+                                        countRow=1)
+            self.assertEqual(sh.arrayData(), [['1','2','','3','4','5'],
+                                              ['a','e','i','o','u'],
+                                              ['6','7','8','9','10'],
+                                              ['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 6)
+            #
+            # test 2: insert two new cells in row zero
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.insertEmptyColumnsInRows(startColumn=2,
+                                        countColumn=2,
+                                        startRow=0,
+                                        countRow=1)
+            self.assertEqual(sh.arrayData(), [['1','2','','','3','4','5'],
+                                              ['a','e','i','o','u'],
+                                              ['6','7','8','9','10'],
+                                              ['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 7)
+            #
+            # test 3: insert one empty cell to column fifth position it has no effect
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.insertEmptyColumnsInRows(startColumn=5,
+                                        countColumn=1,
+                                        startRow=0,
+                                        countRow=1)
+            self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],
+                                              ['a','e','i','o','u'],
+                                              ['6','7','8','9','10'],
+                                              ['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
+            #
+            # test 4: insert two empty cell to row fourth it has no effect
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.insertEmptyColumnsInRows(startColumn=4,
+                                        countColumn=2,
+                                        startRow=4,
+                                        countRow=1)
+            self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],
+                                              ['a','e','i','o','u'],
+                                              ['6','7','8','9','10'],
+                                              ['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
+            #
+            # test 5: insert a new cell in last row
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.insertEmptyColumnsInRows(startColumn=2,
+                                        countColumn=1,
+                                        startRow=3,
+                                        countRow=1)
+            self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],
+                                              ['a','e','i','o','u'],
+                                              ['6','7','8','9','10'],
+                                              ['11','12','','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 6)
+            #
+            # test 6: insert two new cells in last row
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.insertEmptyColumnsInRows(startColumn=2,
+                                        countColumn=2,
+                                        startRow=3,
+                                        countRow=1)
+            self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],
+                                              ['a','e','i','o','u'],
+                                              ['6','7','8','9','10'],
+                                              ['11','12','','','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 7)
+
+        def test_move_insert_empty_column_inrow(self):
+            arrayData = [['1','2','3','4','5'],
+                         ['a','e','i','o','u'],
+                         ['6','7','8','9','10'],
+                         ['11','12','13','14','15']]
+            #
+            # test 1: insert a new cell in row zero
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.insertEmptyColumnInRow(startColumn=2,
+                                      startRow=0)
+            self.assertEqual(sh.arrayData(), [['1','2','','3','4','5'],
+                                              ['a','e','i','o','u'],
+                                              ['6','7','8','9','10'],
+                                              ['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 6)
+            #
+            # test 3: insert one empty cell to column fifth position it has no effect
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.insertEmptyColumnInRow(startColumn=5,
+                                      startRow=0)
+            self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],
+                                              ['a','e','i','o','u'],
+                                              ['6','7','8','9','10'],
+                                              ['11','12','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 5)
+            #
+            # test 5: insert a new cell in last row
+            #
+            sh = Sheet(arraydataIn=copy.deepcopy(arrayData))
+            sh.insertEmptyColumnInRow(startColumn=2,
+                                      startRow=3)
+            self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],
+                                              ['a','e','i','o','u'],
+                                              ['6','7','8','9','10'],
+                                              ['11','12','','13','14','15']])
+            self.assertEqual(sh.rowCount(), 4)
+            self.assertEqual(sh.columnCount(), 6)
+
 
 
     unittest.main()
