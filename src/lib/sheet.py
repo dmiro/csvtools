@@ -166,14 +166,13 @@ class Sheet(object):
     def insertRows(self, startRow, rows):
         if startRow < 0:
             raise IndexError('startRow must be positive')
-        if not rows:
-            raise IndexError('rows is mandatory ')
-        # expand rows
-        self.__expand(startRow)
-        # insert
-        self.__arraydata[startRow:startRow] = rows
-        # constraint rows & columns
-        self.__constraint()
+        if rows:
+            # expand rows
+            self.__expand(startRow)
+            # insert
+            self.__arraydata[startRow:startRow] = rows
+            # constraint rows & columns
+            self.__constraint()
 
 ####    def insertEmptyRowsInColumns(self, startRow, countRow, startColumn, countColumn):
 ####        pass
@@ -182,18 +181,10 @@ class Sheet(object):
 ####        pass
 
     def insertEmptyRows(self, startRow, count):
-        if startRow < 0:
-            raise IndexError('startRow must be positive')
         if count < 0:
             raise IndexError('count must be greater or equal than zero')
-        if startRow < self.rowCount():
-            # expand rows
-            self.__expand(startRow)
-            # insert
-            for _ in xrange(count):
-                self.__arraydata.insert(startRow, [])
-            # constraint rows & columns
-            self.__constraint()
+        rows = [self.__rowClass() for _ in xrange(count)]
+        self.insertRows(startRow, rows)
 
     def insertEmptyRow(self, row):
         self.insertEmptyRows(row, 1)

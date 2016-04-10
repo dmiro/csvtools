@@ -18,3 +18,8 @@ rem The API of the csv module in Python 2 is drastically different from the csv 
 rem The semantics of Python 3's version are more useful because they support unicode natively, while Python 2's csv does not.
 rem https://github.com/ryanhiebert/backports.csv
 rem pip install backports.csv
+
+rem 5.
+rem NumPy is the fundamental package for scientific computing with Python. It contains among other things a powerful N-dimensional array object
+rem http://www.numpy.org/
+rem pip install numpy
