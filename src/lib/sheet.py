@@ -71,13 +71,11 @@ class Sheet(object):
         # all rows must have the same number of columns
         if arrayData:
             maxColumnSize = max(len(row) for row in arrayData)
-            print 'maxColumnSize',maxColumnSize
             for row in arrayData:
                 missingColumns = maxColumnSize - len(row)
-                print 'missingColumns',missingColumns
                 if missingColumns > 0:
                     row.extend([self.__valueClass() for _ in xrange(missingColumns)])
-        self.__arrayData = np.array(arrayData, dtype=object)
+        self.__arrayData = np.array(arrayData, dtype=object).squeeze()
 ##        #????
 ##            # array -> numpy array
 ##            self.__arrayData = np.array(arrayData, dtype=object)
@@ -176,6 +174,7 @@ class Sheet(object):
             # expand rows numpy array 
             self.__expand(startRow, maxColumnSize-1)
             # insert
+            rows = np.array(rows, dtype=object).squeeze()
             self.__arrayData = np.insert(self.__arrayData, startRow, rows, axis=0)
             # constraint rows & columns
             self.__constraint()
