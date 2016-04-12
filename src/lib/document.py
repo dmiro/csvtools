@@ -13,7 +13,6 @@ class QABCMeta(pyqtWrapperType, ABCMeta):   # problem in your case is that the c
                                             # http://www.gulon.co.uk/2012/12/28/pyqt4-qobjects-and-metaclasses/
 
 
-
 class Document(QObject, Sheet):
     __metaclass__ = QABCMeta
 
@@ -168,7 +167,10 @@ class Xsl(Document):
         wb = xlrd.open_workbook(self.filename)
         sh = wb.sheet_by_name(self.sheetname)
         for rownum in xrange(sh.nrows):
-            self.data_.append([QString(value) for value in sh.row_values(rownum)])
+## hay que 'pulir' la conversion de cualquier tipo a cadena
+## self.data_.append([QString(value) for value in sh.row_values(rownum)])
+## http://stackoverflow.com/questions/2739989/reading-numeric-excel-data-as-text-using-xlrd-in-python/2740525
+            self.data_.append([QString(unicode(value)) for value in sh.row_values(rownum)])
         super(Xsl, self).load()
 
     def save(self):

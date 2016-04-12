@@ -47,6 +47,10 @@
 	<file alias="movecolumnleft.png">tools/movecolumnleft.png</file>
 	<file alias="movecolumnright.png">tools/movecolumnright.png</file>
 	<file alias="moverowbottom.png">tools/moverowbottom.png</file>
-	<file alias="moverowtop.png">tools/moverowtop.png</file>
+	<file alias="moverowtop.png">tools/moverowtop.png</file>	
+	<file alias="movecellleft.png">tools/movecellleft.png</file>
+	<file alias="movecellright.png">tools/movecellright.png</file>
+	<file alias="movecellbottom.png">tools/movecellbottom.png</file>
+	<file alias="movecelltop.png">tools/movecelltop.png</file>
 </qresource>
 </RCC>

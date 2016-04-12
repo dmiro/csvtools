@@ -488,6 +488,22 @@ class QCsv(QTableView):
             self.moveColumns(move=MoveBlockDirectionEnum.AfterMove)
             return
 
+        if action == self.moveCellLeftAction:
+            pass
+            return
+
+        if action == self.moveCellRightAction:
+            pass
+            return
+    
+        if action == self.moveCellTopAction:
+            pass
+            return
+   
+        if action == self.moveCellBottomAction:
+            pass
+            return
+      
         if action == self.selectAllEdit:
             self.selectAll()
             return
@@ -524,9 +540,9 @@ class QCsv(QTableView):
         self.insertColumnRightAction.setShortcut('Ctrl+K, Right')
         self.editColumnsMenu.addSeparator()
         self.moveColumnLeftAction = self.editColumnsMenu.addAction(QIcon(':tools/movecolumnleft.png'), self.tr('Move left'))
-        self.moveColumnLeftAction.setShortcut('Ctrl+Shift+Left')
+        self.moveColumnLeftAction.setShortcut('Alt+Shift+Left')
         self.moveColumnRightAction = self.editColumnsMenu.addAction(QIcon(':tools/movecolumnright.png'), self.tr('Move right'))
-        self.moveColumnRightAction.setShortcut('Ctrl+Shift+Right')
+        self.moveColumnRightAction.setShortcut('Alt+Shift+Right')
         self.editColumnsMenu.addSeparator()
         self.removeColumnsAction = self.editColumnsMenu.addAction(QIcon(':tools/removecolumn.png'), self.tr('Remove'))
         self.mergeColumnsAction = self.editColumnsMenu.addAction(QIcon(':tools/mergecolumns.png'), self.tr('Merge'))
@@ -538,12 +554,22 @@ class QCsv(QTableView):
         self.insertRowBottomAction.setShortcut('Ctrl+K, Down')
         self.editRowsMenu.addSeparator()
         self.moveRowTopAction = self.editRowsMenu.addAction(QIcon(':tools/moverowtop.png'), self.tr('Move top'))
-        self.moveRowTopAction.setShortcut('Ctrl+Shift+Up')
+        self.moveRowTopAction.setShortcut('Alt+Shift+Up')
         self.moveRowBottomAction = self.editRowsMenu.addAction(QIcon(':tools/moverowbottom.png'), self.tr('Move bottom'))
-        self.moveRowBottomAction.setShortcut('Ctrl+Shift+Down')
+        self.moveRowBottomAction.setShortcut('Alt+Shift+Down')
         self.editRowsMenu.addSeparator()
         self.removeRowsAction = self.editRowsMenu.addAction(QIcon(':tools/removerow.png'), self.tr('Remove'))
         self.mergeRowsAction = self.editRowsMenu.addAction(QIcon(':tools/mergerows.png'), self.tr('Merge'))
+        # cells submenu
+        self.editCellsMenu = self._editMenu.addMenu(self.tr('Cells'))
+        self.moveCellLeftAction = self.editCellsMenu.addAction(QIcon(':tools/movecellleft.png'), self.tr('Move left'))
+        self.moveCellLeftAction.setShortcut('Ctrl+Shift+Left')
+        self.moveCellRightAction = self.editCellsMenu.addAction(QIcon(':tools/movecellright.png'), self.tr('Move right'))
+        self.moveCellRightAction.setShortcut('Ctrl+Shift+Right')
+        self.moveCellTopAction = self.editCellsMenu.addAction(QIcon(':tools/movecelltop.png'), self.tr('Move top'))
+        self.moveCellTopAction.setShortcut('Ctrl+Shift+Up')
+        self.moveCellBottomAction = self.editCellsMenu.addAction(QIcon(':tools/movecellbottom.png'), self.tr('Move bottom'))
+        self.moveCellBottomAction.setShortcut('Ctrl+Shift+Down')        
         self._editMenu.addSeparator()
         # copy special submenu
         self.copySpecialMenu = self._editMenu.addMenu(self.tr('Copy Special'))
