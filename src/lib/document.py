@@ -167,10 +167,27 @@ class Xsl(Document):
         wb = xlrd.open_workbook(self.filename)
         sh = wb.sheet_by_name(self.sheetname)
         for rownum in xrange(sh.nrows):
+            for cell in sh.row(rownum):
+                cell_type = cell.ctype
+                cell_value = cell.value
+                if cell_type == xlrd.XL_CELL_DATE:
+                    # Returns a tuple.
+                    get_col = xlrd.xldate.xldate_as_datetime(cell_value, wb.datemode)
+                    #####dt_tuple = xlrd.xldate_as_tuple(cell_value, wb.datemode)
+                    # Create datetime object from this tuple.
+                    ######get_col = datetime.datetime(*dt_tuple)
+                elif cell_type == xlrd.XL_CELL_NUMBER:
+                    get_col = unicode(cell_value)
+                else:
+                    get_col = unicode(cell_value)
+                print cell_value
+                print get_col
+                self.data_.append(QString(unicode(get_col)))
 ## hay que 'pulir' la conversion de cualquier tipo a cadena
 ## self.data_.append([QString(value) for value in sh.row_values(rownum)])
 ## http://stackoverflow.com/questions/2739989/reading-numeric-excel-data-as-text-using-xlrd-in-python/2740525
-            self.data_.append([QString(unicode(value)) for value in sh.row_values(rownum)])
+## http://stackoverflow.com/questions/17827471/python-xlrd-discerning-dates-from-floats
+###            self.data_.append([QString(unicode(value)) for value in sh.row_values(rownum)])
         super(Xsl, self).load()
 
     def save(self):
