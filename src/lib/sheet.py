@@ -7,13 +7,12 @@ class Sheet(object):
     # init
     #
 
-    def __init__(self, valueClass, arrayData=[]):
+    def __init__(self, valueClass, arrayData=None):
         self.__valueClass = valueClass
-        self.setArrayData(arrayData)
-##        if arrayData:
-##            self.setArrayData(arrayData)
-##        else:
-##            self.setArrayData([])
+        if arrayData:
+            self.setArrayData(arrayData)
+        else:
+            self.setArrayData([])
         super(Sheet, self).__init__()
 
     #
@@ -75,17 +74,12 @@ class Sheet(object):
                 missingColumns = maxColumnSize - len(row)
                 if missingColumns > 0:
                     row.extend([self.__valueClass() for _ in xrange(missingColumns)])
+        # array -> numpy array & delete dimensions with a single element
         self.__arrayData = np.array(arrayData, dtype=object).squeeze()
-##        #????
-##            # array -> numpy array
-##            self.__arrayData = np.array(arrayData, dtype=object)
-##            print len(arrayData)
-##            print maxColumnSize
-##            self.__arrayData = self.__arrayData.reshape(len(arrayData),maxColumnSize)
-##            print 'b', arrayData
-##            print 's', self.__arrayData.shape
-##        else:
-##            self.__arrayData = np.array(arrayData, dtype=object) 
+        # obtain column dim if it's undefined
+        if len(self.__arrayData.shape) == 1:
+            if self.__arrayData.shape[0] > 0:
+                self.__arrayData = self.__arrayData.reshape(len(arrayData), -1)
 
     def rowCount(self):
         """get row count"""
@@ -93,11 +87,9 @@ class Sheet(object):
 
     def columnCount(self):
         """get column count"""
-        shape = self.__arrayData.shape
-        if len(shape) == 2:
-            return shape[1]
-        else:
-            return 0
+        if len(self.__arrayData.shape) > 1:
+            return self.__arrayData.shape[1]
+        return 0
 
     def value(self, row, column):
         """get cell value"""

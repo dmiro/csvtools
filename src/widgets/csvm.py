@@ -1018,7 +1018,7 @@ class QCsv(QTableView):
                      model.columnDataCount()-1)
 
     def loadRequested(self):
-        model = MyTableModel(self.document.data, config.config_headerrow)
+        model = MyTableModel(self.document, config.config_headerrow)
         self.setModel(model)
 
     def setDocument(self, document):
