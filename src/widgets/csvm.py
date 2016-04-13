@@ -495,15 +495,31 @@ class QCsv(QTableView):
         if action == self.moveCellRightAction:
             pass
             return
-    
+
         if action == self.moveCellTopAction:
             pass
             return
-   
+
         if action == self.moveCellBottomAction:
             pass
             return
-      
+
+        if action == self.insertCellLeftAction:
+            pass
+            return
+
+        if action == self.insertCellRightAction:
+            pass
+            return
+
+        if action == self.insertCellTopAction:
+            pass
+            return
+
+        if action == self.insertCellBottomAction:
+            pass
+            return
+
         if action == self.selectAllEdit:
             self.selectAll()
             return
@@ -562,6 +578,15 @@ class QCsv(QTableView):
         self.mergeRowsAction = self.editRowsMenu.addAction(QIcon(':tools/mergerows.png'), self.tr('Merge'))
         # cells submenu
         self.editCellsMenu = self._editMenu.addMenu(self.tr('Cells'))
+        self.insertCellLeftAction = self.editCellsMenu.addAction(QIcon(':tools/addcellleft.png'), self.tr('Insert left'))
+        self.insertCellLeftAction.setShortcut('Ctrl+L, Left')
+        self.insertCellRightAction = self.editCellsMenu.addAction(QIcon(':tools/addcellright.png'), self.tr('Insert right'))
+        self.insertCellRightAction.setShortcut('Ctrl+L, Right')
+        self.insertCellTopAction = self.editCellsMenu.addAction(QIcon(':tools/addcelltop.png'), self.tr('Insert top'))
+        self.insertCellTopAction.setShortcut('Ctrl+L, Up')
+        self.insertCellBottomAction = self.editCellsMenu.addAction(QIcon(':tools/addcellbottom.png'), self.tr('Insert bottom'))
+        self.insertCellBottomAction.setShortcut('Ctrl+L, Down')
+        self.editCellsMenu.addSeparator()
         self.moveCellLeftAction = self.editCellsMenu.addAction(QIcon(':tools/movecellleft.png'), self.tr('Move left'))
         self.moveCellLeftAction.setShortcut('Ctrl+Shift+Left')
         self.moveCellRightAction = self.editCellsMenu.addAction(QIcon(':tools/movecellright.png'), self.tr('Move right'))
@@ -569,7 +594,12 @@ class QCsv(QTableView):
         self.moveCellTopAction = self.editCellsMenu.addAction(QIcon(':tools/movecelltop.png'), self.tr('Move top'))
         self.moveCellTopAction.setShortcut('Ctrl+Shift+Up')
         self.moveCellBottomAction = self.editCellsMenu.addAction(QIcon(':tools/movecellbottom.png'), self.tr('Move bottom'))
-        self.moveCellBottomAction.setShortcut('Ctrl+Shift+Down')        
+        self.moveCellBottomAction.setShortcut('Ctrl+Shift+Down')
+        self.editCellsMenu.addSeparator()
+        self.removeCellMoveUpAction = self.editCellsMenu.addAction(QIcon(':tools/????.png'), self.tr('Remove and move up'))
+        self.removeCellMoveLeftAction = self.editCellsMenu.addAction(QIcon(':tools/????.png'), self.tr('Remove and move to the left'))
+        self.editCellsMenu.addSeparator()
+        self.mergeCellsAction = self.editCellsMenu.addAction(QIcon(':tools/????.png'), self.tr('Merge'))
         self._editMenu.addSeparator()
         # copy special submenu
         self.copySpecialMenu = self._editMenu.addMenu(self.tr('Copy Special'))

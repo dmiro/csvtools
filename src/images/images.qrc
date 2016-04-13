@@ -52,5 +52,9 @@
 	<file alias="movecellright.png">tools/movecellright.png</file>
 	<file alias="movecellbottom.png">tools/movecellbottom.png</file>
 	<file alias="movecelltop.png">tools/movecelltop.png</file>
+	<file alias="addcellleft.png">tools/addcellleft.png</file>
+	<file alias="addcellright.png">tools/addcellright.png</file>
+	<file alias="addcellbottom.png">tools/addcellbottom.png</file>
+	<file alias="addcelltop.png">tools/addcelltop.png</file>
 </qresource>
 </RCC>
