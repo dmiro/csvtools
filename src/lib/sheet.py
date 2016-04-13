@@ -160,10 +160,10 @@ class Sheet(object):
         if startRow < 0:
             raise IndexError('startRow must be positive')
         if rows:
-            maxColumnSize = max(max(len(row) for row in rows), self.columnCount()) 
+            maxColumnSize = max(max(len(row) for row in rows), self.columnCount())
             # expand columns array
             rows = self.__expandColumnsArray(rows, maxColumnSize-1)
-            # expand rows numpy array 
+            # expand rows numpy array
             self.__expand(startRow, maxColumnSize-1)
             # insert
             rows = np.array(rows, dtype=object).squeeze()
@@ -182,12 +182,6 @@ class Sheet(object):
     def insertEmptyRow(self, row):
         self.insertEmptyRows(row, 1)
 
-####    def insertEmptyRowsInColumns(self, startRow, countRow, startColumn, countColumn):
-####        pass
-####
-####    def insertEmptyRowInColumn(self, startRow, startColumn):
-####        pass
-
     def insertColumns(self, startColumn, columns):
         # check
         if startColumn < 0:
@@ -196,7 +190,7 @@ class Sheet(object):
             maxRowSize = max(max(len(column) for column in columns), self.rowCount())
             # expand columns array
             columns = self.__expandColumnsArray(columns, maxRowSize-1)
-            # expand columns numpy array 
+            # expand columns numpy array
             self.__expand(maxRowSize-1, startColumn)
             # insert
             self.__arrayData = np.insert(self.__arrayData, startColumn, columns, axis=1)
@@ -213,33 +207,6 @@ class Sheet(object):
 
     def insertEmptyColumn(self, startColumn):
         self.insertEmptyColumns(startColumn, 1)
-
-##    def insertEmptyColumnsInRows(self, startColumn, countColumn, startRow, countRow):
-##        if startColumn < 0:
-##            raise IndexError('startColumn must be positive')
-##        if countColumn < 0:
-##            raise IndexError('countColumn must be greater or equal than zero')
-##        if startRow < 0:
-##            raise IndexError('startRow must be positive')
-##        if countRow < 0:
-##            raise IndexError('countRow must be greater or equal than zero')
-##        if startColumn < self.columnCount():
-##            # expand rows & columns
-##            self.__expand(0, startColumn-1)
-##            # get end row
-##            endRow = startRow + countRow
-##            if endRow > self.rowCount():
-##                endRow = self.rowCount()
-##            # insert
-##            for row in self.__arraydata[startRow:endRow]:
-##                if len(row) >= startColumn:
-##                    for _ in xrange(countColumn):
-##                        row.insert(startColumn, self.__valueClass(''))
-##            # constraint rows & columns
-##            self.__constraint()
-##
-##    def insertEmptyColumnInRow(self, startColumn, startRow):
-##        self.insertEmptyColumnsInRows(startColumn, 1, startRow, 1)
 
     def moveRows(self, originRow, count, destinationRow):
         # checks
@@ -291,8 +258,8 @@ class Sheet(object):
             missingColumns = count - dataColumns
         # move
         self.insertColumns(destinationColumn,
-                           self.__arrayData[:, originColumn: originColumn + dataColumns].transpose().tolist())    
-        self.insertEmptyColumns(destinationColumn + dataColumns, missingColumns)        
+                           self.__arrayData[:, originColumn: originColumn + dataColumns].transpose().tolist())
+        self.insertEmptyColumns(destinationColumn + dataColumns, missingColumns)
         if dataColumns > 0:
             if destinationColumn < originColumn:
                 self.removeColumns(originColumn + count,
@@ -303,6 +270,51 @@ class Sheet(object):
 
     def moveColumn(self, originColumn, destinationColumn):
         self.moveColumns(originColumn, 1, destinationColumn)
+
+    def insertArrayInRows(self, x, y, sourceArray):
+        """ example
+
+          arrayData =                x=1   sourceArray =
+          [[11 12 13 14 15 16]       y=1    [[996 997]
+           [17 18 19 20 21 22]               [998 999]]
+           [23 24 25 26 27 28]
+           [29 30 31 32 33 34]]
+
+          result =
+           [[11 12 13 14 15 16]
+            [17 996 997 20 21 22]
+            [23 998 999 26 27 28]
+            [29 18 19 32 33 34]
+            [None 24 25 None None None]
+            [None 30 31 None None None]]
+        """
+        # checks
+        if x < 0:
+            raise IndexError('x must be positive')
+        if y < 0:
+            raise IndexError('y must be positive')
+        #
+        sourceRows = sourceArray.shape[0]
+        sourceColumns = sourceArray.shape[1]
+        destRows = self.__arrayData.shape[0]
+        destColumns = self.__arrayData.shape[1]
+        # add empty rows at last
+        emptyRows = np.empty([sourceRows, destColumns], dtype=object)
+        self.__arrayData = np.concatenate((self.__arrayData, emptyRows), axis=0)
+        # if missing columns, add empty columns at right
+        missingColumns = y+sourceColumns-self.__arrayData.shape[1]
+        if missingColumns > 0:
+            emptyColumns = np.empty([self.__arrayData.shape[0],missingColumns], dtype=object)
+            self.__arrayData = np.concatenate((self.__arrayData, emptyColumns), axis=1)
+        # copy slice array to new position
+        self.__arrayData[x+sourceRows:destRows+sourceRows, y:y+sourceColumns] = self.__arrayData[x:destRows, y:y+sourceColumns]
+        # remove values
+        self.__arrayData[x:x+sourceRows, y:y+sourceColumns] = None
+
+    def insertEmptyCellsInRows(self, destArray, x, y, dimX, dimY):
+        sourceArray = np.empty([dimX,dimY], dtype=object)
+        return insertArrayInRows(destArray, x, y, sourceArray)
+
 
 #
 # test
@@ -1229,6 +1241,79 @@ if __name__ == '__main__':
                                               ['11','12',None,None,None,'13','14','15']])
             self.assertEqual(sh.rowCount(), 4)
             self.assertEqual(sh.columnCount(), 8)
+
+        def test_array_in_rows(self):
+            arrayData = [['1100','1200','1300','1400','1500','1600'],
+                         ['1700','1800','1900','2000','2100','2200'],
+                         ['2300','2400','2500','2600','2700','2800'],
+                         ['2900','3000','3100','3200','3300','3400']]
+            #
+            # test 1
+            #
+            sourceData = np.empty([2,2], dtype=object)
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.insertArrayInRows(1, 1, sourceData)
+            self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                             ['1700', None  , None  , '2000', '2100', '2200'],
+                                             ['2300', None  , None  , '2600', '2700', '2800'],
+                                             ['2900', '1800', '1900', '3200', '3300', '3400'],
+                                             [None  , '2400', '2500', None  , None  , None],
+                                             [None  , '3000', '3100', None  , None  , None]]);
+            #
+            # test 2
+            #
+            sourceData = np.empty([2,2], dtype=object)
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.insertArrayInRows(2, 2, sourceData)
+            self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                             ['1700', '1800', '1900', '2000', '2100', '2200'],
+                                             ['2300', '2400', None , None   , '2700', '2800'],
+                                             ['2900', '3000', None , None   , '3300', '3400'],
+                                             [None  , None  , '2500', '2600', None  , None],
+                                             [None  , None  , '3100', '3200', None  , None]]);
+            #
+            # test 3
+            #
+            sourceData = np.array([['a','b','c']], dtype=object)
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.insertArrayInRows(3, 3, sourceData)
+            print sh.arrayData()
+            self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                             ['1700', '1800', '1900', '2000', '2100', '2200'],
+                                             ['2300', '2400', None , None   , '2700', '2800'],
+                                             ['2900', '3000', None , None   , '3300', '3400'],
+                                             [None  , None  , '2500', '2600', None  , None],
+                                             [None  , None  , '3100', '3200', None  , None]]);
+
+
+
+##        x = np.array([[1100,1200,1300,1400,1500,1600],
+##              [1700,1800,1900,2000,2100,2200],
+##              [2300,2400,2500,2600,2700,2800],
+##              [2900,3000,3100,3200,3300,3400]], dtype=object)
+##        y = np.empty([2,2], dtype=object)
+##        print x
+##        print y
+##        print 'insertArrayInRows(x, 1, 1, y)'
+##        print insertArrayInRows(x, 1, 1, y)
+##        print 'insertArrayInRows(x, 2, 2, y)'
+##        y = np.empty([2,2], dtype=object)
+##        print insertArrayInRows(x, 2, 2, y)
+##        print 'insertEmptyCellsInRows(x, 1, 1, 1, 1)'
+##        print insertEmptyCellsInRows(x, 1, 1, 1, 1)
+##        print 'insertEmptyCellsInRows(x, 2, 2, 1, 1)'
+##        print insertEmptyCellsInRows(x, 2, 2, 1, 1)
+##        print 'insertEmptyCellsInRows(x, 2, 2, 1, 3)'
+##        print insertEmptyCellsInRows(x, 2, 2, 1, 3)
+##        print 'insertEmptyCellsInRows(x, 2, 5, 2, 2)'
+##        print insertEmptyCellsInRows(x, 2, 5, 2, 2)
+##        print 'insertEmptyCellsInRows(x, 2, 6, 2, 2)'
+##        print insertEmptyCellsInRows(x, 2, 6, 2, 2)
+##        print 'insertEmptyCellsInRows(x, 3, 0, 2, 2)'
+##        print insertEmptyCellsInRows(x, 3, 0, 2, 2)
+##        print 'insertEmptyCellsInRows(x, 0, 0, 2, 2)'
+##        print insertEmptyCellsInRows(x, 0, 0, 2, 2)
+
 
     unittest.main()
 
