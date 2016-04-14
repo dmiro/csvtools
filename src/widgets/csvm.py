@@ -227,6 +227,12 @@ class MyTableModel(QAbstractTableModel):
     def insertRow(self, row, parent = QModelIndex()):
         return self.insertRows(row, 1, parent)
 
+    def insertEmptyCellsInRows(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
+        self.beginInsertRows(parent, row, row+dimRows)
+        self.document.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
+        self.endInsertRows()
+        return True
+
     def insertColumns(self, column, count, parent = QModelIndex()):
         self.beginInsertColumns(parent, column, column+count)
         self.document.insertEmptyColumns(column, count)
@@ -505,19 +511,19 @@ class QCsv(QTableView):
             return
 
         if action == self.insertCellLeftAction:
-            pass
+            self.insertArrayInRows()
             return
 
         if action == self.insertCellRightAction:
-            pass
+            self.insertArrayInRows()
             return
 
         if action == self.insertCellTopAction:
-            pass
+            self.insertArrayInRows()
             return
 
         if action == self.insertCellBottomAction:
-            pass
+            self.insertArrayInRows()
             return
 
         if action == self.selectAllEdit:
@@ -920,6 +926,29 @@ class QCsv(QTableView):
                 self._select(row,
                      topLeftIndex.column(),
                      row+count-1,
+                     bottomRightIndex.column())
+
+    def insertArrayInRows(self, dimRows=None, dimColumns=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if dimRows == None:
+                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if dimColumns == None:
+                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if dimRows > 0 and dimColumns > 0:
+                # insert array
+                row = topLeftIndex.row()
+                column = topLeftIndex.column()
+                model = self.model()
+                model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
+                # new selection
+                currentIndex = model.createIndex(row, topLeftIndex.column())
+                self.setCurrentIndex(currentIndex)
+                self.clearSelection()
+                self._select(row,
+                     topLeftIndex.column(),
+                     row+dimRows-1,
                      bottomRightIndex.column())
 
     def removeRows(self, count=None):
