@@ -315,7 +315,7 @@ class Sheet(object):
                 # if missing columns, add empty columns at right
                 missingColumns = startColumn + sourceColumns - self.columnCount()
                 if missingColumns > 0:
-                    emptyColumns = np.empty([self.__arrayData.shape[0], missingColumns], dtype=object)
+                    emptyColumns = np.empty([self.rowCount(), missingColumns], dtype=object)
                     self.__arrayData = np.concatenate((self.__arrayData, emptyColumns), axis=1)
                 # copy slice array to new position
                 self.__arrayData[startRow+sourceRows:destRows+sourceRows, startColumn:startColumn+sourceColumns] = \

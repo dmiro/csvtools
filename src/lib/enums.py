@@ -17,10 +17,10 @@ class MoveBlockDirectionEnum(object):
 
 
 class InsertDirectionEnum(object):
-    LeftMove = 0
-    RightMove = 1
-    TopMove = 2
-    BottomMove = 3
+    LeftInsert = 0
+    RightInsert = 1
+    TopInsert = 2
+    BottomInsert = 3
 
 
 class MoveDirectionEnum(object):

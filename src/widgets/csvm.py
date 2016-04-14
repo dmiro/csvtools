@@ -3,7 +3,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from lib.config import config
 from lib.helper import get_size, QStringToUnicode
-from lib.enums import MatchModeEnum, InsertBlockDirectionEnum, MoveBlockDirectionEnum
+from lib.enums import MatchModeEnum, InsertBlockDirectionEnum, MoveBlockDirectionEnum, InsertDirectionEnum
 from lib.sheet import Sheet
 from datetime import datetime
 import lib.exports
@@ -511,19 +511,19 @@ class QCsv(QTableView):
             return
 
         if action == self.insertCellLeftAction:
-            self.insertArrayInRows()
+            self.insertEmptyArray(InsertDirectionEnum.LeftInsert)
             return
 
         if action == self.insertCellRightAction:
-            self.insertArrayInRows()
+            self.insertEmptyArray(InsertDirectionEnum.RightInsert)
             return
 
         if action == self.insertCellTopAction:
-            self.insertArrayInRows()
+            self.insertEmptyArray(InsertDirectionEnum.TopInsert)
             return
 
         if action == self.insertCellBottomAction:
-            self.insertArrayInRows()
+            self.insertEmptyArray(InsertDirectionEnum.BottomInsert)
             return
 
         if action == self.selectAllEdit:
@@ -822,21 +822,21 @@ class QCsv(QTableView):
             if model.headerrow and numRow == 0:
                 continue
             for numCol, dataCell in enumerate(dataRow):
-                find = False
-                if matchMode == MatchModeEnum.Contains:
-                    if matchCaseOption:
-                        find = dataCell.contains(text, Qt.CaseSensitive)
+                if dataCell != None:
+                    find = False
+                    if matchMode == MatchModeEnum.Contains:
+                        if matchCaseOption:
+                            find = dataCell.contains(text, Qt.CaseSensitive)
+                        else:
+                            find = dataCell.contains(text, Qt.CaseInsensitive)
                     else:
-                        find = dataCell.contains(text, Qt.CaseInsensitive)
-                else:
-                    find = rePattern.search(dataCell)
-                if find:
-                    if model.headerrow:
-                        result.append([numRow, numCol+1, dataCell])
-                    else:
-                        result.append([numRow+1, numCol+1, dataCell])
+                        find = rePattern.search(dataCell)
+                    if find:
+                        if model.headerrow:
+                            result.append([numRow, numCol+1, dataCell])
+                        else:
+                            result.append([numRow+1, numCol+1, dataCell])
         return result
-
 
     def selectedIndexesToRectangularArea(self, includeHeaderRows=False):
         """convert selected indexes to string matrix"""
@@ -928,7 +928,7 @@ class QCsv(QTableView):
                      row+count-1,
                      bottomRightIndex.column())
 
-    def insertArrayInRows(self, dimRows=None, dimColumns=None):
+    def insertEmptyArray(self, insert=InsertDirectionEnum.TopInsert, dimRows=None, dimColumns=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
         # it's a valid selection
         if isValid:
@@ -941,7 +941,15 @@ class QCsv(QTableView):
                 row = topLeftIndex.row()
                 column = topLeftIndex.column()
                 model = self.model()
-                model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
+                if insert==InsertDirectionEnum.TopInsert:
+                    model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
+                elif insert==InsertDirectionEnum.BottomInsert:
+                    row = row + dimRows
+                    model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
+                elif insert==InsertDirectionEnum.LeftInsert:
+                    pass
+                elif insert==InsertDirectionEnum.RightInsert:
+                    pass
                 # new selection
                 currentIndex = model.createIndex(row, topLeftIndex.column())
                 self.setCurrentIndex(currentIndex)
