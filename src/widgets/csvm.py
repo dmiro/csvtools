@@ -2,15 +2,14 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from lib.config import config
-from lib.helper import get_size, QStringToUnicode
-from lib.enums import MatchModeEnum, InsertBlockDirectionEnum, MoveBlockDirectionEnum, InsertDirectionEnum
-from lib.sheet import Sheet
-from datetime import datetime
+import lib.helper as helper
+import lib.enums as enums
 import lib.exports
 import lib.imports
 import lib.images_rc
+from datetime import datetime
 import os
-import re
+#import re
 
 ##class NumberSortModel(QSortFilterProxyModel):
 ##    def lessThan(self, left, right):
@@ -198,7 +197,7 @@ class MyTableModel(QAbstractTableModel):
 ##            if self.rowDataCount() > rowIndex:
 ##                if self.columnDataCount() > columnIndex:
 ##                    return QBrush(QColor(8, 8, 8, 8))
-        return QVariant()
+        ###return QVariant()
 
     def setData(self, index, value, role=Qt.EditRole):
         if role == Qt.EditRole:
@@ -228,7 +227,7 @@ class MyTableModel(QAbstractTableModel):
         return self.insertRows(row, 1, parent)
 
     def insertEmptyCellsInRows(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
-        self.beginInsertRows(parent, row, row+dimRows)
+        self.beginInsertRows(parent, row, row + dimRows)
         self.document.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
         self.endInsertRows()
         return True
@@ -277,6 +276,15 @@ class MyTableModel(QAbstractTableModel):
 
     def moveColumn(self, sourceColumn, destinationColumn, parent = QModelIndex()):
         return self.moveColumns(sourceColumn, 1, destinationColumn, parent)
+
+    def deleteCells(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
+        ##self.beginResetModel()
+        self.document.deleteCells(row, column, dimRows, dimColumns)
+        ##self.endResetModel()
+        topLeft = self.createIndex(row, column)
+        bottomRight = self.createIndex(row+dimRows, column+dimColumns)
+        self.dataChanged.emit(topLeft, bottomRight)
+        return True
 
 #
 # class QCsv
@@ -455,15 +463,15 @@ class QCsv(QTableView):
             return
 
         if action == self.insertColumnRightAction:
-            self.insertColumns(insert=InsertBlockDirectionEnum.AfterInsert)
+            self.insertColumns(insert=enums.InsertBlockDirectionEnum.AfterInsert)
             return
 
         if action == self.insertRowTopAction:
-            self.insertRows(insert=InsertBlockDirectionEnum.BeforeInsert)
+            self.insertRows(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
         if action == self.insertRowBottomAction:
-            self.insertRows(insert=InsertBlockDirectionEnum.AfterInsert)
+            self.insertRows(insert=enums.InsertBlockDirectionEnum.AfterInsert)
             return
 
         if action == self.removeRowsAction:
@@ -479,19 +487,19 @@ class QCsv(QTableView):
             return
 
         if action == self.moveRowTopAction:
-            self.moveRows(move=MoveBlockDirectionEnum.BeforeMove)
+            self.moveRows(move=enums.MoveBlockDirectionEnum.BeforeMove)
             return
 
         if action == self.moveRowBottomAction:
-            self.moveRows(move=MoveBlockDirectionEnum.AfterMove)
+            self.moveRows(move=enums.MoveBlockDirectionEnum.AfterMove)
             return
 
         if action == self.moveColumnLeftAction:
-            self.moveColumns(move=MoveBlockDirectionEnum.BeforeMove)
+            self.moveColumns(move=enums.MoveBlockDirectionEnum.BeforeMove)
             return
 
         if action == self.moveColumnRightAction:
-            self.moveColumns(move=MoveBlockDirectionEnum.AfterMove)
+            self.moveColumns(move=enums.MoveBlockDirectionEnum.AfterMove)
             return
 
         if action == self.moveCellLeftAction:
@@ -511,23 +519,27 @@ class QCsv(QTableView):
             return
 
         if action == self.insertCellLeftAction:
-            self.insertEmptyArray(InsertDirectionEnum.LeftInsert)
+            self.insertEmptyArray(enums.InsertDirectionEnum.LeftInsert)
             return
 
         if action == self.insertCellRightAction:
-            self.insertEmptyArray(InsertDirectionEnum.RightInsert)
+            self.insertEmptyArray(enums.InsertDirectionEnum.RightInsert)
             return
 
         if action == self.insertCellTopAction:
-            self.insertEmptyArray(InsertDirectionEnum.TopInsert)
+            self.insertEmptyArray(enums.InsertDirectionEnum.TopInsert)
             return
 
         if action == self.insertCellBottomAction:
-            self.insertEmptyArray(InsertDirectionEnum.BottomInsert)
+            self.insertEmptyArray(enums.InsertDirectionEnum.BottomInsert)
             return
 
         if action == self.selectAllEdit:
             self.selectAll()
+            return
+
+        if action == self.deleteEdit:
+            self.deleteCells()
             return
 
     def _addEditMenu(self):
@@ -722,7 +734,7 @@ class QCsv(QTableView):
         return self.document.encoding
 
     def sizeValue(self):
-        return get_size(self.document.filename)
+        return helper.get_size(self.document.filename)
 
     def modifiedValue(self):
         modifiedDateTime = QDateTime(datetime.fromtimestamp(os.path.getmtime(self.document.filename)))
@@ -775,8 +787,6 @@ class QCsv(QTableView):
 
     def setSelectCell(self, row, column):
         model = self.model()
-        column = column - 1
-        row = row - 1
         index = model.index(row, column)
         if index.isValid():
             #1st scroll to the item
@@ -792,51 +802,8 @@ class QCsv(QTableView):
             self.setFocus()
 
     def search(self, text, matchMode, matchCaseOption):
-        """search data in CSV"""
-        result = []
-        model = self.model()
-
-        # need convert to unicode formst
-        text = QStringToUnicode(text)
-
-        # set regular expression pattern
-        if matchMode == MatchModeEnum.WholeWord:
-            pattern = ur'\b{0}\b'.format(text)           #  ur = unicode + raw string
-        elif matchMode == MatchModeEnum.StartsWidth:
-            pattern = ur'^{0}'.format(text)
-        elif matchMode == MatchModeEnum.EndsWith:
-            pattern = ur'{0}$'.format(text)
-        elif matchMode == MatchModeEnum.RegularExpression:
-            pattern = ur'{0}'.format(text)
-        else:
-            pattern = ur''
-
-        # compile regular expression
-        if matchCaseOption:
-            rePattern = re.compile(pattern, flags=re.DOTALL|re.UNICODE)
-        else:
-            rePattern = re.compile(pattern, flags=re.IGNORECASE|re.DOTALL|re.UNICODE)
-
-        # search
-        for numRow, dataRow in enumerate(self.document.data):
-            if model.headerrow and numRow == 0:
-                continue
-            for numCol, dataCell in enumerate(dataRow):
-                if dataCell != None:
-                    find = False
-                    if matchMode == MatchModeEnum.Contains:
-                        if matchCaseOption:
-                            find = dataCell.contains(text, Qt.CaseSensitive)
-                        else:
-                            find = dataCell.contains(text, Qt.CaseInsensitive)
-                    else:
-                        find = rePattern.search(dataCell)
-                    if find:
-                        if model.headerrow:
-                            result.append([numRow, numCol+1, dataCell])
-                        else:
-                            result.append([numRow+1, numCol+1, dataCell])
-        return result
+        if self.document:
+            return self.document.search(text, matchMode, matchCaseOption)
 
     def selectedIndexesToRectangularArea(self, includeHeaderRows=False):
         """convert selected indexes to string matrix"""
@@ -906,7 +873,7 @@ class QCsv(QTableView):
                                      topLeftIndexRow + numRowsData - 1,
                                      topLeftIndexColumn + numColumnsData - 1)
 
-    def insertRows(self, insert=InsertBlockDirectionEnum.BeforeInsert, count=None):
+    def insertRows(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert, count=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
         # it's a valid selection
         if isValid:
@@ -915,7 +882,7 @@ class QCsv(QTableView):
             if count > 0:
                 # insert rows
                 row = topLeftIndex.row()
-                if insert == InsertBlockDirectionEnum.AfterInsert:
+                if insert == enums.InsertBlockDirectionEnum.AfterInsert:
                     row = row + count
                 model = self.model()
                 model.insertRows(row, count)
@@ -928,7 +895,7 @@ class QCsv(QTableView):
                      row+count-1,
                      bottomRightIndex.column())
 
-    def insertEmptyArray(self, insert=InsertDirectionEnum.TopInsert, dimRows=None, dimColumns=None):
+    def insertEmptyArray(self, insert=enums.InsertDirectionEnum.TopInsert, dimRows=None, dimColumns=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
         # it's a valid selection
         if isValid:
@@ -941,14 +908,14 @@ class QCsv(QTableView):
                 row = topLeftIndex.row()
                 column = topLeftIndex.column()
                 model = self.model()
-                if insert==InsertDirectionEnum.TopInsert:
+                if insert==enums.InsertDirectionEnum.TopInsert:
                     model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
-                elif insert==InsertDirectionEnum.BottomInsert:
+                elif insert==enums.InsertDirectionEnum.BottomInsert:
                     row = row + dimRows
                     model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
-                elif insert==InsertDirectionEnum.LeftInsert:
+                elif insert==enums.InsertDirectionEnum.LeftInsert:
                     pass
-                elif insert==InsertDirectionEnum.RightInsert:
+                elif insert==enums.InsertDirectionEnum.RightInsert:
                     pass
                 # new selection
                 currentIndex = model.createIndex(row, topLeftIndex.column())
@@ -977,7 +944,7 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def insertColumns(self, insert=InsertBlockDirectionEnum.BeforeInsert, count=None):
+    def insertColumns(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert, count=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
         # it's a valid selection
         if isValid:
@@ -986,7 +953,7 @@ class QCsv(QTableView):
             if count > 0:
                 # insert columns
                 column = topLeftIndex.column()
-                if insert == InsertBlockDirectionEnum.AfterInsert:
+                if insert == enums.InsertBlockDirectionEnum.AfterInsert:
                     column = column + count
                 model = self.model()
                 model.insertColumns(column, count)
@@ -1018,7 +985,7 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def moveRows(self, move=MoveBlockDirectionEnum.AfterMove, count=None):
+    def moveRows(self, move=enums.MoveBlockDirectionEnum.AfterMove, count=None):
         # esta seleccion es el DESTINO, en el portapapeles estará el origen
         # y una vez "pegado" hay que eliminar el origen
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
@@ -1029,12 +996,12 @@ class QCsv(QTableView):
                 # move row
                 row = topLeftIndex.row()
                 destinationRow = row + count + 1
-                if move == MoveBlockDirectionEnum.BeforeMove:
+                if move == enums.MoveBlockDirectionEnum.BeforeMove:
                     destinationRow = row - 1
                 model = self.model()
                 model.moveRows(row, count, destinationRow)
                 # new selection
-                if move == MoveBlockDirectionEnum.AfterMove:
+                if move == enums.MoveBlockDirectionEnum.AfterMove:
                     topLeftIndex = model.createIndex(topLeftIndex.row()+1, topLeftIndex.column())
                     bottomRightIndex = model.createIndex(bottomRightIndex.row()+1, bottomRightIndex.column())
                 else:
@@ -1047,7 +1014,7 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def moveColumns(self, move=MoveBlockDirectionEnum.AfterMove, count=None):
+    def moveColumns(self, move=enums.MoveBlockDirectionEnum.AfterMove, count=None):
         # esta seleccion es el DESTINO, en el portapapeles estará el origen
         # y una vez "pegado" hay que eliminar el origen
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
@@ -1058,12 +1025,12 @@ class QCsv(QTableView):
                 # move column
                 column = topLeftIndex.column()
                 destinationColumn = column + count + 1
-                if move == MoveBlockDirectionEnum.BeforeMove:
+                if move == enums.MoveBlockDirectionEnum.BeforeMove:
                     destinationColumn = column - 1
                 model = self.model()
                 model.moveColumns(column, count, destinationColumn)
                 # new selection
-                if move == MoveBlockDirectionEnum.AfterMove:
+                if move == enums.MoveBlockDirectionEnum.AfterMove:
                     topLeftIndex = model.createIndex(topLeftIndex.row(), topLeftIndex.column()+1)
                     bottomRightIndex = model.createIndex(bottomRightIndex.row(), bottomRightIndex.column()+1)
                 else:
@@ -1076,6 +1043,20 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
+    def deleteCells(self, dimRows=None, dimColumns=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if dimRows == None:
+                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if dimColumns == None:
+                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if dimRows > 0 and dimColumns > 0:
+                # insert array
+                row = topLeftIndex.row()
+                column = topLeftIndex.column()
+                model = self.model()
+                model.deleteCells(row, column, dimRows, dimColumns)
 
     def selectRows(self, row, count):
         """Selects rows in the view"""

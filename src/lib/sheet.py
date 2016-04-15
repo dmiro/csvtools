@@ -1,5 +1,10 @@
+from PyQt4.QtCore import *
 import copy
 import numpy as np
+import lib.enums as enums
+import lib.helper as helper
+import re
+
 
 class Sheet(object):
 
@@ -336,6 +341,67 @@ class Sheet(object):
         sourceArray = np.empty([dimRows,dimColumns], dtype=object)
         return self.insertArrayInRows(startRow, startColumn, sourceArray)
 
+    def deleteCells(self, startRow, startColumn, dimRows, dimColumns):
+        # checks
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
+        if dimRows < 1:
+            raise IndexError('dimRows must be higher than zero')
+        if dimColumns < 1:
+            raise IndexError('dimColumns must be higher than zero')
+        if startRow < self.rowCount() and startColumn < self.columnCount():
+            # get end row & column
+            endRow = startRow + dimRows
+            endColumn = startColumn + dimColumns
+            if endRow > self.rowCount():
+                endRow = self.rowCount()
+            if endColumn > self.columnCount():
+                endColumn = self.columnCount()
+            # set values
+            self.__arrayData[startRow:endRow, startColumn:endColumn] = None
+            # constraint rows & columns
+            self.__constraint()
+
+    def search(self, text, matchMode, matchCaseOption):
+        """search data in CSV
+           return [row,col,value],..]
+        """
+        result = []
+        # need convert to unicode format
+        text = helper.QStringToUnicode(text)
+        # set regular expression pattern
+        if matchMode == enums.MatchModeEnum.WholeWord:
+            pattern = ur'\b{0}\b'.format(text)                   #  ur = unicode + raw string
+        elif matchMode == enums.MatchModeEnum.StartsWidth:
+            pattern = ur'^{0}'.format(text)
+        elif matchMode == enums.MatchModeEnum.EndsWith:
+            pattern = ur'{0}$'.format(text)
+        elif matchMode == enums.MatchModeEnum.RegularExpression:
+            pattern = ur'{0}'.format(text)
+        else:
+            pattern = ur''
+        # compile regular expression
+        if matchCaseOption:
+            rePattern = re.compile(pattern, flags=re.DOTALL|re.UNICODE)
+        else:
+            rePattern = re.compile(pattern, flags=re.IGNORECASE|re.DOTALL|re.UNICODE)
+        # search
+        for numRow, dataRow in enumerate(self.__arrayData):
+            for numCol, dataCell in enumerate(dataRow):
+                if dataCell != None:
+                    find = False
+                    if matchMode == enums.MatchModeEnum.Contains:
+                        if matchCaseOption:
+                            find = dataCell.contains(text, Qt.CaseSensitive)
+                        else:
+                            find = dataCell.contains(text, Qt.CaseInsensitive)
+                    else:
+                        find = rePattern.search(dataCell)
+                    if find:
+                        result.append([numRow, numCol, dataCell])
+        return result
 
 #
 # test
@@ -1582,6 +1648,100 @@ if __name__ == '__main__':
                                              [None, None, 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
                                              [None, None, 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx']]);
 
+        def test_delete_cells(self):
+            arrayData = [['1100','1200','1300','1400','1500','1600'],
+                         ['1700','1800','1900','2000','2100','2200'],
+                         ['2300','2400','2500','2600','2700','2800'],
+                         ['2900','3000','3100','3200','3300','3400']]
+            #
+            # test 1
+            #
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.deleteCells(1, 1, 2, 2)
+            self.assertEqual(sh.arrayData(),[['1100','1200','1300','1400','1500','1600'],
+                                             ['1700',None  ,None  ,'2000','2100','2200'],
+                                             ['2300',None  ,None  ,'2600','2700','2800'],
+                                             ['2900','3000','3100','3200','3300','3400']]);
+            #
+            # test 2
+            #
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.deleteCells(0, 0, 1, 1)
+            self.assertEqual(sh.arrayData(),[[None, '1200','1300','1400','1500','1600'],
+                                             ['1700','1800','1900','2000','2100','2200'],
+                                             ['2300','2400','2500','2600','2700','2800'],
+                                             ['2900','3000','3100','3200','3300','3400']]);
+            #
+            # test 3
+            #
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.deleteCells(3, 0, 1, 1)
+            self.assertEqual(sh.arrayData(),[['1100', '1200','1300','1400','1500','1600'],
+                                             ['1700','1800','1900','2000','2100','2200'],
+                                             ['2300','2400','2500','2600','2700','2800'],
+                                             [None,'3000','3100','3200','3300','3400']]);
+            #
+            # test 4
+            #
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.deleteCells(3, 0, 1, 6)
+            self.assertEqual(sh.arrayData(),[['1100', '1200','1300','1400','1500','1600'],
+                                             ['1700','1800','1900','2000','2100','2200'],
+                                             ['2300','2400','2500','2600','2700','2800']]);
+            #
+            # test 5
+            #
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.deleteCells(3, 0, 2, 7)
+            self.assertEqual(sh.arrayData(),[['1100', '1200','1300','1400','1500','1600'],
+                                             ['1700','1800','1900','2000','2100','2200'],
+                                             ['2300','2400','2500','2600','2700','2800']]);
+            #
+            # test 6
+            #
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.deleteCells(2, 1, 2, 5)
+            self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                             ['1700', '1800', '1900', '2000', '2100', '2200'],
+                                             ['2300', None, None, None, None, None],
+                                             ['2900', None, None, None, None, None]]);
+            #
+            # test 7
+            #
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.deleteCells(2, 1, 20, 70)
+            self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                             ['1700', '1800', '1900', '2000', '2100', '2200'],
+                                             ['2300', None, None, None, None, None],
+                                             ['2900', None, None, None, None, None]]);
+            #
+            # test 8
+            #
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.deleteCells(0, 6, 1, 1)
+            self.assertEqual(sh.arrayData(),[['1100', '1200','1300','1400','1500','1600'],
+                                             ['1700','1800','1900','2000','2100','2200'],
+                                             ['2300','2400','2500','2600','2700','2800'],
+                                             ['2900','3000','3100','3200','3300','3400']]);
+            #
+            # test 9
+            #
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            sh.deleteCells(4, 0, 1, 1)
+            self.assertEqual(sh.arrayData(),[['1100', '1200','1300','1400','1500','1600'],
+                                             ['1700','1800','1900','2000','2100','2200'],
+                                             ['2300','2400','2500','2600','2700','2800'],
+                                             ['2900','3000','3100','3200','3300','3400']]);
+            #
+            # test 10
+            #
+            sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+            with self.assertRaises(IndexError):
+                sh.deleteCells(0, 0, 0, 0)
+            with self.assertRaises(IndexError):
+                sh.deleteCells(1, 1, 0, 0)
+            with self.assertRaises(IndexError):
+                sh.deleteCells(0, 0, -1, -1)
 
     unittest.main()
 

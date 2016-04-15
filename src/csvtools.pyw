@@ -11,7 +11,7 @@ from widgets.status import QStatus
 from widgets.search import QSearch
 from widgets.opencsvfiledialog import QOpenCsvFileDialog
 from widgets.csvwiz import QCsvWiz
-import lib.document
+from lib.document import Xsl, Csv
 from lib.config import config
 from lib.helper import waiting, get_excel_sheets, QStringToUnicode
 import lib.images_rc
@@ -36,11 +36,11 @@ class MainWindow(QMainWindow):
         if hook > -1:
             sheetname = file_[hook+1:]
             excelfile = file_[:hook]
-            xslDoc = lib.document.Xsl(excelfile, sheetname)
+            xslDoc = Xsl(excelfile, sheetname)
             xslDoc.load()
             csv = QCsv(xslDoc)
         else:
-            csvDoc = lib.document.Csv(file_)
+            csvDoc = Csv(file_)
             csvDoc.load()
             csv = QCsv(csvDoc)
         csv.selectionChanged_.connect(self.csvSelectionChangedEvent)

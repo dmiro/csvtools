@@ -63,11 +63,11 @@ class QSearch(QWidget):
             parent.setData(item['tabToolTip'], Qt.WhatsThisRole)
             # iterating over search result file
             for value in item['result']:
-                row = QStandardItem(str(value[0]))
+                row = QStandardItem(str(value[0]+1))
                 row.setData(value, Qt.WhatsThisRole)
                 row.setEditable(False)
 
-                col = QStandardItem(str(value[1]))
+                col = QStandardItem(str(value[1]+1))
                 col.setData(value, Qt.WhatsThisRole)
                 col.setEditable(False)
 
@@ -141,13 +141,13 @@ class QSearch(QWidget):
         item = self.result.currentIndex()
         if item.isValid():
             parent = item.parent()
-            # estoy en un item valido
+            # it's a valid item
             if parent.isValid():
                 row = item.row()
-                # el item tiene un hermano
+                # item has a sibling
                 if parent.child(row+1, 0).isValid():
                     return self._getResultRow(parent, row+1)
-                # el item no tiene hermano
+                # item hasn't a sibling
                 else:
                     row = parent.row()
                     parent = model.index(row+1, 0)
@@ -155,7 +155,7 @@ class QSearch(QWidget):
                         return self._getResultRow(parent, 0)
                     else:
                         return self._lastResultItem()
-            # estoy en un item que tiene hijos
+            # I'm in an item that has children
             else:
                 return self._getResultRow(item, 0)
         return self._firstResultItem()
@@ -165,20 +165,20 @@ class QSearch(QWidget):
         item = self.result.currentIndex()
         if item.isValid():
             parent = item.parent()
-            # estoy en un item valido
+            # it's a valid item
             if parent.isValid():
                 row = item.row()
-                # el item tiene un hermano
+                # item has a sibling
                 if parent.child(row-1, 0).isValid():
                     return self._getResultRow(parent, row-1)
-                # el item no tiene hermano
+                # item hasn't a sibling
                 else:
                     row = parent.row()
                     parent = model.index(row-1, 0)
                     if parent.isValid():
                         row = model.rowCount(parent)
                         return self._getResultRow(parent, row-1)
-            # estoy en un item que tiene hijos
+            # I'm in an item that has children
             else:
                 return self._getResultRow(item, 0)
         # otherwise get firt item
