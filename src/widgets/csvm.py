@@ -9,7 +9,6 @@ import lib.imports
 import lib.images_rc
 from datetime import datetime
 import os
-#import re
 
 ##class NumberSortModel(QSortFilterProxyModel):
 ##    def lessThan(self, left, right):
@@ -94,7 +93,7 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
                     painter.drawLine(option.rect.topLeft(), option.rect.topRight())
                 if drawBottom:
                     painter.drawLine(option.rect.bottomRight(), option.rect.bottomLeft())
-        super(QItemDataBorderDelegate, self).paint(painter, option, index)
+        return super(QItemDataBorderDelegate, self).paint(painter, option, index)
 
 #
 # class MyTableModel
@@ -140,10 +139,10 @@ class MyTableModel(QAbstractTableModel):
 
     def rowDataCount(self, parent=QModelIndex()):
         """get row count real data"""
-        if self.headerrow:
-            return self.document.rowCount() - 1
-        else:
-            return self.document.rowCount()
+    #    if self.headerrow:
+    #        return self.document.rowCount() - 1
+    #    else:
+        return self.document.rowCount()
 
     def columnDataCount(self, parent=QModelIndex()):
         """get column count real data"""
