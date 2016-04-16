@@ -198,23 +198,26 @@ class Sheet(object):
         if startColumn < 0:
             raise IndexError('startColumn must be positive')
         if columns:
-            maxRowSize = max(max(len(column) for column in columns), self.rowCount())
             # expand columns array
-            columns = self.__expandColumnsArray(columns, maxRowSize-1)
-            # expand columns numpy array
-            self.__expand(maxRowSize-1, startColumn)
-            # insert
-            self.__arrayData = np.insert(self.__arrayData, startColumn, columns, axis=1)
-            # constraint rows & columns
-            self.__constraint()
+    #        maxRowSize = max(max(len(column) for column in columns), self.rowCount())
+    #        columns = self.__expandColumnsArray(columns, maxRowSize-1)
+            # insert columns
+            self.insertArrayInColumns(startRow=0,
+                                      startColumn=startColumn,
+                                      array=columns)
 
     def insertEmptyColumns(self, startColumn, count):
         # check
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
         if count < 0:
             raise IndexError('count must be greater or equal than zero')
         # insert
-        columns = [[] for _ in xrange(count)]
-        self.insertColumns(startColumn, columns)
+        if self.rowCount() > 0:
+            self.insertEmptyCellsInColumns(startRow=0,
+                                           startColumn=startColumn,
+                                           dimRows=self.rowCount(),
+                                           dimColumns=count)
 
     def insertEmptyColumn(self, startColumn):
         self.insertEmptyColumns(startColumn, 1)
@@ -329,6 +332,15 @@ class Sheet(object):
             self.__constraint()
             return True
 
+    def insertEmptyCellsInColumns(self, startRow, startColumn, dimRows, dimColumns):
+        # checks
+        if dimRows < 1:
+            raise IndexError('dimRows must be higher than zero')
+        if dimColumns < 1:
+            raise IndexError('dimColumns must be higher than zero')
+        sourceArray = np.empty([dimRows, dimColumns], dtype=object)
+        return self.insertArrayInColumns(startRow, startColumn, sourceArray)
+
     def insertArrayInRows(self, startRow, startColumn, array):
         """ example
 
@@ -386,7 +398,7 @@ class Sheet(object):
             raise IndexError('dimRows must be higher than zero')
         if dimColumns < 1:
             raise IndexError('dimColumns must be higher than zero')
-        sourceArray = np.empty([dimRows,dimColumns], dtype=object)
+        sourceArray = np.empty([dimRows, dimColumns], dtype=object)
         return self.insertArrayInRows(startRow, startColumn, sourceArray)
 
     def deleteCells(self, startRow, startColumn, dimRows, dimColumns):

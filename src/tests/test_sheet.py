@@ -307,7 +307,10 @@ class SheetTestCase(TestCase):
         # test 1
         #
         sh = Sheet(valueClass=QString, arrayData=copy.deepcopy(arrayData))
-        sh.insertColumns(0, [['a','b','c','d']])
+        sh.insertColumns(0, [['a'],
+                             ['b'],
+                             ['c'],
+                             ['d']])
         self.assertEqual(sh.arrayData(), [['a','1','2'],
                                           ['b','a','e'],
                                           ['c','6','7'],
@@ -316,7 +319,10 @@ class SheetTestCase(TestCase):
         # test 2
         #
         sh = Sheet(valueClass=QString, arrayData=copy.deepcopy(arrayData))
-        sh.insertColumns(2, [['a','b','c','d'], ['a','b','c','d']])
+        sh.insertColumns(2, [['a','a'],
+                             ['b','b'],
+                             ['c','c'],
+                             ['d','d']])
         self.assertEqual(sh.arrayData(), [['1','2','a','a'],
                                           ['a','e','b','b'],
                                           ['6','7','c','c'],
@@ -325,7 +331,10 @@ class SheetTestCase(TestCase):
         # test 3
         #
         sh = Sheet(valueClass=QString, arrayData=copy.deepcopy(arrayData))
-        sh.insertColumns(4, [['a','b','c','d']])
+        sh.insertColumns(4, [['a'],
+                             ['b'],
+                             ['c'],
+                             ['d']])
         self.assertEqual(sh.arrayData(), [['1','2',None, None,'a'],
                                           ['a','e',None, None,'b'],
                                           ['6','7',None, None,'c'],
@@ -334,7 +343,10 @@ class SheetTestCase(TestCase):
         # test 5
         #
         sh = Sheet(valueClass=QString, arrayData=copy.deepcopy(arrayData))
-        sh.insertColumns(0, [['a','b','c']])
+        sh.insertColumns(0, [['a'],
+                             ['b'],
+                             ['c']])
+        print sh.arrayData()
         self.assertEqual(sh.arrayData(), [['a','1','2'],
                                           ['b','a','e'],
                                           ['c','6','7'],
@@ -1359,7 +1371,6 @@ class SheetTestCase(TestCase):
                                          ['1700', None, None, '1800', '1900', '2000', '2100', '2200'],
                                          ['2300', None, None, '2400', '2500', '2600', '2700', '2800'],
                                          ['2900', '3000', '3100', '3200', '3300', '3400', None, None]])
-
         #
         # test 2
         #
@@ -1380,30 +1391,26 @@ class SheetTestCase(TestCase):
                                          ['1700', '1800', '1900', '2000', '2100', '2200', None, None, None],
                                          ['2300', '2400', '2500', '2600', '2700', '2800', None, None, None],
                                          ['2900', '3000', '3100', '3200', 'a', 'b', 'c', '3300', '3400']])
-
-
         #
         # test 4
         #
         sourceData = [['a','b','c']]
         sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
-        sh.insertArrayInColumns(3, 4, sourceData)
-        print sh.arrayData()
-        self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600', None],
-                                         ['1700', '1800', '1900', '2000', '2100', '2200', None],
-                                         ['2300', '2400', '2500', '2600', '2700', '2800', None],
-                                         ['2900', '3000', '3100', '3200', 'a',    'b',    'c'],
-                                         [None,   None,   None,   None,   '3300', '3400', None]])
+        sh.insertArrayInColumns(3, 5, sourceData)
+        self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600', None, None, None],
+                                         ['1700', '1800', '1900', '2000', '2100', '2200', None, None, None],
+                                         ['2300', '2400', '2500', '2600', '2700', '2800', None, None, None],
+                                         ['2900', '3000', '3100', '3200', '3300', 'a',    'b',   'c', '3400']])
         #
         # test 5
         #
         sourceData = [['a','b','c']]
         sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.insertArrayInColumns(3, 6, sourceData)
-        self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600', None, None, None],
+        self.assertEqual(sh.arrayData(), [['1100', '1200', '1300', '1400', '1500', '1600', None, None, None],
                                          ['1700', '1800', '1900', '2000', '2100', '2200', None, None, None],
                                          ['2300', '2400', '2500', '2600', '2700', '2800', None, None, None],
-                                         ['2900', '3000', '3100', '3200', '3300', '3400', 'a',  'b',  'c']])
+                                         ['2900', '3000', '3100', '3200', '3300', '3400', 'a', 'b', 'c']])
         #
         # test 6
         #
@@ -1414,7 +1421,7 @@ class SheetTestCase(TestCase):
                                          ['1700', '1800', '1900', '2000', '2100', '2200', None, None, None],
                                          ['2300', '2400', '2500', '2600', '2700', '2800', None, None, None],
                                          ['2900', '3000', '3100', '3200', '3300', '3400', None, None, None],
-                                         [None,   None,   None,   None,   None,   None,   'a',  'b',  'c']])
+                                         [None, None, None, None, None, None, 'a', 'b', 'c']])
         #
         # test 7
         #
@@ -1425,8 +1432,8 @@ class SheetTestCase(TestCase):
                                          ['1700', '1800', '1900', '2000', '2100', '2200', None, None, None],
                                          ['2300', '2400', '2500', '2600', '2700', '2800', None, None, None],
                                          ['2900', '3000', '3100', '3200', '3300', '3400', None, None, None],
-                                         [None,   None,   None,   None,   None,   None,   None, None, None],
-                                         [None,   None,   None,   None,   None,   None,   'a',  'b',  'c']])
+                                         [None, None, None, None, None, None, None, None, None],
+                                         [None, None, None, None, None, None, 'a', 'b', 'c']])
         #
         # test 8
         #
@@ -1437,9 +1444,9 @@ class SheetTestCase(TestCase):
                                          ['1700', '1800', '1900', '2000', '2100', '2200', None, None, None],
                                          ['2300', '2400', '2500', '2600', '2700', '2800', None, None, None],
                                          ['2900', '3000', '3100', '3200', '3300', '3400', None, None, None],
-                                         [None,   None,   None,   None,   None,   None,   None, None, None],
-                                         [None,   None,   None,   None,   None,   None,   'a',  'b',  'c'],
-                                         [None,   None,   None,   None,   None,   None,   'd',  'e',  'f']])
+                                         [None, None, None, None, None, None, None, None, None],
+                                         [None, None, None, None, None, None, 'a', 'b', 'c'],
+                                         [None, None, None, None, None, None, 'd', 'e', 'f']])
         #
         # test 9
         #
@@ -1459,14 +1466,10 @@ class SheetTestCase(TestCase):
                       ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx']]
         sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.insertArrayInColumns(0, 0, sourceData)
-        self.assertEqual(sh.arrayData(),[['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
-                                         ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
-                                         ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
-                                         ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
-                                         ['1100', '1200', '1300', '1400', '1500', '1600'],
-                                         ['1700', '1800', '1900', '2000', '2100', '2200'],
-                                         ['2300', '2400', '2500', '2600', '2700', '2800'],
-                                         ['2900', '3000', '3100', '3200', '3300', '3400']]);
+        self.assertEqual(sh.arrayData(),[['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', '1100', '1200', '1300', '1400', '1500', '1600'],
+                                         ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', '1700', '1800', '1900', '2000', '2100', '2200'],
+                                         ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', '2300', '2400', '2500', '2600', '2700', '2800'],
+                                         ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', '2900', '3000', '3100', '3200', '3300', '3400']]);
         #
         # test 11
         #
@@ -1475,15 +1478,11 @@ class SheetTestCase(TestCase):
                       ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
                       ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx']]
         sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
-        sh.insertArrayInColumns(0, 0, sourceData)
-        self.assertEqual(sh.arrayData(),[['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
-                                         ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
-                                         ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
-                                         ['xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
-                                         ['1100', '1200', '1300', '1400', '1500', '1600', None],
-                                         ['1700', '1800', '1900', '2000', '2100', '2200', None],
-                                         ['2300', '2400', '2500', '2600', '2700', '2800', None],
-                                         ['2900', '3000', '3100', '3200', '3300', '3400', None]]);
+        sh.insertArrayInColumns(0, 1, sourceData)
+        self.assertEqual(sh.arrayData(),[['1100', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', '1200', '1300', '1400', '1500', '1600'],
+                                         ['1700', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', '1800', '1900', '2000', '2100', '2200'],
+                                         ['2300', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', '2400', '2500', '2600', '2700', '2800'],
+                                         ['2900', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', '3000', '3100', '3200', '3300', '3400']]);
         #
         # test 12
         #
@@ -1501,7 +1500,7 @@ class SheetTestCase(TestCase):
                                          [None, None, 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
                                          [None, None, 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
                                          [None, None, 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx'],
-                                         [None, None, 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx']]);
+                                         [None, None, 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx', 'xxxx']])
 
 
 if __name__ == '__main__':

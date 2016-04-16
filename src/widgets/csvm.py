@@ -231,6 +231,12 @@ class MyTableModel(QAbstractTableModel):
         self.endInsertRows()
         return True
 
+    def insertEmptyCellsInColumns(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
+        self.beginInsertColumns(parent, column, column + dimColumns)
+        self.document.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
+        self.endInsertColumns()
+        return True
+
     def insertColumns(self, column, count, parent = QModelIndex()):
         self.beginInsertColumns(parent, column, column+count)
         self.document.insertEmptyColumns(column, count)
@@ -458,7 +464,7 @@ class QCsv(QTableView):
             return
 
         if action == self.insertColumnLeftAction:
-            self.insertColumns(insert=InsertBlockDirectionEnum.BeforeInsert)
+            self.insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
         if action == self.insertColumnRightAction:
@@ -913,17 +919,18 @@ class QCsv(QTableView):
                     row = row + dimRows
                     model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
                 elif insert==enums.InsertDirectionEnum.LeftInsert:
-                    pass
+                    model.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
                 elif insert==enums.InsertDirectionEnum.RightInsert:
-                    pass
+                    column = column + dimColumns
+                    model.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
                 # new selection
-                currentIndex = model.createIndex(row, topLeftIndex.column())
+                currentIndex = model.createIndex(row, column)
                 self.setCurrentIndex(currentIndex)
                 self.clearSelection()
                 self._select(row,
-                     topLeftIndex.column(),
-                     row+dimRows-1,
-                     bottomRightIndex.column())
+                             column,
+                             row + dimRows - 1,
+                             column + dimColumns - 1)
 
     def removeRows(self, count=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
