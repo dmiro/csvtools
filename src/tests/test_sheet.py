@@ -346,7 +346,6 @@ class SheetTestCase(TestCase):
         sh.insertColumns(0, [['a'],
                              ['b'],
                              ['c']])
-        print sh.arrayData()
         self.assertEqual(sh.arrayData(), [['a','1','2'],
                                           ['b','a','e'],
                                           ['c','6','7'],
@@ -355,12 +354,16 @@ class SheetTestCase(TestCase):
         # test 6
         #
         sh = Sheet(valueClass=QString, arrayData=copy.deepcopy(arrayData))
-        sh.insertColumns(0, [['a'],['a','b'], ['a','b','c','d','e']])
-        self.assertEqual(sh.arrayData(), [['a','a','a','1','2'],
-                                          [None, 'b','b','a','e'],
-                                          [None, None,'c','6','7'],
-                                          [None, None,'d','11','12'],
-                                          [None, None,'e',None,None]])
+        sh.insertColumns(0, [['a ', 'a', 'a'],
+                             [None, 'b', 'b'],
+                             [None, None,'c'],
+                             [None, None,'d'],
+                             [None, None,'e']])
+        self.assertEqual(sh.arrayData(),[['a ', 'a', 'a', '1', '2'],
+                                         [None, 'b', 'b', 'a', 'e'],
+                                         [None, None, 'c', '6', '7'],
+                                         [None, None, 'd', '11', '12'],
+                                         [None, None, 'e', None, None]])
 
     def test_insert_rows(self):
         arrayData = [['1','2'],
@@ -1408,9 +1411,9 @@ class SheetTestCase(TestCase):
         sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.insertArrayInColumns(3, 6, sourceData)
         self.assertEqual(sh.arrayData(), [['1100', '1200', '1300', '1400', '1500', '1600', None, None, None],
-                                         ['1700', '1800', '1900', '2000', '2100', '2200', None, None, None],
-                                         ['2300', '2400', '2500', '2600', '2700', '2800', None, None, None],
-                                         ['2900', '3000', '3100', '3200', '3300', '3400', 'a', 'b', 'c']])
+                                          ['1700', '1800', '1900', '2000', '2100', '2200', None, None, None],
+                                          ['2300', '2400', '2500', '2600', '2700', '2800', None, None, None],
+                                          ['2900', '3000', '3100', '3200', '3300', '3400', 'a', 'b', 'c']])
         #
         # test 6
         #

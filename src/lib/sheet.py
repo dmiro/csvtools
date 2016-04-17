@@ -199,8 +199,10 @@ class Sheet(object):
             raise IndexError('startColumn must be positive')
         if columns:
             # expand columns array
-    #        maxRowSize = max(max(len(column) for column in columns), self.rowCount())
-    #        columns = self.__expandColumnsArray(columns, maxRowSize-1)
+            missingRows = max(self.rowCount() - len(columns), 0)
+            if missingRows > 0:
+                emptyRows = np.empty([missingRows, len(columns[0])], dtype=object)
+                columns = np.concatenate((columns, emptyRows), axis=0)
             # insert columns
             self.insertArrayInColumns(startRow=0,
                                       startColumn=startColumn,
@@ -271,9 +273,12 @@ class Sheet(object):
             dataColumns = min(self.columnCount() - originColumn, count)
             missingColumns = count - dataColumns
         # move
+#        self.insertColumns(destinationColumn,
+#                           self.__arrayData[:, originColumn: originColumn + dataColumns].transpose().tolist())
         self.insertColumns(destinationColumn,
-                           self.__arrayData[:, originColumn: originColumn + dataColumns].transpose().tolist())
-        self.insertEmptyColumns(destinationColumn + dataColumns, missingColumns)
+                           self.__arrayData[:, originColumn: originColumn + dataColumns].tolist())
+        if missingColumns > 0:
+            self.insertEmptyColumns(destinationColumn + dataColumns, missingColumns)
         if dataColumns > 0:
             if destinationColumn < originColumn:
                 self.removeColumns(originColumn + count,
