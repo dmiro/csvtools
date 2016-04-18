@@ -700,6 +700,13 @@ class QCsv(QTableView):
         bottomRightIndex = model.createIndex(maxRow, maxColumn)
         return topLeftIndex, bottomRightIndex
 
+    def _clipboardCancelEvent(self, r):
+        if self.lastSelectionRanges:
+            clipboard = QApplication.clipboard()
+            if clipboard.ownsClipboard():
+                clipboard.clear()                 # it's important to respect
+                self.lastSelectionRanges = None   # this order
+
     def _clipboardDataChangedEvent(self):
         if self.lastSelectionRanges:
             # lastSelectionRanges to None and refresh view
@@ -819,6 +826,7 @@ class QCsv(QTableView):
             selectionModel = self.selectionModel()
             selectionModel.clear()
             selectionModel.select(index, QItemSelectionModel.Select)
+            self.setCurrentIndex(index)
             #focused cell
             self.setFocus()
 
@@ -1182,6 +1190,12 @@ class QCsv(QTableView):
         self.lastSelectionRanges = None
         self.lastSelectionRangesTimerId = self.startTimer(200)
         self.lastSelectionRangesDashOffset = 0
+
+        # cancel clipboard action
+        cancelClipboardAction = QAction(self)
+        cancelClipboardAction.setShortcut('ESC')
+        cancelClipboardAction.triggered.connect(self._clipboardCancelEvent)
+        self.addAction(cancelClipboardAction)
 
         # edit menu
         self._addEditMenu()
