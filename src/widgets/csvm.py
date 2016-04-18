@@ -7,6 +7,7 @@ import lib.enums as enums
 import lib.exports
 import lib.imports
 import lib.images_rc
+from widgets.qradiobuttondialog import QRadioButtonDialog
 from datetime import datetime
 import os
 
@@ -449,7 +450,9 @@ class QCsv(QTableView):
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonDict(matrix)
 
+        #
         # at last copy result to clipboard
+        #
         if textClip:
             clipboard = QApplication.clipboard()
             clipboard.setText(textClip, mode=QClipboard.Clipboard)
@@ -487,8 +490,21 @@ class QCsv(QTableView):
             self.removeColumns()
             return
 
-        if action == self.insertFromClipboard:
-            pass
+        # insert edit
+        if action == self.insertEdit:
+            option = QRadioButtonDialog.getSelectItem('Insert',
+                                                      ['Shift cells right',
+                                                       'Shift cells down',
+                                                       'Insert an entire row',
+                                                       'Insert an entire column'])
+            if option == 0:
+                self.insertEmptyArray(insert=enums.InsertDirectionEnum.LeftInsert)
+            if option == 1:
+                self.insertEmptyArray(insert=enums.InsertDirectionEnum.TopInsert)
+            if option == 2:
+                self.insertRows(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
+            if option == 3:
+                self.insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
         if action == self.moveRowTopAction:
@@ -524,19 +540,19 @@ class QCsv(QTableView):
             return
 
         if action == self.insertCellLeftAction:
-            self.insertEmptyArray(enums.InsertDirectionEnum.LeftInsert)
+            self.insertEmptyArray(insert=enums.InsertDirectionEnum.LeftInsert)
             return
 
         if action == self.insertCellRightAction:
-            self.insertEmptyArray(enums.InsertDirectionEnum.RightInsert)
+            self.insertEmptyArray(insert=enums.InsertDirectionEnum.RightInsert)
             return
 
         if action == self.insertCellTopAction:
-            self.insertEmptyArray(enums.InsertDirectionEnum.TopInsert)
+            self.insertEmptyArray(insert=enums.InsertDirectionEnum.TopInsert)
             return
 
         if action == self.insertCellBottomAction:
-            self.insertEmptyArray(enums.InsertDirectionEnum.BottomInsert)
+            self.insertEmptyArray(insert=enums.InsertDirectionEnum.BottomInsert)
             return
 
         if action == self.selectAllEdit:
@@ -562,8 +578,8 @@ class QCsv(QTableView):
         self.copyToClipboard.setShortcut(QKeySequence.Copy)
         self.pasteFromClipboard = self._editMenu.addAction(QIcon(':images/paste.png'), self.tr('Paste'))
         self.pasteFromClipboard.setShortcut(QKeySequence.Paste)
-        self.insertFromClipboard = self._editMenu.addAction(self.tr('Insert...'))
-        self.insertFromClipboard.setShortcut('Ctrl+Ins')
+        self.insertEdit = self._editMenu.addAction(self.tr('Insert...'))
+        self.insertEdit.setShortcut('Ctrl+Ins')
         self.removeEdit = self._editMenu.addAction(self.tr('Remove...'))
         self.removeEdit.setShortcut('Ctrl+Delete')
         self.deleteEdit = self._editMenu.addAction(self.tr('Delete content'))
