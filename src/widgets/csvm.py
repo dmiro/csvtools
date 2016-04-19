@@ -750,6 +750,8 @@ class QCsv(QTableView):
                 # updates the area occupied by the given indexes in selection
                 for index in self.lastSelectionRanges.indexes():
                     self.update(index)
+            return
+        super(QCsv, self).timerEvent(timerEvent)
 
     #
     # public
@@ -1134,6 +1136,19 @@ class QCsv(QTableView):
     def editMenu(self):
         return self._editMenu
 
+    def edit (self, index, trigger, event):
+        """override the method 'edit' to cancel the area copied to the clipboard if
+        the user edits inside the area"""
+        editing = QTableView.edit(self, index, trigger, event)
+        # view's state is now EditingState
+        if editing:
+            if self.lastSelectionRanges:
+                if self.lastSelectionRanges.contains(index):
+                    self.lastSelectionRanges = None
+                    clipboard = QApplication.clipboard()
+                    clipboard.clear()
+        return editing
+
     #
     # del
     #
@@ -1149,22 +1164,8 @@ class QCsv(QTableView):
     # init
     #
 
-
-    def edit (self, index, trigger, event):
-        """override the method 'edit' to cancel the area copied to the clipboard if
-        the user edits inside the area"""
-        editing = QTableView.edit(self, index, trigger, event)
-        # view's state is now EditingState
-        if editing:
-            if self.lastSelectionRanges:
-                if self.lastSelectionRanges.contains(index):
-                    self.lastSelectionRanges = None
-                    clipboard = QApplication.clipboard()
-                    clipboard.clear()
-        return editing
-
     def __init__(self, document, *args):
-        QTableView.__init__(self, *args)
+        super(QCsv, self).__init__(*args)
 
         # config and connect scrollbars
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
@@ -1201,7 +1202,6 @@ class QCsv(QTableView):
         self._addEditMenu()
         self.contextMenuRequested.connect(self._csvcontextMenuRequestedEvent)
         self.selectionChanged_.connect(self._csvSelectionChangedEvent)
-
 
 ##       self.setSortingEnabled(True)
 ##        # table model proxy
