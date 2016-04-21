@@ -28,3 +28,8 @@ class MoveDirectionEnum(object):
     RightMove = 1
     TopMove = 2
     BottomMove = 3
+
+
+class RemoveDirectionEnum(object):
+    MoveUpRemove = 0
+    MoveLeftRemove = 1

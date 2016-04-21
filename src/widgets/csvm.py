@@ -238,6 +238,12 @@ class MyTableModel(QAbstractTableModel):
         self.endInsertColumns()
         return True
 
+    def removeArrayInColumns(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
+        self.beginRemoveRows(parent, column, column + dimColumns)
+        self.document.removeArrayInColumns(row, column, dimRows, dimColumns)
+        self.endRemoveRows()
+        return True
+
     def insertColumns(self, column, count, parent = QModelIndex()):
         self.beginInsertColumns(parent, column, column+count)
         self.document.insertEmptyColumns(column, count)
@@ -537,6 +543,14 @@ class QCsv(QTableView):
 
         if action == self.moveCellBottomAction:
             pass
+            return
+
+        if action ==  self.removeCellMoveUpAction:
+            pass
+            return
+
+        if action == self.removeCellMoveLeftAction:
+            self.removeArray(remove=enums.RemoveDirectionEnum.MoveLeftRemove)
             return
 
         if action == self.insertCellLeftAction:
@@ -949,6 +963,32 @@ class QCsv(QTableView):
                 elif insert==enums.InsertDirectionEnum.RightInsert:
                     column = column + dimColumns
                     model.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
+                # new selection
+                currentIndex = model.createIndex(row, column)
+                self.setCurrentIndex(currentIndex)
+                self.clearSelection()
+                self._select(row,
+                             column,
+                             row + dimRows - 1,
+                             column + dimColumns - 1)
+
+    def removeArray(self, remove=enums.RemoveDirectionEnum.MoveLeftRemove, dimRows=None, dimColumns=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if dimRows == None:
+                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if dimColumns == None:
+                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if dimRows > 0 and dimColumns > 0:
+                # remove array
+                row = topLeftIndex.row()
+                column = topLeftIndex.column()
+                model = self.model()
+                if remove==enums.RemoveDirectionEnum.MoveUpRemove:
+                    pass
+                if remove==enums.RemoveDirectionEnum.MoveLeftRemove:
+                    model.removeArrayInColumns(row, column, dimRows, dimColumns)
                 # new selection
                 currentIndex = model.createIndex(row, column)
                 self.setCurrentIndex(currentIndex)

@@ -130,12 +130,12 @@ class Sheet(object):
             raise IndexError('column index must be positive')
         if endColumn < 0:
             raise IndexError('column index must be positive')
-        if startColumn >= self.columnCount():
-            raise IndexError('column index out of range')
-        if endColumn >= self.columnCount():
-            raise IndexError('column index out of range')
         if endColumn < startColumn:
             raise IndexError('startColumn must be smaller than endColumn')
+        if startColumn >= self.columnCount():
+            return
+        if endColumn >= self.columnCount():
+            endColumn = self.columnCount()-1
         # remove
         self.__arrayData = np.delete(self.__arrayData, xrange(startColumn, endColumn+1), 1)
         # constraint rows & columns
@@ -150,12 +150,12 @@ class Sheet(object):
             raise IndexError('startRow must be positive')
         if endRow < 0:
             raise IndexError('endRow must be positive')
-        if startRow >= self.rowCount():
-            raise IndexError('startRow out of range')
-        if endRow >= self.rowCount():
-            raise IndexError('row index out of range')
         if endRow < startRow:
             raise IndexError('startRow must be smaller than endRow')
+        if startRow >= self.rowCount():
+            return
+        if endRow >= self.rowCount():
+            endRow = self.rowCount()-1
         # remove
         self.__arrayData = np.delete(self.__arrayData, xrange(startRow, endRow+1), 0)
         # constraint rows & columns
@@ -405,6 +405,41 @@ class Sheet(object):
             raise IndexError('dimColumns must be higher than zero')
         sourceArray = np.empty([dimRows, dimColumns], dtype=object)
         return self.insertArrayInRows(startRow, startColumn, sourceArray)
+
+    def removeArrayInColumns(self, startRow, startColumn, dimRows, dimColumns):
+        # checks
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
+        if dimRows < 1:
+            raise IndexError('dimRows must be higher than zero')
+        if dimColumns < 1:
+            raise IndexError('dimColumns must be higher than zero')
+        if not self.isEmpty():
+            endRow = min(startRow + dimRows, self.rowCount())
+            endColumn =  self.columnCount() - dimColumns
+            #
+            originStartRow = startRow
+            originEndRow = endRow
+            originStartColumn = startColumn + dimColumns
+            originEndColumn = self.columnCount()
+            #
+            emptyStartRow = startRow
+            emptyEndRow = endRow
+            emptyStartColumn = max(startColumn, endColumn)
+            emptyEndColumn = self.columnCount()
+            #
+            if startColumn <= endColumn:
+                self.__arrayData[startRow:endRow, startColumn:endColumn] = self.__arrayData[originStartRow:originEndRow, originStartColumn:originEndColumn]
+            if emptyStartColumn <= emptyEndColumn:
+                self.__arrayData[emptyStartRow:emptyEndRow, emptyStartColumn:emptyEndColumn] = None
+            # constraint rows & columns
+            self.__constraint()
+            return True
+
+    def removeArrayInRows(self, startRow, startColumn, dimRows, dimColumns):
+        pass
 
     def deleteCells(self, startRow, startColumn, dimRows, dimColumns):
         # checks
