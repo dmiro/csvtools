@@ -164,15 +164,15 @@ class SheetTestCase(TestCase):
         self.assertEqual(sh.rowCount(), 4)
         self.assertEqual(sh.columnCount(), 3)
         #
-        sh.removeColumns(1, 2)
+        sh.removeColumns(1, 1)
         self.assertEqual(sh.rowCount(), 4)
-        self.assertEqual(sh.columnCount(), 1)
+        self.assertEqual(sh.columnCount(), 2)
         self.assertEqual(sh.value(0,0), '')
         self.assertEqual(sh.value(0,1), '')
         self.assertEqual(sh.value(1,0), '1-0')
         self.assertEqual(sh.value(1,1), '')
         self.assertEqual(sh.value(2,0), '')
-        self.assertEqual(sh.value(2,1), '')
+        self.assertEqual(sh.value(2,1), '2-2')
         self.assertEqual(sh.value(3,0), '3-0')
         self.assertEqual(sh.value(3,1), '')
         #
@@ -191,7 +191,7 @@ class SheetTestCase(TestCase):
         self.assertEqual(sh.rowCount(), 4)
         self.assertEqual(sh.columnCount(), 3)
         #
-        sh.removeColumns(0, 2)
+        sh.removeColumns(0, 3)
         self.assertEqual(sh.rowCount(), 0)
         self.assertEqual(sh.columnCount(), 0)
         self.assertEqual(sh.value(0,0), '')
@@ -260,15 +260,18 @@ class SheetTestCase(TestCase):
         self.assertEqual(sh.rowCount(), 4)
         self.assertEqual(sh.columnCount(), 3)
         #
-        sh.removeRows(1, 2)
-        self.assertEqual(sh.rowCount(), 2)
-        self.assertEqual(sh.columnCount(), 2)
+        sh.removeRows(1, 1)
+        self.assertEqual(sh.rowCount(), 3)
+        self.assertEqual(sh.columnCount(), 3)
         self.assertEqual(sh.value(0,0), '')
-        self.assertEqual(sh.value(0,0), '')
-        self.assertEqual(sh.value(1,0), '3-0')
-        self.assertEqual(sh.value(1,1), '3-1')
-        self.assertEqual(sh.value(2,0), '')
-        self.assertEqual(sh.value(2,1), '')
+        self.assertEqual(sh.value(0,1), '')
+        self.assertEqual(sh.value(0,2), '')
+        self.assertEqual(sh.value(1,0), '')
+        self.assertEqual(sh.value(1,1), '2-1')
+        self.assertEqual(sh.value(1,2), '2-2')
+        self.assertEqual(sh.value(2,0), '3-0')
+        self.assertEqual(sh.value(2,1), '3-1')
+        self.assertEqual(sh.value(2,2), '')
         #
         # test 2
         #
@@ -285,7 +288,7 @@ class SheetTestCase(TestCase):
         self.assertEqual(sh.rowCount(), 4)
         self.assertEqual(sh.columnCount(), 3)
         #
-        sh.removeRows(0, 3)
+        sh.removeRows(0, 4)
         self.assertEqual(sh.rowCount(), 0)
         self.assertEqual(sh.columnCount(), 0)
         self.assertEqual(sh.value(0,0), '')
@@ -1660,6 +1663,151 @@ class SheetTestCase(TestCase):
                                          ['1800','1900','2000','2100','2200'],
                                          ['2400','2500','2600','2700','2800'],
                                          ['3000','3100','3200','3300','3400']])
+
+    def test_remove_array_in_rows(self):
+        arrayData = [['1100','1200','1300','1400','1500','1600'],
+                     ['1700','1800','1900','2000','2100','2200'],
+                     ['2300','2400','2500','2600','2700','2800'],
+                     ['2900','3000','3100','3200','3300','3400']]
+        #
+        # test 0
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(0, 1, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1100', '2400', '2500', '1400', '1500', '1600'],
+                                         ['1700', '3000', '3100', '2000', '2100', '2200'],
+                                         ['2300', None, None, '2600', '2700', '2800'],
+                                         ['2900', None, None, '3200', '3300', '3400']])
+        #
+        # test 1
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(1, 1, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                         ['1700', '3000', '3100', '2000', '2100', '2200'],
+                                         ['2300', None, None, '2600', '2700', '2800'],
+                                         ['2900', None, None, '3200', '3300', '3400']])
+        #
+        # test 2
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(2, 1, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                         ['1700', '1800', '1900', '2000', '2100', '2200'],
+                                         ['2300', None, None, '2600', '2700', '2800'],
+                                         ['2900', None, None, '3200', '3300', '3400']])
+        #
+        # test 3
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(3, 1, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                         ['1700', '1800', '1900', '2000', '2100', '2200'],
+                                         ['2300', '2400', '2500', '2600', '2700', '2800'],
+                                         ['2900', None, None, '3200', '3300', '3400']])
+        #
+        # test 4
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(4, 1, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                         ['1700', '1800', '1900', '2000', '2100', '2200'],
+                                         ['2300', '2400', '2500', '2600', '2700', '2800'],
+                                         ['2900', '3000', '3100', '3200', '3300', '3400']])
+        #
+        # test 5
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(5, 1, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                         ['1700', '1800', '1900', '2000', '2100', '2200'],
+                                         ['2300', '2400', '2500', '2600', '2700', '2800'],
+                                         ['2900', '3000', '3100', '3200', '3300', '3400']])
+        #
+        # test 8
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(0, 1, 2, 6)
+        self.assertEqual(sh.arrayData(),[['1100', '2400', '2500', '2600', '2700', '2800'],
+                                         ['1700', '3000', '3100', '3200', '3300', '3400'],
+                                         ['2300', None, None, None, None, None],
+                                         ['2900', None, None, None, None, None]])
+        #
+        # test 9
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(0, 1, 3, 6)
+        self.assertEqual(sh.arrayData(),[['1100', '3000', '3100', '3200', '3300', '3400'],
+                                         ['1700', None, None, None, None, None],
+                                         ['2300', None, None, None, None, None],
+                                         ['2900', None, None, None, None, None]])
+        #
+        # test 10
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(0, 1, 4, 6)
+        self.assertEqual(sh.arrayData(),[['1100'],
+                                         ['1700'],
+                                         ['2300'],
+                                         ['2900']])
+        #
+        # test 11
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(0, 0, 4, 6)
+        self.assertEqual(sh.arrayData(),[])
+        #
+        # test 12
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(0, 0, 10, 10)
+        self.assertEqual(sh.arrayData(),[])
+        #
+        # test 13
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        with self.assertRaises(IndexError):
+            sh.removeArrayInRows(0, 0, 0, 0)
+        with self.assertRaises(IndexError):
+            sh.removeArrayInRows(1, 1, 0, 0)
+        with self.assertRaises(IndexError):
+            sh.removeArrayInRows(0, 0, -1, -1)
+        #
+        # test 14
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(1, 1, 1, 1)
+        self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                         ['1700', '2400', '1900', '2000', '2100', '2200'],
+                                         ['2300', '3000', '2500', '2600', '2700', '2800'],
+                                         ['2900', None, '3100', '3200', '3300', '3400']])
+        #
+        # test 15
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(3, 5, 1, 1)
+        self.assertEqual(sh.arrayData(),[['1100', '1200', '1300', '1400', '1500', '1600'],
+                                         ['1700', '1800', '1900', '2000', '2100', '2200'],
+                                         ['2300', '2400', '2500', '2600', '2700', '2800'],
+                                         ['2900', '3000', '3100', '3200', '3300', None]])
+        #
+        # test 16
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(3, 5, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1100','1200','1300','1400','1500','1600'],
+                                         ['1700','1800','1900','2000','2100','2200'],
+                                         ['2300','2400','2500','2600','2700','2800'],
+                                         ['2900','3000','3100','3200','3300',None]])
+        #
+        # test 17
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.removeArrayInRows(0, 0, 1, 6)
+        self.assertEqual(sh.arrayData(),[['1700', '1800', '1900', '2000', '2100', '2200'],
+                                         ['2300', '2400', '2500', '2600', '2700', '2800'],
+                                         ['2900', '3000', '3100', '3200', '3300', '3400']])
+
 
 
 if __name__ == '__main__':

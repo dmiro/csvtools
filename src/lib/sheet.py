@@ -124,45 +124,43 @@ class Sheet(object):
         # constraint rows & columns
         self.__constraint()
 
-    def removeColumns(self, startColumn, endColumn):
+    def removeColumns(self, startColumn, count):
         # check
         if startColumn < 0:
             raise IndexError('column index must be positive')
-        if endColumn < 0:
-            raise IndexError('column index must be positive')
-        if endColumn < startColumn:
-            raise IndexError('startColumn must be smaller than endColumn')
+        if count < 0:
+            raise IndexError('count must be greater or equal than zero')
         if startColumn >= self.columnCount():
             return
-        if endColumn >= self.columnCount():
-            endColumn = self.columnCount()-1
         # remove
-        self.__arrayData = np.delete(self.__arrayData, xrange(startColumn, endColumn+1), 1)
+        endColumn = startColumn + count
+        if endColumn > self.columnCount():
+            endColumn = self.columnCount()
+        self.__arrayData = np.delete(self.__arrayData, xrange(startColumn, endColumn), axis=1)
         # constraint rows & columns
         self.__constraint()
 
     def removeColumn(self, column):
-        self.removeColumns(column, column)
+        self.removeColumns(column, 1)
 
-    def removeRows(self, startRow, endRow):
+    def removeRows(self, startRow, count):
         # check
         if startRow < 0:
             raise IndexError('startRow must be positive')
-        if endRow < 0:
-            raise IndexError('endRow must be positive')
-        if endRow < startRow:
-            raise IndexError('startRow must be smaller than endRow')
+        if count < 0:
+            raise IndexError('count must be greater or equal than zero')
         if startRow >= self.rowCount():
             return
-        if endRow >= self.rowCount():
-            endRow = self.rowCount()-1
         # remove
-        self.__arrayData = np.delete(self.__arrayData, xrange(startRow, endRow+1), 0)
+        endRow = startRow + count
+        if endRow >  self.rowCount():
+            endRow = self.rowCount()
+        self.__arrayData = np.delete(self.__arrayData, xrange(startRow, endRow), axis=0)
         # constraint rows & columns
         self.__constraint()
 
     def removeRow(self, row):
-        self.removeRows(row, row)
+        self.removeRows(row, 1)
 
     def insertRows(self, startRow, rows):
         # check
@@ -247,10 +245,10 @@ class Sheet(object):
         if dataRows > 0:
             if destinationRow < originRow:
                 self.removeRows(originRow + count,
-                                originRow + count + dataRows - 1)
+                                count + dataRows)
             else:
                 self.removeRows(originRow,
-                                originRow + dataRows - 1)
+                                dataRows)
 
     def moveRow(self, originRow, destinationRow):
         self.moveRows(originRow, 1, destinationRow)
@@ -273,8 +271,6 @@ class Sheet(object):
             dataColumns = min(self.columnCount() - originColumn, count)
             missingColumns = count - dataColumns
         # move
-#        self.insertColumns(destinationColumn,
-#                           self.__arrayData[:, originColumn: originColumn + dataColumns].transpose().tolist())
         self.insertColumns(destinationColumn,
                            self.__arrayData[:, originColumn: originColumn + dataColumns].tolist())
         if missingColumns > 0:
@@ -282,10 +278,10 @@ class Sheet(object):
         if dataColumns > 0:
             if destinationColumn < originColumn:
                 self.removeColumns(originColumn + count,
-                                   originColumn + count + dataColumns - 1)
+                                   count + dataColumns)
             else:
                 self.removeColumns(originColumn,
-                                   originColumn + dataColumns - 1)
+                                   dataColumns)
 
     def moveColumn(self, originColumn, destinationColumn):
         self.moveColumns(originColumn, 1, destinationColumn)
@@ -439,7 +435,36 @@ class Sheet(object):
             return True
 
     def removeArrayInRows(self, startRow, startColumn, dimRows, dimColumns):
-        pass
+        # checks
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
+        if dimRows < 1:
+            raise IndexError('dimRows must be higher than zero')
+        if dimColumns < 1:
+            raise IndexError('dimColumns must be higher than zero')
+        if not self.isEmpty():
+            endRow =  self.rowCount() - dimRows
+            endColumn =  min(startColumn + dimColumns, self.columnCount())
+            #
+            originStartRow = startRow + dimRows
+            originEndRow = self.rowCount()
+            originStartColumn = startColumn
+            originEndColumn = endColumn
+            #
+            emptyStartRow = max(startRow, endRow)
+            emptyEndRow = self.rowCount()
+            emptyStartColumn =  startColumn
+            emptyEndColumn = endColumn
+            #
+            if startRow <= endRow:
+                self.__arrayData[startRow:endRow, startColumn:endColumn] = self.__arrayData[originStartRow:originEndRow, originStartColumn:originEndColumn]
+            if emptyStartRow <= emptyEndRow:
+                self.__arrayData[emptyStartRow:emptyEndRow, emptyStartColumn:emptyEndColumn] = None
+            # constraint rows & columns
+            self.__constraint()
+            return True
 
     def deleteCells(self, startRow, startColumn, dimRows, dimColumns):
         # checks

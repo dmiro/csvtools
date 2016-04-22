@@ -244,6 +244,12 @@ class MyTableModel(QAbstractTableModel):
         self.endRemoveRows()
         return True
 
+    def removeArrayInRows(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
+        self.beginRemoveRows(parent, column, column + dimColumns)
+        self.document.removeArrayInRows(row, column, dimRows, dimColumns)
+        self.endRemoveRows()
+        return True
+
     def insertColumns(self, column, count, parent = QModelIndex()):
         self.beginInsertColumns(parent, column, column+count)
         self.document.insertEmptyColumns(column, count)
@@ -254,8 +260,8 @@ class MyTableModel(QAbstractTableModel):
         return self.insertColumn(column, 1, parent)
 
     def removeRows(self, row, count, parent = QModelIndex()):
-        self.beginRemoveRows(parent, row, row+count)
-        self.document.removeRows(row, row+count)
+        self.beginRemoveRows(parent, row, count)
+        self.document.removeRows(row, count)
         self.endRemoveRows()
         return True
 
@@ -263,8 +269,8 @@ class MyTableModel(QAbstractTableModel):
         return self.removeRows(row, 1, parent)
 
     def removeColumns(self, column, count, parent = QModelIndex()):
-        self.beginRemoveColumns(parent, column, column+count)
-        self.document.removeColumns(column, column+count)
+        self.beginRemoveColumns(parent, column, count)
+        self.document.removeColumns(column, count)
         self.endRemoveColumns()
         return True
 
@@ -513,6 +519,22 @@ class QCsv(QTableView):
                 self.insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
+        if action == self.removeEdit:
+            option = QRadioButtonDialog.getSelectItem('Remove',
+                                                      ['Shift cells left',
+                                                       'Shift cells up',
+                                                       'Remove entire row',
+                                                       'Remove entire column'])
+            if option == 0:
+                self.removeArray(remove=enums.RemoveDirectionEnum.MoveLeftRemove)
+            if option == 1:
+                self.removeArray(remove=enums.RemoveDirectionEnum.MoveUpRemove)
+            if option == 2:
+                self.removeRows()
+            if option == 3:
+                self.removeColumns()
+            return
+
         if action == self.moveRowTopAction:
             self.moveRows(move=enums.MoveBlockDirectionEnum.BeforeMove)
             return
@@ -546,7 +568,7 @@ class QCsv(QTableView):
             return
 
         if action ==  self.removeCellMoveUpAction:
-            pass
+            self.removeArray(remove=enums.RemoveDirectionEnum.MoveUpRemove)
             return
 
         if action == self.removeCellMoveLeftAction:
@@ -729,13 +751,6 @@ class QCsv(QTableView):
             # updates the area occupied by the given indexes in selection
             for index in selectionRanges.indexes():
                 self.update(index)
-            ##
-            ##        clipboard = QApplication.clipboard()
-            ##        print 'clipboard!'
-            ##        print 'ownsClipboard:',clipboard.ownsClipboard()
-            ##        print 'ownsFindBuffer:',clipboard.ownsFindBuffer()
-            ##        print 'ownsSelection:',clipboard.ownsSelection()
-            ##
 
     # http://stackoverflow.com/questions/11352523/qt-and-pyqt-tablewidget-growing-row-count
     # http://stackoverflow.com/questions/19993898/dynamically-add-data-to-qtableview
@@ -986,7 +1001,7 @@ class QCsv(QTableView):
                 column = topLeftIndex.column()
                 model = self.model()
                 if remove==enums.RemoveDirectionEnum.MoveUpRemove:
-                    pass
+                    model.removeArrayInRows(row, column, dimRows, dimColumns)
                 if remove==enums.RemoveDirectionEnum.MoveLeftRemove:
                     model.removeArrayInColumns(row, column, dimRows, dimColumns)
                 # new selection
