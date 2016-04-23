@@ -222,70 +222,6 @@ class Sheet(object):
     def insertEmptyColumn(self, startColumn):
         self.insertEmptyColumns(startColumn, 1)
 
-    def moveRows(self, originRow, count, destinationRow):
-        # checks
-        if originRow < 0:
-            raise IndexError('originRow must be positive')
-        if destinationRow < 0:
-            raise IndexError('destinationRow must be positive')
-        if count < 1:
-            raise IndexError('count must be higher than zero')
-        if destinationRow in range(originRow, originRow+count):
-            raise IndexError('destinationRow cannot be within place to move')
-        # calculate source rows empty and missing
-        if originRow > self.rowCount():
-            dataRows = 0
-            missingRows = count
-        else:
-            dataRows = min(self.rowCount() - originRow, count)
-            missingRows = count - dataRows
-        # move
-        self.insertRows(destinationRow,
-                        self.__arrayData[originRow: originRow + dataRows].tolist() + [[] for _ in xrange(missingRows)])
-        if dataRows > 0:
-            if destinationRow < originRow:
-                self.removeRows(originRow + count,
-                                count + dataRows)
-            else:
-                self.removeRows(originRow,
-                                dataRows)
-
-    def moveRow(self, originRow, destinationRow):
-        self.moveRows(originRow, 1, destinationRow)
-
-    def moveColumns(self, originColumn, count, destinationColumn):
-        # checks
-        if originColumn < 0:
-            raise IndexError('originColumn must be positive')
-        if destinationColumn < 0:
-            raise IndexError('destinationColumn must be positive')
-        if count < 1:
-            raise IndexError('count must be higher than zero')
-        if destinationColumn in range(originColumn, originColumn+count):
-            raise IndexError('destinationColumn cannot be within place to move')
-        # calculate source rows empty and missing
-        if originColumn > self.rowCount():
-            dataColumns = 0
-            missingColumns = count
-        else:
-            dataColumns = min(self.columnCount() - originColumn, count)
-            missingColumns = count - dataColumns
-        # move
-        self.insertColumns(destinationColumn,
-                           self.__arrayData[:, originColumn: originColumn + dataColumns].tolist())
-        if missingColumns > 0:
-            self.insertEmptyColumns(destinationColumn + dataColumns, missingColumns)
-        if dataColumns > 0:
-            if destinationColumn < originColumn:
-                self.removeColumns(originColumn + count,
-                                   count + dataColumns)
-            else:
-                self.removeColumns(originColumn,
-                                   dataColumns)
-
-    def moveColumn(self, originColumn, destinationColumn):
-        self.moveColumns(originColumn, 1, destinationColumn)
-
     def insertArrayInColumns(self, startRow, startColumn, array):
         """
         Insert array and move the affected columns downward
@@ -564,3 +500,44 @@ class Sheet(object):
         self.removeArrayInRows(startRow, startColumn, dimRows, dimColumns)
         self.insertArrayInRows(destRow, destColumn, array)
         return True
+
+    def moveArrayInColumns(self, startRow, startColumn, dimRows, dimColumns, destRow, destColumn):
+        # checks
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
+        if dimRows < 1:
+            raise IndexError('dimRows must be higher than zero')
+        if dimColumns < 1:
+            raise IndexError('dimColumns must be higher than zero')
+        if destRow < 0:
+            raise IndexError('destRow must be positive')
+        if destColumn < 0:
+            raise IndexError('destColumn must be positive')
+        array = self.getArray(startRow, startColumn, dimRows, dimColumns)
+        self.removeArrayInColumns(startRow, startColumn, dimRows, dimColumns)
+        self.insertArrayInColumns(destRow, destColumn, array)
+        return True
+
+    def moveRows(self, startRow, count, destRow):
+         self.moveArrayInRows(startRow,
+                              0,
+                              count,
+                              self.columnCount(),
+                              destRow,
+                              0)
+
+    def moveRow(self, originRow, destinationRow):
+        self.moveRows(originRow, 1, destinationRow)
+
+    def moveColumns(self, startColumn, count, destColumn):
+        self.moveArrayInColumns(0,
+                                startColumn,
+                                self.rowCount(),
+                                count,
+                                0,
+                                destColumn)
+
+    def moveColumn(self, originColumn, destinationColumn):
+        self.moveColumns(originColumn, 1, destinationColumn)

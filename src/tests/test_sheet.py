@@ -756,20 +756,21 @@ class SheetTestCase(TestCase):
         #
         sh = Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveRow(0, 2)
-        self.assertEqual(sh.arrayData(), [['a','e','i','o','u'],
-                                          ['1','2','3','4','5'],
-                                          ['6','7','8','9','10'],
-                                          ['11','12','13','14','15']])
+        self.assertEqual(sh.arrayData(),[['a', 'e', 'i', 'o', 'u'],
+                                         ['6', '7', '8', '9', '10'],
+                                         ['1', '2', '3', '4', '5'],
+                                         ['11', '12', '13', '14', '15']])
         #
         # test 2
         #
         sh = Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveRow(2, 5)
-        self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],
-                                          ['a','e','i','o','u'],
-                                          ['11','12','13','14','15'],
-                                          [None, None, None, None, None],
-                                          ['6','7','8','9','10']])
+        self.assertEqual(sh.arrayData(),[['1', '2', '3', '4', '5'],
+                                         ['a', 'e', 'i', 'o', 'u'],
+                                         ['11', '12', '13', '14', '15'],
+                                         [None, None, None, None, None],
+                                         [None, None, None, None, None],
+                                         ['6', '7', '8', '9', '10']])
 
     def test_move_rows(self):
         arrayData = [['1','2','3','4','5'],
@@ -781,10 +782,11 @@ class SheetTestCase(TestCase):
         #
         sh = Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveRows(0, 1, 2)
-        self.assertEqual(sh.arrayData(), [['a','e','i','o','u'],
-                                          ['1','2','3','4','5'],
-                                          ['6','7','8','9','10'],
-                                          ['11','12','13','14','15']])
+        self.assertEqual(sh.arrayData(),[['a', 'e', 'i', 'o', 'u'],
+                                         ['6', '7', '8', '9', '10'],
+                                         ['1', '2', '3', '4', '5'],
+                                         ['11', '12', '13', '14', '15']]
+)
         self.assertEqual(sh.rowCount(), 4)
         self.assertEqual(sh.columnCount(), 5)
         #
@@ -792,21 +794,24 @@ class SheetTestCase(TestCase):
         #
         sh = Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveRows(0, 2, 3)
-        self.assertEqual(sh.arrayData(), [['6','7','8','9','10'],
-                                          ['1','2','3','4','5'],
-                                          ['a','e','i','o','u'],
-                                          ['11','12','13','14','15']])
-        self.assertEqual(sh.rowCount(), 4)
+        self.assertEqual(sh.arrayData(),[['6', '7', '8', '9', '10'],
+                                         ['11', '12', '13', '14', '15'],
+                                         [None, None, None, None, None],
+                                         ['1', '2', '3', '4', '5'],
+                                         ['a', 'e', 'i', 'o', 'u']]
+)
+        self.assertEqual(sh.rowCount(), 5)
         self.assertEqual(sh.columnCount(), 5)
         #
         # test 3
         #
         sh = Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveRows(0, 2, 2)
-        self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],
-                                          ['a','e','i','o','u'],
-                                          ['6','7','8','9','10'],
-                                          ['11','12','13','14','15']])
+        self.assertEqual(sh.arrayData(), [['6', '7', '8', '9', '10'],
+                                          ['11', '12', '13', '14', '15'],
+                                          ['1', '2', '3', '4', '5'],
+                                          ['a', 'e', 'i', 'o', 'u']]
+)
         self.assertEqual(sh.rowCount(), 4)
         self.assertEqual(sh.columnCount(), 5)
         #
@@ -825,13 +830,14 @@ class SheetTestCase(TestCase):
         #
         sh = Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveRows(3, 1, 6)
-        self.assertEqual(sh.arrayData(), [['1','2','3','4','5'],
-                                          ['a','e','i','o','u'],
-                                          ['6','7','8','9','10'],
-                                          [None,None,None,None,None],
-                                          [None,None,None,None,None],
-                                          ['11','12','13','14','15']])
-        self.assertEqual(sh.rowCount(), 6)
+        self.assertEqual(sh.arrayData(), [['1', '2', '3', '4', '5'],
+                                          ['a', 'e', 'i', 'o', 'u'],
+                                          ['6', '7', '8', '9', '10'],
+                                          [None, None, None, None, None],
+                                          [None, None, None, None, None],
+                                          [None, None, None, None, None],
+                                          ['11', '12', '13', '14', '15']])
+        self.assertEqual(sh.rowCount(), 7)
         self.assertEqual(sh.columnCount(), 5)
         #
         # test 6
@@ -912,10 +918,11 @@ class SheetTestCase(TestCase):
         sh.moveRows(0, 1, 5)
         self.assertEqual(sh.arrayData(), [['a', 'e', 'i', 'o', 'u'],
                                           ['6', '7', '8', '9', '10'],
-                                          ['11','12','13','14','15'],
-                                          [None,None,None,None,None],
+                                          ['11', '12', '13', '14', '15'],
+                                          [None, None, None, None, None],
+                                          [None, None, None, None, None],
                                           ['1', '2', '3', '4', '5']])
-        self.assertEqual(sh.rowCount(), 5)
+        self.assertEqual(sh.rowCount(), 6)
         self.assertEqual(sh.columnCount(), 5)
         #
         # test 13
@@ -928,8 +935,9 @@ class SheetTestCase(TestCase):
                                           [None,None,None,None,None],
                                           [None,None,None,None,None],
                                           [None,None,None,None,None],
+                                          [None,None,None,None,None],
                                           ['1', '2', '3', '4', '5']])
-        self.assertEqual(sh.rowCount(), 7)
+        self.assertEqual(sh.rowCount(), 8)
         self.assertEqual(sh.columnCount(), 5)
         #
         # test 14
@@ -961,15 +969,9 @@ class SheetTestCase(TestCase):
         #
         sh = Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         with self.assertRaises(IndexError):
-            sh.moveRows(0, 2, 0)
+            sh.moveRows(-1, 2, 2)
         with self.assertRaises(IndexError):
-            sh.moveRows(0, 2, 1)
-        with self.assertRaises(IndexError):
-            sh.moveRows(2, 1, 2)
-        with self.assertRaises(IndexError):
-            sh.moveRows(2, 2, 2)
-        with self.assertRaises(IndexError):
-            sh.moveRows(2, 2, 3)
+            sh.moveRows(2, 0, 3)
 
     def test_move_columns(self):
         arrayData = [['1','2','3','4','5'],
@@ -981,10 +983,10 @@ class SheetTestCase(TestCase):
         #
         sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveColumns(0, 1, 2)
-        self.assertEqual(sh.arrayData(), [['2','1','3','4','5'],
-                                          ['e','a','i','o','u'],
-                                          ['7','6','8','9','10'],
-                                          ['12','11','13','14','15']])
+        self.assertEqual(sh.arrayData(),[['2', '3', '1', '4', '5'],
+                                         ['e', 'i', 'a', 'o', 'u'],
+                                         ['7', '8', '6', '9', '10'],
+                                         ['12', '13', '11', '14', '15']])
         self.assertEqual(sh.rowCount(), 4)
         self.assertEqual(sh.columnCount(), 5)
         #
@@ -992,10 +994,10 @@ class SheetTestCase(TestCase):
         #
         sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveColumns(0, 2, 3)
-        self.assertEqual(sh.arrayData(), [['3','1','2','4','5'],
-                                          ['i','a','e','o','u'],
-                                          ['8','6','7','9','10'],
-                                          ['13','11','12','14','15']])
+        self.assertEqual(sh.arrayData(),[['3', '4', '5', '1', '2'],
+                                         ['i', 'o', 'u', 'a', 'e'],
+                                         ['8', '9', '10', '6', '7'],
+                                         ['13', '14', '15', '11', '12']])
         self.assertEqual(sh.rowCount(), 4)
         self.assertEqual(sh.columnCount(), 5)
         #
@@ -1003,12 +1005,12 @@ class SheetTestCase(TestCase):
         #
         sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveColumns(0, 1, 6)
-        self.assertEqual(sh.arrayData(), [['2','3','4','5',None,'1'],
-                                          ['e','i','o','u',None,'a'],
-                                          ['7','8','9','10',None,'6'],
-                                          ['12','13','14','15',None,'11']])
+        self.assertEqual(sh.arrayData(),[['2', '3', '4', '5', None, None, '1'],
+                                         ['e', 'i', 'o', 'u', None, None, 'a'],
+                                         ['7', '8', '9', '10', None, None, '6'],
+                                         ['12', '13', '14', '15', None, None, '11']])
         self.assertEqual(sh.rowCount(), 4)
-        self.assertEqual(sh.columnCount(), 6)
+        self.assertEqual(sh.columnCount(), 7)
         #
         # test 4
         #
@@ -1872,7 +1874,6 @@ class SheetTestCase(TestCase):
         #
         sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveArrayInRows(1, 0, 2, 2, 1, 0)
-        print sh.arrayData()
         self.assertEqual(sh.arrayData(),[['1100','1200','1300','1400','1500','1600'],
                                          ['1700','1800','1900','2000','2100','2200'],
                                          ['2300','2400','2500','2600','2700','2800'],
@@ -1882,13 +1883,54 @@ class SheetTestCase(TestCase):
         #
         sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
         sh.moveArrayInRows(0, 0, 2, 2, 3, 0)
-        print sh.arrayData()
         self.assertEqual(sh.arrayData(),[['2300', '2400', '1300', '1400', '1500', '1600'],
                                          ['2900', '3000', '1900', '2000', '2100', '2200'],
                                          [None,    None,  '2500', '2600', '2700', '2800'],
                                          ['1100', '1200', '3100', '3200', '3300', '3400'],
                                          ['1700', '1800',  None,   None,   None,   None]]
 )
+    def test_move_array_in_columns(self):
+        arrayData = [['1100','1200','1300','1400','1500','1600'],
+                     ['1700','1800','1900','2000','2100','2200'],
+                     ['2300','2400','2500','2600','2700','2800'],
+                     ['2900','3000','3100','3200','3300','3400']]
+        #
+        # test 1
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.moveArrayInColumns(0, 0, 2, 2, 2, 0)
+        self.assertEqual(sh.arrayData(),[['1300', '1400', '1500', '1600', None, None, None, None],
+                                         ['1900', '2000', '2100', '2200', None, None, None, None],
+                                         ['1100', '1200', '2300', '2400', '2500', '2600', '2700', '2800'],
+                                         ['1700', '1800', '2900', '3000', '3100', '3200', '3300', '3400']])
+        #
+        # test 2
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.moveArrayInColumns(1, 0, 2, 2, 1, 0)
+        self.assertEqual(sh.arrayData(),[['1100','1200','1300','1400','1500','1600'],
+                                         ['1700','1800','1900','2000','2100','2200'],
+                                         ['2300','2400','2500','2600','2700','2800'],
+                                         ['2900','3000','3100','3200','3300','3400']])
+        #
+        # test 3
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.moveArrayInColumns(0, 0, 2, 2, 3, 0)
+        self.assertEqual(sh.arrayData(),[['1300', '1400', '1500', '1600', None, None, None, None],
+                                         ['1900', '2000', '2100', '2200', None, None, None, None],
+                                         ['2300', '2400', '2500', '2600', '2700', '2800', None, None],
+                                         ['1100', '1200', '2900', '3000', '3100', '3200', '3300', '3400'],
+                                         ['1700', '1800', None, None, None, None, None, None]])
+        #
+        # test 4
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.moveArrayInColumns(0, 0, 2, 2, 0, 2)
+        self.assertEqual(sh.arrayData(),[['1300', '1400', '1100', '1200', '1500', '1600'],
+                                         ['1900', '2000', '1700', '1800', '2100', '2200'],
+                                         ['2300', '2400', '2500', '2600', '2700', '2800'],
+                                         ['2900', '3000', '3100', '3200', '3300', '3400']])
 
 if __name__ == '__main__':
     unittest.main()

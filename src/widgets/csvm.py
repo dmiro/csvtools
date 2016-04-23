@@ -286,6 +286,12 @@ class MyTableModel(QAbstractTableModel):
     def moveRow(self, sourceRow, destinationRow, parent = QModelIndex()):
         return self.moveRows(sourceRow, 1, destinationRow, parent)
 
+    def moveArrayInRows(self, startRow, startColumn, dimRows, dimColumns, destRow, destColumn, parent = QModelIndex()):
+        self.beginInsertRows(parent, startRow, startRow+dimRows)
+        self.document.moveArrayInRows(startRow, startColumn, dimRows, dimColumns, destRow, destColumn)
+        self.endInsertRows()
+        return True
+
     def moveColumns(self, sourceColumn, count, destinationColumn, parent = QModelIndex()):
         self.beginInsertColumns(parent, sourceColumn, sourceColumn+count)
         self.document.moveColumns(sourceColumn, count, destinationColumn)
@@ -294,6 +300,12 @@ class MyTableModel(QAbstractTableModel):
 
     def moveColumn(self, sourceColumn, destinationColumn, parent = QModelIndex()):
         return self.moveColumns(sourceColumn, 1, destinationColumn, parent)
+
+    def moveArrayInColumns(self, startRow, startColumn, dimRows, dimColumns, destRow, destColumn, parent = QModelIndex()):
+        self.beginInsertColumns(parent, startColumn, startColumn+dimColumns)
+        self.document.moveArrayInColumns(startRow, startColumn, dimRows, dimColumns, destRow, destColumn)
+        self.endInsertColumns()
+        return True
 
     def deleteCells(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
         ##self.beginResetModel()
@@ -552,19 +564,20 @@ class QCsv(QTableView):
             return
 
         if action == self.moveCellLeftAction:
-            pass
+            print 'left'
+            self.moveArray(move=enums.MoveDirectionEnum.LeftMove)
             return
 
         if action == self.moveCellRightAction:
-            pass
+            self.moveArray(move=enums.MoveDirectionEnum.RightMove)
             return
 
         if action == self.moveCellTopAction:
-            pass
+            self.moveArray(move=enums.MoveDirectionEnum.TopMove)
             return
 
         if action == self.moveCellBottomAction:
-            pass
+            self.moveArray(move=enums.MoveDirectionEnum.BottomMove)
             return
 
         if action ==  self.removeCellMoveUpAction:
@@ -1013,6 +1026,42 @@ class QCsv(QTableView):
                              row + dimRows - 1,
                              column + dimColumns - 1)
 
+    def moveArray(self, move, dimRows=None, dimColumns=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if dimRows == None:
+                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if dimColumns == None:
+                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if dimRows > 0 and dimColumns > 0:
+                # remove array
+                row = topLeftIndex.row()
+                column = topLeftIndex.column()
+                destRow = row
+                destColumn = column
+                model = self.model()
+                if move==enums.MoveDirectionEnum.LeftMove:
+                    destColumn = destColumn - 1
+                    model.moveArrayInColumns(row, column, dimRows, dimColumns, destRow, destColumn)
+                if move==enums.MoveDirectionEnum.RightMove:
+                    destColumn = destColumn + 1
+                    model.moveArrayInColumns(row, column, dimRows, dimColumns, destRow, destColumn)
+                if move==enums.MoveDirectionEnum.TopMove:
+                    destRow = destRow - 1
+                    model.moveArrayInRows(row, column, dimRows, dimColumns, destRow, destColumn)
+                if move==enums.MoveDirectionEnum.BottomMove:
+                    destRow = destRow + 1
+                    model.moveArrayInRows(row, column, dimRows, dimColumns, destRow, destColumn)
+                # new selection
+                currentIndex = model.createIndex(destRow, destColumn)
+                self.setCurrentIndex(currentIndex)
+                self.clearSelection()
+                self._select(destRow,
+                             destColumn,
+                             destRow + dimRows - 1,
+                             destColumn + dimColumns - 1)
+
     def removeRows(self, count=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
         if isValid:
@@ -1073,8 +1122,6 @@ class QCsv(QTableView):
                              bottomRightIndex.column())
 
     def moveRows(self, move=enums.MoveBlockDirectionEnum.AfterMove, count=None):
-        # esta seleccion es el DESTINO, en el portapapeles estará el origen
-        # y una vez "pegado" hay que eliminar el origen
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
         if isValid:
             if count == None:
@@ -1082,7 +1129,7 @@ class QCsv(QTableView):
             if count > 0:
                 # move row
                 row = topLeftIndex.row()
-                destinationRow = row + count + 1
+                destinationRow = row + 1
                 if move == enums.MoveBlockDirectionEnum.BeforeMove:
                     destinationRow = row - 1
                 model = self.model()
@@ -1102,8 +1149,6 @@ class QCsv(QTableView):
                              bottomRightIndex.column())
 
     def moveColumns(self, move=enums.MoveBlockDirectionEnum.AfterMove, count=None):
-        # esta seleccion es el DESTINO, en el portapapeles estará el origen
-        # y una vez "pegado" hay que eliminar el origen
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
         if isValid:
             if count == None:
@@ -1111,7 +1156,7 @@ class QCsv(QTableView):
             if count > 0:
                 # move column
                 column = topLeftIndex.column()
-                destinationColumn = column + count + 1
+                destinationColumn = column + 1
                 if move == enums.MoveBlockDirectionEnum.BeforeMove:
                     destinationColumn = column - 1
                 model = self.model()
