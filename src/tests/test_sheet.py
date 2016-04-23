@@ -1808,7 +1808,87 @@ class SheetTestCase(TestCase):
                                          ['2300', '2400', '2500', '2600', '2700', '2800'],
                                          ['2900', '3000', '3100', '3200', '3300', '3400']])
 
+    def test_get_array(self):
+        arrayData = [['1100','1200','1300','1400','1500','1600'],
+                     ['1700','1800','1900','2000','2100','2200'],
+                     ['2300','2400','2500','2600','2700','2800'],
+                     ['2900','3000','3100','3200','3300','3400']]
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        #
+        # test 1
+        #
+        array = sh.getArray(1, 0, 2, 2).tolist()
+        self.assertEqual(array,[['1700', '1800'],
+                                ['2300', '2400']])
+        #
+        # test 2
+        #
+        array = sh.getArray(3, 0, 2, 2).tolist()
+        self.assertEqual(array, [['2900', '3000'],
+                                 [None, None]])
+        #
+        # test 3
+        #
+        with self.assertRaises(IndexError):
+            sh.getArray(0, 0, 0, 0)
+        with self.assertRaises(IndexError):
+            sh.getArray(1, 1, 0, 0)
+        with self.assertRaises(IndexError):
+            sh.getArray(0, 0, -1, -1)
+        #
+        # test 4
+        #
+        array = sh.getArray(3, 5, 1, 1).tolist()
+        self.assertEqual(array, [['3400']])
+        #
+        # test 5
+        #
+        array = sh.getArray(3, 5, 2, 2).tolist()
+        self.assertEqual(array, [['3400', None],
+                                 [None, None]])
+        #
+        # test 6
+        #
+        array = sh.getArray(3, 6, 2, 2).tolist()
+        self.assertEqual(array, [[None, None],
+                                 [None, None]])
 
+    def test_move_array_in_rows(self):
+        arrayData = [['1100','1200','1300','1400','1500','1600'],
+                     ['1700','1800','1900','2000','2100','2200'],
+                     ['2300','2400','2500','2600','2700','2800'],
+                     ['2900','3000','3100','3200','3300','3400']]
+        #
+        # test 1
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.moveArrayInRows(0, 0, 2, 2, 2, 0)
+        self.assertEqual(sh.arrayData(),[['2300', '2400', '1300', '1400', '1500', '1600'],
+                                         ['2900', '3000', '1900', '2000', '2100', '2200'],
+                                         ['1100', '1200', '2500', '2600', '2700', '2800'],
+                                         ['1700', '1800', '3100', '3200', '3300', '3400']])
+        #
+        # test 2
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.moveArrayInRows(1, 0, 2, 2, 1, 0)
+        print sh.arrayData()
+        self.assertEqual(sh.arrayData(),[['1100','1200','1300','1400','1500','1600'],
+                                         ['1700','1800','1900','2000','2100','2200'],
+                                         ['2300','2400','2500','2600','2700','2800'],
+                                         ['2900','3000','3100','3200','3300','3400']])
+        #
+        # test 3
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.moveArrayInRows(0, 0, 2, 2, 3, 0)
+        print sh.arrayData()
+        self.assertEqual(sh.arrayData(),[['2300', '2400', '1300', '1400', '1500', '1600'],
+                                         ['2900', '3000', '1900', '2000', '2100', '2200'],
+                                         [None,    None,  '2500', '2600', '2700', '2800'],
+                                         ['1100', '1200', '3100', '3200', '3300', '3400'],
+                                         ['1700', '1800',  None,   None,   None,   None]]
+)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,20 @@
+1) download & install PyQt4 32 bit from:  
+   http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/PyQt4-4.11.4-gpl-Py2.7-Qt4.8.7-x32.exe
+
+2) install xlrd to load xsl/xslt.
+   https://pypi.python.org/pypi/xlrd
+   install xlrd
+
+3) cChardet is high speed universal character encoding detector. - binding to charsetdetect.
+   Requires Cython: http://www.cython.org/
+   https://github.com/PyYoshi/cChardet
+   pip install -U cchardet
+
+4) The API of the csv module in Python 2 is drastically different from the csv module in Python 3. This is due, for the most part, to the difference between str in Python 2 and Python 3.
+   The semantics of Python 3's version are more useful because they support unicode natively, while Python 2's csv does not.
+   https://github.com/ryanhiebert/backports.csv
+   pip install backports.csv
+
+5) NumPy is the fundamental package for scientific computing with Python. It contains among other things a powerful N-dimensional array object
+   http://www.numpy.org/
+   pip install numpy

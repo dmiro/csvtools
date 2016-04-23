@@ -528,3 +528,39 @@ class Sheet(object):
                         result.append([numRow, numCol, dataCell])
         return result
 
+    def getArray(self, startRow, startColumn, dimRows, dimColumns):
+        # checks
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
+        if dimRows < 1:
+            raise IndexError('dimRows must be higher than zero')
+        if dimColumns < 1:
+            raise IndexError('dimColumns must be higher than zero')
+        # get array
+        endRow = startRow+dimRows
+        endColumn = startColumn+dimColumns
+        self.__expand(endRow, endColumn)
+        array = self.__arrayData[startRow:endRow, startColumn:endColumn]
+        self.__constraint()
+        return copy.deepcopy(array)
+
+    def moveArrayInRows(self, startRow, startColumn, dimRows, dimColumns, destRow, destColumn):
+        # checks
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
+        if dimRows < 1:
+            raise IndexError('dimRows must be higher than zero')
+        if dimColumns < 1:
+            raise IndexError('dimColumns must be higher than zero')
+        if destRow < 0:
+            raise IndexError('destRow must be positive')
+        if destColumn < 0:
+            raise IndexError('destColumn must be positive')
+        array = self.getArray(startRow, startColumn, dimRows, dimColumns)
+        self.removeArrayInRows(startRow, startColumn, dimRows, dimColumns)
+        self.insertArrayInRows(destRow, destColumn, array)
+        return True
