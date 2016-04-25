@@ -308,9 +308,7 @@ class MyTableModel(QAbstractTableModel):
         return True
 
     def deleteCells(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
-        ##self.beginResetModel()
         self.document.deleteCells(row, column, dimRows, dimColumns)
-        ##self.endResetModel()
         topLeft = self.createIndex(row, column)
         bottomRight = self.createIndex(row+dimRows, column+dimColumns)
         self.dataChanged.emit(topLeft, bottomRight)
@@ -372,6 +370,39 @@ class QCsv(QTableView):
         selectionModel = self.selectionModel()
         selectionModel.select(selection, QItemSelectionModel.Select)
 
+    def _selectedIndexesToRectangularArea(self, includeHeaderRows=False):
+        """copy and convert selected indexes to string matrix"""
+        result = None
+        topLeftIndex = None
+        bottomRightIndex = None
+        selectedIndexes = self.selectedIndexes()
+        if selectedIndexes:
+            # get mix&max coordinates area from selected indexes
+            topLeftIndex, bottomRightIndex = self._getMinMaxCoordinates(selectedIndexes)
+            minColumn = topLeftIndex.column()
+            minRow = topLeftIndex.row()
+            maxColumn = bottomRightIndex.column()
+            maxRow = bottomRightIndex.row()
+            # get a two dimension matrix with default value ''
+            result = []
+            for _ in range(maxRow-minRow+1):
+                row = [QString('') for _ in range(maxColumn-minColumn+1)]
+                result.append(row)
+            # set values in two dimension matrix
+            for selectedIndex in selectedIndexes:
+                column = selectedIndex.column()
+                row = selectedIndex.row()
+                data = selectedIndex.data()
+                text = data.toString()
+                result[row-minRow][column-minColumn] = text
+            # add header rows
+            if includeHeaderRows:
+                headerRows = self._getHeaderRows()
+                if headerRows:
+                    header = headerRows[minColumn:maxColumn+1]
+                    result.insert(0, header)
+        return result
+
     def _rectangularAreaToTopLeftIndex(self, matrix, topLeftIndexRow, topLeftIndexColumn):
         """paste rectangular are to selected left-upper corner"""
         numRows = len(matrix)
@@ -401,11 +432,63 @@ class QCsv(QTableView):
         bottomRightIndex = model.createIndex(topLeftIndexRow+numRows, topLeftIndexColumn+numColumns)
         model.dataChanged.emit(topLeftIndex, bottomRightIndex)
 
+    def _rectangularAreaToSelectedIndex(self, matrix):
+        """paste rectangular are to selected left-upper corner"""
+        selectionRanges = self.selectionModel().selection()
+        if len(selectionRanges)==1:
+            selectionRange = selectionRanges[0]
+            numRowsData = len(matrix)
+            if numRowsData > 0:
+                numColumnsData = len(matrix[0])
+                if numColumnsData > 0:
+                    # get size of selection
+                    topLeftIndex = selectionRange.topLeft()
+                    topLeftIndexRow = topLeftIndex.row()
+                    topLeftIndexColumn = topLeftIndex.column()
+                    numRowsSelection = selectionRange.bottomRight().row() - topLeftIndexRow + 1
+                    numColumnsSelection = selectionRange.bottomRight().column() - topLeftIndexColumn + 1
+                    # repeat paste
+                    repeatInSelection = ((numRowsSelection % numRowsData) + (numColumnsSelection % numColumnsData) == 0)
+                    if repeatInSelection:
+                        for numRow in xrange(numRowsSelection / numRowsData):
+                            for numColumn in xrange(numColumnsSelection / numColumnsData):
+                                self._rectangularAreaToTopLeftIndex(matrix,
+                                                                    topLeftIndexRow + (numRowsData * numRow),
+                                                                    topLeftIndexColumn = topLeftIndexColumn + (numColumnsData * numColumn))
+                    # single paste
+                    else:
+                        self._rectangularAreaToTopLeftIndex(matrix,
+                                                            topLeftIndexRow,
+                                                            topLeftIndexColumn)
+                        self.setCurrentIndex(topLeftIndex)
+                        self.clearSelection()
+                        self._select(topLeftIndexRow,
+                                     topLeftIndexColumn,
+                                     topLeftIndexRow + numRowsData - 1,
+                                     topLeftIndexColumn + numColumnsData - 1)
+
+    def _globalCut(self):
+        selectionModel = self.selectionModel()
+        QCsv._cuteSelectionRanges = selectionModel.selection()
+        QCsv._cuteInstance = self
+
+    @staticmethod
+    def _globalPaste():
+        clipboard = QApplication.clipboard()
+        if clipboard.ownsClipboard():
+            if hasattr(QCsv, '_cuteSelectionRanges') and hasattr(QCsv, '_cuteInstance'):
+                if QCsv._cuteSelectionRanges:
+                    QCsv._cuteInstance.deleteCells(QCsv._cuteSelectionRanges)
+                    QCsv._cuteInstance.cancelClipboardAction.trigger()
+                    QCsv._cuteSelectionRanges = None
+                    QCsv._cuteInstance = None
+        return
+
     def _editAction(self, action):
         textClip = None
         # copy to clipboard action
-        if action == self.copyToClipboard:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=False)
+        if action == self.copyToClipboard or action == self.cuteToClipboard:
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=False)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
                 # set clipboard
@@ -416,61 +499,64 @@ class QCsv(QTableView):
                 # updates the area occupied by the given indexes in selection
                 for index in self.lastSelectionRanges.indexes():
                     self.update(index)
-                return
+                # if cut action then set selected indexes
+                if action == self.cuteToClipboard:
+                    self._globalCut()
+            return
 
         # copy with Column Name(s) action
-        elif action == self.copyWithHeaderColumnsToClipboard:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+        if action == self.copyWithHeaderColumnsToClipboard:
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
         # copy Column Name(s) action
         elif action == self.copyHeaderColumnsToClipboard:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toClipboard([matrix[0]])
         # copy As JSON action
         elif action == self.copyAsJSON:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toJSON(matrix)
         # copy As Delimited action
         elif action == self.copyAsDelimited:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toDelimitied(matrix)
         # copy As Delimited action
         elif action == self.copyAsXML:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toXML(matrix)
         # copy As Text action
         elif action == self.copyAsText:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toText(matrix)
         # copy As HTML action
         elif action == self.copyAsHTML:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toHTML(matrix)
         # copy Python Source Code As TEXT action
         elif action == self.copyPythonAsText:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonText(matrix)
         # copy Python Source Code As TUPLE action
         elif action == self.copyPythonAsTuple:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonTuple(matrix)
         # copy Python Source Code As LIST action
         elif action == self.copyPythonAsList:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonList(matrix)
         # copy Python Source Code As DICT action
         elif action == self.copyPythonAsDict:
-            matrix, _, _ = self.selectedIndexesToRectangularArea(includeHeaderRows=True)
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonDict(matrix)
 
@@ -487,7 +573,8 @@ class QCsv(QTableView):
             clipboard = QApplication.clipboard()
             textClip = clipboard.text()
             matrix = lib.imports.ClipboardFormat.toMatrix(textClip)
-            self.rectangularAreaToSelectedIndex(matrix)
+            self._rectangularAreaToSelectedIndex(matrix)
+            self._globalPaste()
             return
 
         if action == self.insertColumnLeftAction:
@@ -564,7 +651,6 @@ class QCsv(QTableView):
             return
 
         if action == self.moveCellLeftAction:
-            print 'left'
             self.moveArray(move=enums.MoveDirectionEnum.LeftMove)
             return
 
@@ -707,6 +793,7 @@ class QCsv(QTableView):
         self.copyPythonAsDict = self.copyToPythonMenu.addAction(self.tr('As Dict'))
         # connect menu action
         self._editMenu.triggered.connect(self._editAction)
+
         #### #copy to source code submenu
         #### self.copyToSourceCodeMenu.addAction(QAction('C++', self)) ## acabar
         #### self.copyToSourceCodeMenu.addAction(QAction('C#', self)) ## acabar
@@ -877,74 +964,6 @@ class QCsv(QTableView):
     def search(self, text, matchMode, matchCaseOption):
         if self.document:
             return self.document.search(text, matchMode, matchCaseOption)
-
-    def selectedIndexesToRectangularArea(self, includeHeaderRows=False):
-        """convert selected indexes to string matrix"""
-        result = None
-        topLeftIndex = None
-        bottomRightIndex = None
-        selectedIndexes = self.selectedIndexes()
-        if selectedIndexes:
-            # get mix&max coordinates area from selected indexes
-            topLeftIndex, bottomRightIndex = self._getMinMaxCoordinates(selectedIndexes)
-            minColumn = topLeftIndex.column()
-            minRow = topLeftIndex.row()
-            maxColumn = bottomRightIndex.column()
-            maxRow = bottomRightIndex.row()
-            # get a two dimension matrix with default value ''
-            result = []
-            for _ in range(maxRow-minRow+1):
-                row = [QString('') for _ in range(maxColumn-minColumn+1)]
-                result.append(row)
-            # set values in two dimension matrix
-            for selectedIndex in selectedIndexes:
-                column = selectedIndex.column()
-                row = selectedIndex.row()
-                data = selectedIndex.data()
-                text = data.toString()
-                result[row-minRow][column-minColumn] = text
-            # add header rows
-            if includeHeaderRows:
-                headerRows = self._getHeaderRows()
-                if headerRows:
-                    header = headerRows[minColumn:maxColumn+1]
-                    result.insert(0, header)
-        return result, topLeftIndex, bottomRightIndex
-
-    def rectangularAreaToSelectedIndex(self, matrix):
-        """paste rectangular are to selected left-upper corner"""
-        selectionRanges = self.selectionModel().selection()
-        if len(selectionRanges)==1:
-            selectionRange = selectionRanges[0]
-            numRowsData = len(matrix)
-            if numRowsData > 0:
-                numColumnsData = len(matrix[0])
-                if numColumnsData > 0:
-                    # get size of selection
-                    topLeftIndex = selectionRange.topLeft()
-                    topLeftIndexRow = topLeftIndex.row()
-                    topLeftIndexColumn = topLeftIndex.column()
-                    numRowsSelection = selectionRange.bottomRight().row() - topLeftIndexRow + 1
-                    numColumnsSelection = selectionRange.bottomRight().column() - topLeftIndexColumn + 1
-                    # repeat paste
-                    repeatInSelection = ((numRowsSelection % numRowsData) + (numColumnsSelection % numColumnsData) == 0)
-                    if repeatInSelection:
-                        for numRow in xrange(numRowsSelection / numRowsData):
-                            for numColumn in xrange(numColumnsSelection / numColumnsData):
-                                self._rectangularAreaToTopLeftIndex(matrix,
-                                                                    topLeftIndexRow + (numRowsData * numRow),
-                                                                    topLeftIndexColumn = topLeftIndexColumn + (numColumnsData * numColumn))
-                    # single paste
-                    else:
-                        self._rectangularAreaToTopLeftIndex(matrix,
-                                                            topLeftIndexRow,
-                                                            topLeftIndexColumn)
-                        self.setCurrentIndex(topLeftIndex)
-                        self.clearSelection()
-                        self._select(topLeftIndexRow,
-                                     topLeftIndexColumn,
-                                     topLeftIndexRow + numRowsData - 1,
-                                     topLeftIndexColumn + numColumnsData - 1)
 
     def insertRows(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert, count=None):
         isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
@@ -1175,20 +1194,21 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def deleteCells(self, dimRows=None, dimColumns=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        # it's a valid selection
-        if isValid:
-            if dimRows == None:
-                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if dimColumns == None:
-                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if dimRows > 0 and dimColumns > 0:
-                # insert array
-                row = topLeftIndex.row()
-                column = topLeftIndex.column()
-                model = self.model()
-                model.deleteCells(row, column, dimRows, dimColumns)
+    def deleteCells(self, selectionRanges=None):
+        # if not selection range especified then get current selection range
+        if selectionRanges == None:
+            selectionModel = self.selectionModel()
+            selectionRanges = selectionModel.selection()
+        # delete cells
+        model = self.model()
+        for selectionRange in selectionRanges:
+            topLeftIndex = selectionRange.topLeft()
+            bottomRightIndex = selectionRange.bottomRight()
+            row = topLeftIndex.row()
+            column = topLeftIndex.column()
+            dimRows = bottomRightIndex.row() - row + 1
+            dimColumns = bottomRightIndex.column() - column + 1
+            model.deleteCells(row, column, dimRows, dimColumns)
 
     def selectRows(self, row, count):
         """Selects rows in the view"""
@@ -1257,6 +1277,8 @@ class QCsv(QTableView):
         try:
             clipboard = QApplication.clipboard()
             clipboard.dataChanged.disconnect(self._clipboardDataChangedEvent)
+            QCsv.cuteSelectionRanges = None
+            QCsv.cuteInstance = None
         except:
             pass
 
@@ -1293,10 +1315,10 @@ class QCsv(QTableView):
         self.lastSelectionRangesDashOffset = 0
 
         # cancel clipboard action
-        cancelClipboardAction = QAction(self)
-        cancelClipboardAction.setShortcut('ESC')
-        cancelClipboardAction.triggered.connect(self._clipboardCancelEvent)
-        self.addAction(cancelClipboardAction)
+        self.cancelClipboardAction = QAction(self)
+        self.cancelClipboardAction.setShortcut('ESC')
+        self.cancelClipboardAction.triggered.connect(self._clipboardCancelEvent)
+        self.addAction(self.cancelClipboardAction)
 
         # edit menu
         self._addEditMenu()
