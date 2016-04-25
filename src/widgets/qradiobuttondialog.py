@@ -15,8 +15,8 @@ class QRadioButtonDialog(QDialog):
     # init
     #
 
-    def __init__(self, title, items, columns=1, setIndex=0):
-        super(QRadioButtonDialog, self).__init__()
+    def __init__(self, title, items, parent=None, columns=1, setIndex=0):
+        super(QRadioButtonDialog, self).__init__(parent)
         # add widgets
         self.radioButtonGroup = QRadioButtonGroup(title=title, columns=columns)
         for item in items:
@@ -52,8 +52,8 @@ class QRadioButtonDialog(QDialog):
     #
 
     @staticmethod
-    def getSelectItem(title, items):
-        dialog = QRadioButtonDialog(title, items)
+    def getSelectItem(title, items, parent=None):
+        dialog = QRadioButtonDialog(title, items, parent)
         result = dialog.exec_()
         if result == QDialog.Accepted:
             return dialog.selectedItem()

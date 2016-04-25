@@ -607,7 +607,8 @@ class QCsv(QTableView):
                                                       ['Shift cells right',
                                                        'Shift cells down',
                                                        'Insert an entire row',
-                                                       'Insert an entire column'])
+                                                       'Insert an entire column'],
+                                                      parent=self)
             if option == 0:
                 self.insertEmptyArray(insert=enums.InsertDirectionEnum.LeftInsert)
             if option == 1:
@@ -623,7 +624,8 @@ class QCsv(QTableView):
                                                       ['Shift cells left',
                                                        'Shift cells up',
                                                        'Remove entire row',
-                                                       'Remove entire column'])
+                                                       'Remove entire column'],
+                                                      parent=self)
             if option == 0:
                 self.removeArray(remove=enums.RemoveDirectionEnum.MoveLeftRemove)
             if option == 1:
@@ -717,7 +719,7 @@ class QCsv(QTableView):
         self.insertEdit.setShortcut('Ctrl+Ins')
         self.removeEdit = self._editMenu.addAction(self.tr('Remove...'))
         self.removeEdit.setShortcut('Ctrl+Delete')
-        self.deleteEdit = self._editMenu.addAction(self.tr('Delete content'))
+        self.deleteEdit = self._editMenu.addAction(QIcon(':images/eraser.png'), self.tr('Delete content'))
         self.deleteEdit.setShortcut(QKeySequence.Delete)
         self.selectAllEdit = self._editMenu.addAction(QIcon(':images/all.png'), self.tr('Select All'))
         self.selectAllEdit.setShortcut(QKeySequence.SelectAll)

@@ -34,6 +34,7 @@
 	<file alias="redo.png">icons/glyphicons-223-share.png</file>
 	<file alias="cut.png">icons/glyphicons-599-scissors-alt.png</file>
 	<file alias="all.png">flaticon/interface.png</file>
+	<file alias="eraser.png">flaticon/eraser.png</file>
 </qresource>
 <qresource prefix="/tools">
     <file alias="removecolumn.png">tools/removecolumn.png</file>
