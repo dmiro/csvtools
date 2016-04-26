@@ -6,7 +6,7 @@
     <file alias="import.png">icons/glyphicons-359-file-import.png</file>
     <file alias="exit.png">icons/glyphicons-389-exit.png</file>
     <file alias="about.png">icons/glyphicons-21-home.png</file>
-    <file alias="options.png">icons/glyphicons-281-settings.png</file>   
+    <file alias="options.png">icons/glyphicons-281-settings.png</file>
     <file alias="accept.png">icons/glyphicons-207-ok-2.png</file>
     <file alias="cancel.png">icons/glyphicons-208-remove-2.png</file>
     <file alias="min.png">icons/glyphicons-434-minus.png</file>
@@ -16,13 +16,13 @@
     <file alias="close.png">flaticon/close10.png</file>
     <file alias="reload.png">icons/glyphicons-86-repeat.png</file>
     <file alias="search.png">icons/glyphicons-28-search.png</file>
-    <file alias="explorer.png">flaticon/folder284.png</file>	
-    <file alias="first.png">flaticon/rewind44.png</file>  
-    <file alias="prev.png">flaticon/left216.png</file>  
-    <file alias="next.png">flaticon/keyboard53.png</file>  
-    <file alias="last.png">flaticon/fast44.png</file>  
+    <file alias="explorer.png">flaticon/folder284.png</file>
+    <file alias="first.png">flaticon/rewind44.png</file>
+    <file alias="prev.png">flaticon/left216.png</file>
+    <file alias="next.png">flaticon/keyboard53.png</file>
+    <file alias="last.png">flaticon/fast44.png</file>
     <file alias="filteroptions.png">icons/glyphicons-137-cogwheel.png</file>
-    <file alias="update.png">icons/glyphicons-182-download-alt.png</file>     
+    <file alias="update.png">icons/glyphicons-182-download-alt.png</file>
     <file alias="favfolder.png">flaticon/folder290.png</file>
     <file alias="removefavfolder.png">flaticon/folder285.png</file>
 	<file alias="folder.png">flaticon/folders.png</file>
@@ -44,11 +44,11 @@
 	<file alias="addrowbottom.png">tools/addrowbottom.png</file>
 	<file alias="addrowtop.png">tools/addrowtop.png</file>
 	<file alias="mergerows.png">tools/mergerows.png</file>
-	<file alias="mergecolumns.png">tools/mergecolumns.png</file>	
+	<file alias="mergecolumns.png">tools/mergecolumns.png</file>
 	<file alias="movecolumnleft.png">tools/movecolumnleft.png</file>
 	<file alias="movecolumnright.png">tools/movecolumnright.png</file>
 	<file alias="moverowbottom.png">tools/moverowbottom.png</file>
-	<file alias="moverowtop.png">tools/moverowtop.png</file>	
+	<file alias="moverowtop.png">tools/moverowtop.png</file>
 	<file alias="movecellleft.png">tools/movecellleft.png</file>
 	<file alias="movecellright.png">tools/movecellright.png</file>
 	<file alias="movecellbottom.png">tools/movecellbottom.png</file>
@@ -57,5 +57,8 @@
 	<file alias="addcellright.png">tools/addcellright.png</file>
 	<file alias="addcellbottom.png">tools/addcellbottom.png</file>
 	<file alias="addcelltop.png">tools/addcelltop.png</file>
+	<file alias="mergecells.png">tools/mergecells.png</file>
+	<file alias="removecellleft.png">tools/removecellleft.png</file>
+	<file alias="removecelltop.png">tools/removecelltop.png</file>
 </qresource>
 </RCC>

@@ -370,6 +370,251 @@ class QCsv(QTableView):
         selectionModel = self.selectionModel()
         selectionModel.select(selection, QItemSelectionModel.Select)
 
+    def _insertRows(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert, count=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if count == None:
+                count = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if count > 0:
+                # insert rows
+                row = topLeftIndex.row()
+                if insert == enums.InsertBlockDirectionEnum.AfterInsert:
+                    row = row + count
+                model = self.model()
+                model.insertRows(row, count)
+                # new selection
+                currentIndex = model.createIndex(row, topLeftIndex.column())
+                self.setCurrentIndex(currentIndex)
+                self.clearSelection()
+                self._select(row,
+                     topLeftIndex.column(),
+                     row+count-1,
+                     bottomRightIndex.column())
+
+    def _insertEmptyArray(self, insert=enums.InsertDirectionEnum.TopInsert, dimRows=None, dimColumns=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if dimRows == None:
+                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if dimColumns == None:
+                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if dimRows > 0 and dimColumns > 0:
+                # insert array
+                row = topLeftIndex.row()
+                column = topLeftIndex.column()
+                model = self.model()
+                if insert==enums.InsertDirectionEnum.TopInsert:
+                    model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
+                elif insert==enums.InsertDirectionEnum.BottomInsert:
+                    row = row + dimRows
+                    model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
+                elif insert==enums.InsertDirectionEnum.LeftInsert:
+                    model.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
+                elif insert==enums.InsertDirectionEnum.RightInsert:
+                    column = column + dimColumns
+                    model.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
+                # new selection
+                currentIndex = model.createIndex(row, column)
+                self.setCurrentIndex(currentIndex)
+                self.clearSelection()
+                self._select(row,
+                             column,
+                             row + dimRows - 1,
+                             column + dimColumns - 1)
+
+    def _removeArray(self, remove=enums.RemoveDirectionEnum.MoveLeftRemove, dimRows=None, dimColumns=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if dimRows == None:
+                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if dimColumns == None:
+                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if dimRows > 0 and dimColumns > 0:
+                # remove array
+                row = topLeftIndex.row()
+                column = topLeftIndex.column()
+                model = self.model()
+                if remove==enums.RemoveDirectionEnum.MoveUpRemove:
+                    model.removeArrayInRows(row, column, dimRows, dimColumns)
+                if remove==enums.RemoveDirectionEnum.MoveLeftRemove:
+                    model.removeArrayInColumns(row, column, dimRows, dimColumns)
+                # new selection
+                currentIndex = model.createIndex(row, column)
+                self.setCurrentIndex(currentIndex)
+                self.clearSelection()
+                self._select(row,
+                             column,
+                             row + dimRows - 1,
+                             column + dimColumns - 1)
+
+    def _moveArray(self, move, dimRows=None, dimColumns=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if dimRows == None:
+                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if dimColumns == None:
+                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if dimRows > 0 and dimColumns > 0:
+                # remove array
+                row = topLeftIndex.row()
+                column = topLeftIndex.column()
+                destRow = row
+                destColumn = column
+                model = self.model()
+                if move==enums.MoveDirectionEnum.LeftMove:
+                    destColumn = destColumn - 1
+                    model.moveArrayInColumns(row, column, dimRows, dimColumns, destRow, destColumn)
+                if move==enums.MoveDirectionEnum.RightMove:
+                    destColumn = destColumn + 1
+                    model.moveArrayInColumns(row, column, dimRows, dimColumns, destRow, destColumn)
+                if move==enums.MoveDirectionEnum.TopMove:
+                    destRow = destRow - 1
+                    model.moveArrayInRows(row, column, dimRows, dimColumns, destRow, destColumn)
+                if move==enums.MoveDirectionEnum.BottomMove:
+                    destRow = destRow + 1
+                    model.moveArrayInRows(row, column, dimRows, dimColumns, destRow, destColumn)
+                # new selection
+                currentIndex = model.createIndex(destRow, destColumn)
+                self.setCurrentIndex(currentIndex)
+                self.clearSelection()
+                self._select(destRow,
+                             destColumn,
+                             destRow + dimRows - 1,
+                             destColumn + dimColumns - 1)
+
+    def _removeRows(self, count=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        if isValid:
+            if count == None:
+                count = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if count > 0:
+                # remove rows
+                row = topLeftIndex.row()
+                model = self.model()
+                model.removeRows(row, count)
+                # new selection
+                self.setCurrentIndex(topLeftIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             topLeftIndex.column(),
+                             bottomRightIndex.row(),
+                             bottomRightIndex.column())
+
+    def _insertColumns(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert, count=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if count == None:
+                count = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if count > 0:
+                # insert columns
+                column = topLeftIndex.column()
+                if insert == enums.InsertBlockDirectionEnum.AfterInsert:
+                    column = column + count
+                model = self.model()
+                model.insertColumns(column, count)
+                # new selection
+                currentIndex = model.createIndex(topLeftIndex.row(), column)
+                self.setCurrentIndex(currentIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             column,
+                             bottomRightIndex.row(),
+                             column+count-1)
+
+    def _removeColumns(self, count=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        # it's a valid selection
+        if isValid:
+            if count == None:
+                count = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if count > 0:
+                # remove columns
+                column = topLeftIndex.column()
+                model = self.model()
+                model.removeColumns(column, count)
+                # new selection
+                self.setCurrentIndex(topLeftIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             topLeftIndex.column(),
+                             bottomRightIndex.row(),
+                             bottomRightIndex.column())
+
+    def _moveRows(self, move=enums.MoveBlockDirectionEnum.AfterMove, count=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        if isValid:
+            if count == None:
+                count = bottomRightIndex.row() - topLeftIndex.row() + 1
+            if count > 0:
+                # move row
+                row = topLeftIndex.row()
+                destinationRow = row + 1
+                if move == enums.MoveBlockDirectionEnum.BeforeMove:
+                    destinationRow = row - 1
+                model = self.model()
+                model.moveRows(row, count, destinationRow)
+                # new selection
+                if move == enums.MoveBlockDirectionEnum.AfterMove:
+                    topLeftIndex = model.createIndex(topLeftIndex.row()+1, topLeftIndex.column())
+                    bottomRightIndex = model.createIndex(bottomRightIndex.row()+1, bottomRightIndex.column())
+                else:
+                    topLeftIndex = model.createIndex(topLeftIndex.row()-1, topLeftIndex.column())
+                    bottomRightIndex = model.createIndex(bottomRightIndex.row()-1, bottomRightIndex.column())
+                self.setCurrentIndex(topLeftIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             topLeftIndex.column(),
+                             bottomRightIndex.row(),
+                             bottomRightIndex.column())
+
+    def _moveColumns(self, move=enums.MoveBlockDirectionEnum.AfterMove, count=None):
+        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+        if isValid:
+            if count == None:
+                count = bottomRightIndex.column() - topLeftIndex.column() + 1
+            if count > 0:
+                # move column
+                column = topLeftIndex.column()
+                destinationColumn = column + 1
+                if move == enums.MoveBlockDirectionEnum.BeforeMove:
+                    destinationColumn = column - 1
+                model = self.model()
+                model.moveColumns(column, count, destinationColumn)
+                # new selection
+                if move == enums.MoveBlockDirectionEnum.AfterMove:
+                    topLeftIndex = model.createIndex(topLeftIndex.row(), topLeftIndex.column()+1)
+                    bottomRightIndex = model.createIndex(bottomRightIndex.row(), bottomRightIndex.column()+1)
+                else:
+                    topLeftIndex = model.createIndex(topLeftIndex.row(), topLeftIndex.column()-1)
+                    bottomRightIndex = model.createIndex(bottomRightIndex.row(), bottomRightIndex.column()-1)
+                self.setCurrentIndex(topLeftIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             topLeftIndex.column(),
+                             bottomRightIndex.row(),
+                             bottomRightIndex.column())
+
+    def _deleteCells(self, selectionRanges=None):
+        # if not selection range especified then get current selection range
+        if selectionRanges == None:
+            selectionModel = self.selectionModel()
+            selectionRanges = selectionModel.selection()
+        # delete cells
+        model = self.model()
+        for selectionRange in selectionRanges:
+            topLeftIndex = selectionRange.topLeft()
+            bottomRightIndex = selectionRange.bottomRight()
+            row = topLeftIndex.row()
+            column = topLeftIndex.column()
+            dimRows = bottomRightIndex.row() - row + 1
+            dimColumns = bottomRightIndex.column() - column + 1
+            model.deleteCells(row, column, dimRows, dimColumns)
+
     def _selectedIndexesToRectangularArea(self, includeHeaderRows=False):
         """copy and convert selected indexes to string matrix"""
         result = None
@@ -478,7 +723,7 @@ class QCsv(QTableView):
         if clipboard.ownsClipboard():
             if hasattr(QCsv, '_cuteSelectionRanges') and hasattr(QCsv, '_cuteInstance'):
                 if QCsv._cuteSelectionRanges:
-                    QCsv._cuteInstance.deleteCells(QCsv._cuteSelectionRanges)
+                    QCsv._cuteInstance._deleteCells(QCsv._cuteSelectionRanges)
                     QCsv._cuteInstance.cancelClipboardAction.trigger()
                     QCsv._cuteSelectionRanges = None
                     QCsv._cuteInstance = None
@@ -578,27 +823,27 @@ class QCsv(QTableView):
             return
 
         if action == self.insertColumnLeftAction:
-            self.insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
+            self._insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
         if action == self.insertColumnRightAction:
-            self.insertColumns(insert=enums.InsertBlockDirectionEnum.AfterInsert)
+            self._insertColumns(insert=enums.InsertBlockDirectionEnum.AfterInsert)
             return
 
         if action == self.insertRowTopAction:
-            self.insertRows(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
+            self._insertRows(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
         if action == self.insertRowBottomAction:
-            self.insertRows(insert=enums.InsertBlockDirectionEnum.AfterInsert)
+            self._insertRows(insert=enums.InsertBlockDirectionEnum.AfterInsert)
             return
 
         if action == self.removeRowsAction:
-            self.removeRows()
+            self._removeRows()
             return
 
         if action == self.removeColumnsAction:
-            self.removeColumns()
+            self._removeColumns()
             return
 
         # insert edit
@@ -610,13 +855,13 @@ class QCsv(QTableView):
                                                        'Insert an entire column'],
                                                       parent=self)
             if option == 0:
-                self.insertEmptyArray(insert=enums.InsertDirectionEnum.LeftInsert)
+                self._insertEmptyArray(insert=enums.InsertDirectionEnum.LeftInsert)
             if option == 1:
-                self.insertEmptyArray(insert=enums.InsertDirectionEnum.TopInsert)
+                self._insertEmptyArray(insert=enums.InsertDirectionEnum.TopInsert)
             if option == 2:
                 self.insertRows(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             if option == 3:
-                self.insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
+                self._insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
         if action == self.removeEdit:
@@ -627,69 +872,69 @@ class QCsv(QTableView):
                                                        'Remove entire column'],
                                                       parent=self)
             if option == 0:
-                self.removeArray(remove=enums.RemoveDirectionEnum.MoveLeftRemove)
+                self._removeArray(remove=enums.RemoveDirectionEnum.MoveLeftRemove)
             if option == 1:
-                self.removeArray(remove=enums.RemoveDirectionEnum.MoveUpRemove)
+                self._removeArray(remove=enums.RemoveDirectionEnum.MoveUpRemove)
             if option == 2:
-                self.removeRows()
+                self._removeRows()
             if option == 3:
-                self.removeColumns()
+                self._removeColumns()
             return
 
         if action == self.moveRowTopAction:
-            self.moveRows(move=enums.MoveBlockDirectionEnum.BeforeMove)
+            self._moveRows(move=enums.MoveBlockDirectionEnum.BeforeMove)
             return
 
         if action == self.moveRowBottomAction:
-            self.moveRows(move=enums.MoveBlockDirectionEnum.AfterMove)
+            self._moveRows(move=enums.MoveBlockDirectionEnum.AfterMove)
             return
 
         if action == self.moveColumnLeftAction:
-            self.moveColumns(move=enums.MoveBlockDirectionEnum.BeforeMove)
+            self._moveColumns(move=enums.MoveBlockDirectionEnum.BeforeMove)
             return
 
         if action == self.moveColumnRightAction:
-            self.moveColumns(move=enums.MoveBlockDirectionEnum.AfterMove)
+            self._moveColumns(move=enums.MoveBlockDirectionEnum.AfterMove)
             return
 
         if action == self.moveCellLeftAction:
-            self.moveArray(move=enums.MoveDirectionEnum.LeftMove)
+            self._moveArray(move=enums.MoveDirectionEnum.LeftMove)
             return
 
         if action == self.moveCellRightAction:
-            self.moveArray(move=enums.MoveDirectionEnum.RightMove)
+            self._moveArray(move=enums.MoveDirectionEnum.RightMove)
             return
 
         if action == self.moveCellTopAction:
-            self.moveArray(move=enums.MoveDirectionEnum.TopMove)
+            self._moveArray(move=enums.MoveDirectionEnum.TopMove)
             return
 
         if action == self.moveCellBottomAction:
-            self.moveArray(move=enums.MoveDirectionEnum.BottomMove)
+            self._moveArray(move=enums.MoveDirectionEnum.BottomMove)
             return
 
         if action ==  self.removeCellMoveUpAction:
-            self.removeArray(remove=enums.RemoveDirectionEnum.MoveUpRemove)
+            self._removeArray(remove=enums.RemoveDirectionEnum.MoveUpRemove)
             return
 
         if action == self.removeCellMoveLeftAction:
-            self.removeArray(remove=enums.RemoveDirectionEnum.MoveLeftRemove)
+            self._removeArray(remove=enums.RemoveDirectionEnum.MoveLeftRemove)
             return
 
         if action == self.insertCellLeftAction:
-            self.insertEmptyArray(insert=enums.InsertDirectionEnum.LeftInsert)
+            self._insertEmptyArray(insert=enums.InsertDirectionEnum.LeftInsert)
             return
 
         if action == self.insertCellRightAction:
-            self.insertEmptyArray(insert=enums.InsertDirectionEnum.RightInsert)
+            self._insertEmptyArray(insert=enums.InsertDirectionEnum.RightInsert)
             return
 
         if action == self.insertCellTopAction:
-            self.insertEmptyArray(insert=enums.InsertDirectionEnum.TopInsert)
+            self._insertEmptyArray(insert=enums.InsertDirectionEnum.TopInsert)
             return
 
         if action == self.insertCellBottomAction:
-            self.insertEmptyArray(insert=enums.InsertDirectionEnum.BottomInsert)
+            self._insertEmptyArray(insert=enums.InsertDirectionEnum.BottomInsert)
             return
 
         if action == self.selectAllEdit:
@@ -697,7 +942,7 @@ class QCsv(QTableView):
             return
 
         if action == self.deleteEdit:
-            self.deleteCells()
+            self._deleteCells()
             return
 
     def _addEditMenu(self):
@@ -772,10 +1017,10 @@ class QCsv(QTableView):
         self.moveCellBottomAction = self.editCellsMenu.addAction(QIcon(':tools/movecellbottom.png'), self.tr('Move bottom'))
         self.moveCellBottomAction.setShortcut('Ctrl+Shift+Down')
         self.editCellsMenu.addSeparator()
-        self.removeCellMoveUpAction = self.editCellsMenu.addAction(QIcon(':tools/????.png'), self.tr('Remove and move up'))
-        self.removeCellMoveLeftAction = self.editCellsMenu.addAction(QIcon(':tools/????.png'), self.tr('Remove and move to the left'))
+        self.removeCellMoveUpAction = self.editCellsMenu.addAction(QIcon(':tools/removecelltop.png'), self.tr('Remove and move up'))
+        self.removeCellMoveLeftAction = self.editCellsMenu.addAction(QIcon(':tools/removecellleft.png'), self.tr('Remove and move to the left'))
         self.editCellsMenu.addSeparator()
-        self.mergeCellsAction = self.editCellsMenu.addAction(QIcon(':tools/????.png'), self.tr('Merge'))
+        self.mergeCellsAction = self.editCellsMenu.addAction(QIcon(':tools/mergecells.png'), self.tr('Merge'))
         self._editMenu.addSeparator()
         # copy special submenu
         self.copySpecialMenu = self._editMenu.addMenu(self.tr('Copy Special'))
@@ -966,251 +1211,6 @@ class QCsv(QTableView):
     def search(self, text, matchMode, matchCaseOption):
         if self.document:
             return self.document.search(text, matchMode, matchCaseOption)
-
-    def insertRows(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        # it's a valid selection
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if count > 0:
-                # insert rows
-                row = topLeftIndex.row()
-                if insert == enums.InsertBlockDirectionEnum.AfterInsert:
-                    row = row + count
-                model = self.model()
-                model.insertRows(row, count)
-                # new selection
-                currentIndex = model.createIndex(row, topLeftIndex.column())
-                self.setCurrentIndex(currentIndex)
-                self.clearSelection()
-                self._select(row,
-                     topLeftIndex.column(),
-                     row+count-1,
-                     bottomRightIndex.column())
-
-    def insertEmptyArray(self, insert=enums.InsertDirectionEnum.TopInsert, dimRows=None, dimColumns=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        # it's a valid selection
-        if isValid:
-            if dimRows == None:
-                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if dimColumns == None:
-                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if dimRows > 0 and dimColumns > 0:
-                # insert array
-                row = topLeftIndex.row()
-                column = topLeftIndex.column()
-                model = self.model()
-                if insert==enums.InsertDirectionEnum.TopInsert:
-                    model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
-                elif insert==enums.InsertDirectionEnum.BottomInsert:
-                    row = row + dimRows
-                    model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
-                elif insert==enums.InsertDirectionEnum.LeftInsert:
-                    model.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
-                elif insert==enums.InsertDirectionEnum.RightInsert:
-                    column = column + dimColumns
-                    model.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
-                # new selection
-                currentIndex = model.createIndex(row, column)
-                self.setCurrentIndex(currentIndex)
-                self.clearSelection()
-                self._select(row,
-                             column,
-                             row + dimRows - 1,
-                             column + dimColumns - 1)
-
-    def removeArray(self, remove=enums.RemoveDirectionEnum.MoveLeftRemove, dimRows=None, dimColumns=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        # it's a valid selection
-        if isValid:
-            if dimRows == None:
-                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if dimColumns == None:
-                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if dimRows > 0 and dimColumns > 0:
-                # remove array
-                row = topLeftIndex.row()
-                column = topLeftIndex.column()
-                model = self.model()
-                if remove==enums.RemoveDirectionEnum.MoveUpRemove:
-                    model.removeArrayInRows(row, column, dimRows, dimColumns)
-                if remove==enums.RemoveDirectionEnum.MoveLeftRemove:
-                    model.removeArrayInColumns(row, column, dimRows, dimColumns)
-                # new selection
-                currentIndex = model.createIndex(row, column)
-                self.setCurrentIndex(currentIndex)
-                self.clearSelection()
-                self._select(row,
-                             column,
-                             row + dimRows - 1,
-                             column + dimColumns - 1)
-
-    def moveArray(self, move, dimRows=None, dimColumns=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        # it's a valid selection
-        if isValid:
-            if dimRows == None:
-                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if dimColumns == None:
-                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if dimRows > 0 and dimColumns > 0:
-                # remove array
-                row = topLeftIndex.row()
-                column = topLeftIndex.column()
-                destRow = row
-                destColumn = column
-                model = self.model()
-                if move==enums.MoveDirectionEnum.LeftMove:
-                    destColumn = destColumn - 1
-                    model.moveArrayInColumns(row, column, dimRows, dimColumns, destRow, destColumn)
-                if move==enums.MoveDirectionEnum.RightMove:
-                    destColumn = destColumn + 1
-                    model.moveArrayInColumns(row, column, dimRows, dimColumns, destRow, destColumn)
-                if move==enums.MoveDirectionEnum.TopMove:
-                    destRow = destRow - 1
-                    model.moveArrayInRows(row, column, dimRows, dimColumns, destRow, destColumn)
-                if move==enums.MoveDirectionEnum.BottomMove:
-                    destRow = destRow + 1
-                    model.moveArrayInRows(row, column, dimRows, dimColumns, destRow, destColumn)
-                # new selection
-                currentIndex = model.createIndex(destRow, destColumn)
-                self.setCurrentIndex(currentIndex)
-                self.clearSelection()
-                self._select(destRow,
-                             destColumn,
-                             destRow + dimRows - 1,
-                             destColumn + dimColumns - 1)
-
-    def removeRows(self, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if count > 0:
-                # remove rows
-                row = topLeftIndex.row()
-                model = self.model()
-                model.removeRows(row, count)
-                # new selection
-                self.setCurrentIndex(topLeftIndex)
-                self.clearSelection()
-                self._select(topLeftIndex.row(),
-                             topLeftIndex.column(),
-                             bottomRightIndex.row(),
-                             bottomRightIndex.column())
-
-    def insertColumns(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        # it's a valid selection
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if count > 0:
-                # insert columns
-                column = topLeftIndex.column()
-                if insert == enums.InsertBlockDirectionEnum.AfterInsert:
-                    column = column + count
-                model = self.model()
-                model.insertColumns(column, count)
-                # new selection
-                currentIndex = model.createIndex(topLeftIndex.row(), column)
-                self.setCurrentIndex(currentIndex)
-                self.clearSelection()
-                self._select(topLeftIndex.row(),
-                             column,
-                             bottomRightIndex.row(),
-                             column+count-1)
-
-    def removeColumns(self, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        # it's a valid selection
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if count > 0:
-                # remove columns
-                column = topLeftIndex.column()
-                model = self.model()
-                model.removeColumns(column, count)
-                # new selection
-                self.setCurrentIndex(topLeftIndex)
-                self.clearSelection()
-                self._select(topLeftIndex.row(),
-                             topLeftIndex.column(),
-                             bottomRightIndex.row(),
-                             bottomRightIndex.column())
-
-    def moveRows(self, move=enums.MoveBlockDirectionEnum.AfterMove, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if count > 0:
-                # move row
-                row = topLeftIndex.row()
-                destinationRow = row + 1
-                if move == enums.MoveBlockDirectionEnum.BeforeMove:
-                    destinationRow = row - 1
-                model = self.model()
-                model.moveRows(row, count, destinationRow)
-                # new selection
-                if move == enums.MoveBlockDirectionEnum.AfterMove:
-                    topLeftIndex = model.createIndex(topLeftIndex.row()+1, topLeftIndex.column())
-                    bottomRightIndex = model.createIndex(bottomRightIndex.row()+1, bottomRightIndex.column())
-                else:
-                    topLeftIndex = model.createIndex(topLeftIndex.row()-1, topLeftIndex.column())
-                    bottomRightIndex = model.createIndex(bottomRightIndex.row()-1, bottomRightIndex.column())
-                self.setCurrentIndex(topLeftIndex)
-                self.clearSelection()
-                self._select(topLeftIndex.row(),
-                             topLeftIndex.column(),
-                             bottomRightIndex.row(),
-                             bottomRightIndex.column())
-
-    def moveColumns(self, move=enums.MoveBlockDirectionEnum.AfterMove, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if count > 0:
-                # move column
-                column = topLeftIndex.column()
-                destinationColumn = column + 1
-                if move == enums.MoveBlockDirectionEnum.BeforeMove:
-                    destinationColumn = column - 1
-                model = self.model()
-                model.moveColumns(column, count, destinationColumn)
-                # new selection
-                if move == enums.MoveBlockDirectionEnum.AfterMove:
-                    topLeftIndex = model.createIndex(topLeftIndex.row(), topLeftIndex.column()+1)
-                    bottomRightIndex = model.createIndex(bottomRightIndex.row(), bottomRightIndex.column()+1)
-                else:
-                    topLeftIndex = model.createIndex(topLeftIndex.row(), topLeftIndex.column()-1)
-                    bottomRightIndex = model.createIndex(bottomRightIndex.row(), bottomRightIndex.column()-1)
-                self.setCurrentIndex(topLeftIndex)
-                self.clearSelection()
-                self._select(topLeftIndex.row(),
-                             topLeftIndex.column(),
-                             bottomRightIndex.row(),
-                             bottomRightIndex.column())
-
-    def deleteCells(self, selectionRanges=None):
-        # if not selection range especified then get current selection range
-        if selectionRanges == None:
-            selectionModel = self.selectionModel()
-            selectionRanges = selectionModel.selection()
-        # delete cells
-        model = self.model()
-        for selectionRange in selectionRanges:
-            topLeftIndex = selectionRange.topLeft()
-            bottomRightIndex = selectionRange.bottomRight()
-            row = topLeftIndex.row()
-            column = topLeftIndex.column()
-            dimRows = bottomRightIndex.row() - row + 1
-            dimColumns = bottomRightIndex.column() - column + 1
-            model.deleteCells(row, column, dimRows, dimColumns)
 
     def selectRows(self, row, count):
         """Selects rows in the view"""
