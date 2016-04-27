@@ -1932,6 +1932,22 @@ class SheetTestCase(TestCase):
                                          ['2300', '2400', '2500', '2600', '2700', '2800'],
                                          ['2900', '3000', '3100', '3200', '3300', '3400']])
 
+
+    def test_merge_array_in_rows(self):
+        arrayData = [['1','2','3','4','5'],
+                     ['a','e','i','o','u'],
+                     ['6','7','8','9','10'],
+                     ['11','12','13','14','15']]
+        #
+        # test 1
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInRows(0, 0, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1 a', '2 e', '3', '4', '5'],
+                                         ['6' , '7'   , 'i', 'o', 'u'],
+                                         ['11', '12'  , '8', '9', '10'],
+                                         [None, None  , '13', '14', '15']])
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -541,3 +541,29 @@ class Sheet(object):
 
     def moveColumn(self, originColumn, destinationColumn):
         self.moveColumns(originColumn, 1, destinationColumn)
+
+    def mergeArrayInRows(self, startRow, startColumn, dimRows, dimColumns):
+        # checks
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
+        if dimRows < 1:
+            raise IndexError('dimRows must be higher than zero')
+        if dimColumns < 1:
+            raise IndexError('dimColumns must be higher than zero')
+        # get array
+        array = self.getArray(startRow, startColumn, dimRows, dimColumns)
+        # merge array
+        merged = []
+        for xcolumn in xrange(array.shape[1]):
+            acolumn = array[:, xcolumn]
+            acolumn = [value for value in acolumn if value]
+            value = ' '.join(acolumn)
+            merged.append(self.__valueClass(value))
+        # eliminar
+        self.removeArrayInRows(startRow, startColumn, dimRows, dimColumns)
+        # insertar la union
+        merged = np.array(merged, dtype=object).reshape(1, dimColumns)
+        self.insertArrayInRows(startRow, startColumn, merged)
+        return True
