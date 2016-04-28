@@ -542,7 +542,7 @@ class Sheet(object):
     def moveColumn(self, originColumn, destinationColumn):
         self.moveColumns(originColumn, 1, destinationColumn)
 
-    def mergeArrayInRows(self, startRow, startColumn, dimRows, dimColumns):
+    def mergeArrayInRows(self, startRow, startColumn, dimRows, dimColumns, separator=' '):
         # checks
         if startRow < 0:
             raise IndexError('startRow must be positive')
@@ -557,13 +557,72 @@ class Sheet(object):
         # merge array
         merged = []
         for xcolumn in xrange(array.shape[1]):
-            acolumn = array[:, xcolumn]
-            acolumn = [value for value in acolumn if value]
-            value = ' '.join(acolumn)
-            merged.append(self.__valueClass(value))
-        # eliminar
-        self.removeArrayInRows(startRow, startColumn, dimRows, dimColumns)
-        # insertar la union
+            acolumns = array[:, xcolumn]
+### problema con QString pq no crear numpy array vacio con un fill , las dimensiones ya las sabes = (1,dimColumns) 
+            acolumns = [helper.QStringToUnicode(value) for value in acolumns if value]
+###
+            value = separator.join(acolumns)
+### problema con QString
+            merged.append([value])  ## merged.append([self.__valueClass(value)])
+###
+        # convert array to numpy array
         merged = np.array(merged, dtype=object).reshape(1, dimColumns)
+### problema con QString
+        for nitem in xrange(merged.size):
+            merged.flat[nitem] = self.__valueClass(merged.flat[nitem])
+###
+        # remove array to merged
+        self.removeArrayInRows(startRow, startColumn, dimRows, dimColumns)
+        # insert merged array
         self.insertArrayInRows(startRow, startColumn, merged)
         return True
+
+    def mergeRows(self, startRow, rows, separator=' '):
+        self.mergeArrayInRows(startRow,
+                              0,
+                              rows,
+                              self.columnCount(),
+                              separator)
+
+    def mergeArrayInColumns(self, startRow, startColumn, dimRows, dimColumns, separator=' '):
+        # checks
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
+        if dimRows < 1:
+            raise IndexError('dimRows must be higher than zero')
+        if dimColumns < 1:
+            raise IndexError('dimColumns must be higher than zero')
+        # get array
+        array = self.getArray(startRow, startColumn, dimRows, dimColumns)
+        # merge array
+        merged = []
+        for xrow in xrange(array.shape[0]):
+            arows = array[xrow, :]
+### problema con QString
+            arows = [helper.QStringToUnicode(value) for value in arows if value]
+###
+            value = separator.join(arows)
+### problema con QString
+            merged.append([value])  ## merged.append([self.__valueClass(value)])
+###
+        # convert array to numpy array
+        merged = np.array(merged, dtype=object).reshape(dimRows, 1)
+### problema con QString
+        for nitem in xrange(merged.size):
+            merged.flat[nitem] = self.__valueClass(merged.flat[nitem])
+###
+        # remove array to merged
+        self.removeArrayInColumns(startRow, startColumn, dimRows, dimColumns)
+        # insert merged array
+        self.insertArrayInColumns(startRow, startColumn, merged)
+        return True
+
+    def mergeColumns(self, startColumn, columns, separator=' '):
+        self.mergeArrayInColumns(0,
+                                 startColumn,
+                                 self.rowCount(),
+                                 columns,
+                                 separator)
+

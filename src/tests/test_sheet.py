@@ -1947,6 +1947,147 @@ class SheetTestCase(TestCase):
                                          ['6' , '7'   , 'i', 'o', 'u'],
                                          ['11', '12'  , '8', '9', '10'],
                                          [None, None  , '13', '14', '15']])
+        #
+        # test 2
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInRows(0, 0, 4, 5)
+        self.assertEqual(sh.arrayData(),[['1 a 6 11', '2 e 7 12', '3 i 8 13', '4 o 9 14', '5 u 10 15']])
+        #
+        # test 3
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInRows(2, 3, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1', '2', '3', '4', '5'],
+                                         ['a', 'e', 'i', 'o', 'u'],
+                                         ['6', '7', '8', '9 14', '10 15'],
+                                         ['11', '12', '13', None, None]])
+        #
+        # test 4
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInRows(3, 3, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1', '2', '3', '4', '5'],
+                                         ['a', 'e', 'i', 'o', 'u'],
+                                         ['6', '7', '8', '9', '10'],
+                                         ['11', '12', '13', '14', '15']])
+        #
+        # test 5
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInRows(1, 2, 20, 20)
+        self.assertEqual(sh.arrayData(),[['1', '2'  , '3'     , '4'     , '5'],
+                                         ['a', 'e'  , 'i 8 13', 'o 9 14', 'u 10 15'],
+                                         ['6', '7'  , None    , None   , None],
+                                         ['11', '12', None    , None   , None]])
+        #
+        # test 6
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInRows(0, 0, 2, 2, separator=',')
+        self.assertEqual(sh.arrayData(),[['1,a', '2,e', '3', '4', '5'],
+                                         ['6', '7', 'i', 'o', 'u'],
+                                         ['11', '12', '8', '9', '10'],
+                                         [None, None, '13', '14', '15']])
+
+    def test_merge_array_in_columns(self):
+        arrayData = [['1','2','3','4','5'],
+                     ['a','e','i','o','u'],
+                     ['6','7','8','9','10'],
+                     ['11','12','13','14','15']]
+        #
+        # test 1
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInColumns(0, 0, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1 2', '3', '4', '5', None],
+                                         ['a e', 'i', 'o', 'u', None],
+                                         ['6', '7', '8', '9', '10'],
+                                         ['11', '12', '13', '14', '15']])
+        #
+        # test 2
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInColumns(0, 0, 4, 5)
+        self.assertEqual(sh.arrayData(),[['1 2 3 4 5'], ['a e i o u'], ['6 7 8 9 10'], ['11 12 13 14 15']])
+        #
+        # test 3
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInColumns(2, 3, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1', '2', '3', '4', '5'],
+                                         ['a', 'e', 'i', 'o', 'u'],
+                                         ['6', '7', '8', '9 10', None],
+                                         ['11', '12', '13', '14 15', None]])
+        #
+        # test 4
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInColumns(2, 4, 2, 2)
+        self.assertEqual(sh.arrayData(),[['1', '2', '3', '4', '5'],
+                                         ['a', 'e', 'i', 'o', 'u'],
+                                         ['6', '7', '8', '9', '10'],
+                                         ['11', '12', '13', '14', '15']])
+        #
+        # test 5
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInColumns(1, 2, 20, 20)
+        self.assertEqual(sh.arrayData(),[['1', '2', '3', '4', '5'],
+                                         ['a', 'e', 'i o u', None, None],
+                                         ['6', '7', '8 9 10', None, None],
+                                         ['11', '12', '13 14 15', None, None]])
+        #
+        # test 6
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeArrayInColumns(0, 0, 2, 2, separator=',')
+        self.assertEqual(sh.arrayData(),[['1,2', '3', '4', '5', None],
+                                         ['a,e', 'i', 'o', 'u', None],
+                                         ['6', '7', '8', '9', '10'],
+                                         ['11', '12', '13', '14', '15']])
+
+    def test_merge_rows(self):
+        arrayData = [['1','2','3','4','5'],
+                     ['a','e','i','o','u'],
+                     ['6','7','8','9','10'],
+                     ['11','12','13','14','15']]
+        #
+        # test 1
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeRows(0, 2)
+        self.assertEqual(sh.arrayData(),[['1 a', '2 e', '3 i', '4 o', '5 u'],
+                                         ['6', '7', '8', '9', '10'],
+                                         ['11', '12', '13', '14', '15']])
+        #
+        # test 2
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeRows(0, 4)
+        self.assertEqual(sh.arrayData(),[['1 a 6 11', '2 e 7 12', '3 i 8 13', '4 o 9 14', '5 u 10 15']])
+
+    def test_merge_columns(self):
+        arrayData = [['1','2','3','4','5'],
+                     ['a','e','i','o','u'],
+                     ['6','7','8','9','10'],
+                     ['11','12','13','14','15']]
+        #
+        # test 1
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeColumns(0, 2)
+        self.assertEqual(sh.arrayData(),[['1 2', '3', '4', '5'],
+                                         ['a e', 'i', 'o', 'u'],
+                                         ['6 7', '8', '9', '10'],
+                                         ['11 12', '13', '14', '15']])
+        #
+        # test 2
+        #
+        sh=Sheet(valueClass=str, arrayData=copy.deepcopy(arrayData))
+        sh.mergeColumns(0, 5)
+        self.assertEqual(sh.arrayData(),[['1 2 3 4 5'], ['a e i o u'], ['6 7 8 9 10'], ['11 12 13 14 15']])
+
 
 if __name__ == '__main__':
     unittest.main()

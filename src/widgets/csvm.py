@@ -314,6 +314,34 @@ class MyTableModel(QAbstractTableModel):
         self.dataChanged.emit(topLeft, bottomRight)
         return True
 
+    def mergeRows(self, startRow, rows, parent = QModelIndex()):
+        self.document.mergeRows(startRow, rows)
+        topLeft = self.createIndex(startRow, 0)
+        bottomRight = self.createIndex(startRow+rows, self.columnCount())
+        self.dataChanged.emit(topLeft, bottomRight)
+        return True
+
+    def mergeColumns(self, startColumn, columns, parent = QModelIndex()):
+        self.document.mergeColumns(startColumn, columns)
+        topLeft = self.createIndex(0, startColumn)
+        bottomRight = self.createIndex(self.rowCount(), startColumn+columns)
+        self.dataChanged.emit(topLeft, bottomRight)
+        return True
+
+    def mergeArrayInColumns(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
+        self.document.mergeArrayInColumns(row, column, dimRows, dimColumns)
+        topLeft = self.createIndex(row, column)
+        bottomRight = self.createIndex(row+dimRows, column+dimColumns)
+        self.dataChanged.emit(topLeft, bottomRight)
+        return True
+
+    def mergeArrayInRows(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
+        self.document.mergeArrayInRows(row, column, dimRows, dimColumns)
+        topLeft = self.createIndex(row, column)
+        bottomRight = self.createIndex(row+dimRows, column+dimColumns)
+        self.dataChanged.emit(topLeft, bottomRight)
+        return True
+
 #
 # class QCsv
 #
@@ -348,6 +376,14 @@ class QCsv(QTableView):
         return result
 
     def _getValidSelection(self):
+        """
+        selects the first SelectRange and returns info about it:
+          True, if select range exist
+          topLeftIndex
+          bottomRightIndex
+          dimRows
+          dimColumn
+        """
         selectionModel = self.selectionModel()
         selectionRanges = selectionModel.selection()
         if len(selectionRanges)==1:
@@ -357,8 +393,10 @@ class QCsv(QTableView):
             # if top-left corner selection is inside data area
             if topLeftIndex.row() < model.rowDataCount():
                 if topLeftIndex.column() < model.columnDataCount():
-                    return True, topLeftIndex, bottomRightIndex
-        return False, None, None
+                    dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+                    dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+                    return True, topLeftIndex, bottomRightIndex, dimRows, dimColumns
+        return False, None, None, 0, 0
 
     def _select(self, topLeftRow, topLeftColumn, bottomRightRow, bottomRightColumn):
         # create item selection
@@ -370,13 +408,10 @@ class QCsv(QTableView):
         selectionModel = self.selectionModel()
         selectionModel.select(selection, QItemSelectionModel.Select)
 
-    def _insertRows(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+    def _insertRows(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):
+        isValid, topLeftIndex, bottomRightIndex, count, _ = self._getValidSelection()
         # it's a valid selection
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if count > 0:
+        if isValid and count > 0:
                 # insert rows
                 row = topLeftIndex.row()
                 if insert == enums.InsertBlockDirectionEnum.AfterInsert:
@@ -392,15 +427,10 @@ class QCsv(QTableView):
                      row+count-1,
                      bottomRightIndex.column())
 
-    def _insertEmptyArray(self, insert=enums.InsertDirectionEnum.TopInsert, dimRows=None, dimColumns=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+    def _insertEmptyArray(self, insert=enums.InsertDirectionEnum.TopInsert):
+        isValid, topLeftIndex, bottomRightIndex, dimRows, dimColumns = self._getValidSelection()
         # it's a valid selection
-        if isValid:
-            if dimRows == None:
-                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if dimColumns == None:
-                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if dimRows > 0 and dimColumns > 0:
+        if isValid and dimRows > 0 and dimColumns > 0:
                 # insert array
                 row = topLeftIndex.row()
                 column = topLeftIndex.column()
@@ -424,15 +454,10 @@ class QCsv(QTableView):
                              row + dimRows - 1,
                              column + dimColumns - 1)
 
-    def _removeArray(self, remove=enums.RemoveDirectionEnum.MoveLeftRemove, dimRows=None, dimColumns=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+    def _removeArray(self, remove=enums.RemoveDirectionEnum.MoveLeftRemove):
+        isValid, topLeftIndex, bottomRightIndex, dimRows, dimColumns = self._getValidSelection()
         # it's a valid selection
-        if isValid:
-            if dimRows == None:
-                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if dimColumns == None:
-                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if dimRows > 0 and dimColumns > 0:
+        if isValid and dimRows > 0 and dimColumns > 0:
                 # remove array
                 row = topLeftIndex.row()
                 column = topLeftIndex.column()
@@ -450,15 +475,10 @@ class QCsv(QTableView):
                              row + dimRows - 1,
                              column + dimColumns - 1)
 
-    def _moveArray(self, move, dimRows=None, dimColumns=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+    def _moveArray(self, move):
+        isValid, topLeftIndex, bottomRightIndex, dimRows, dimColumns = self._getValidSelection()
         # it's a valid selection
-        if isValid:
-            if dimRows == None:
-                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if dimColumns == None:
-                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if dimRows > 0 and dimColumns > 0:
+        if isValid and dimRows > 0 and dimColumns > 0:
                 # remove array
                 row = topLeftIndex.row()
                 column = topLeftIndex.column()
@@ -486,12 +506,9 @@ class QCsv(QTableView):
                              destRow + dimRows - 1,
                              destColumn + dimColumns - 1)
 
-    def _removeRows(self, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if count > 0:
+    def _removeRows(self):
+        isValid, topLeftIndex, bottomRightIndex, count, _ = self._getValidSelection()
+        if isValid and count > 0:
                 # remove rows
                 row = topLeftIndex.row()
                 model = self.model()
@@ -504,13 +521,61 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def _insertColumns(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+    def _mergeRows(self):
+        isValid, topLeftIndex, bottomRightIndex, count, _ = self._getValidSelection()
+        if isValid and count > 1:
+                # merge rows
+                row = topLeftIndex.row()
+                model = self.model()
+                model.mergeRows(row, count)
+                # new selection
+                self.setCurrentIndex(topLeftIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             topLeftIndex.column(),
+                             topLeftIndex.row(),
+                             bottomRightIndex.column())
+
+    def _mergeColumns(self):
+        isValid, topLeftIndex, bottomRightIndex, _, count = self._getValidSelection()
+        if isValid and count > 1:
+                # merge rows
+                column = topLeftIndex.column()
+                model = self.model()
+                model.mergeColumns(column, count)
+                # new selection
+                self.setCurrentIndex(topLeftIndex)
+                self.clearSelection()
+                self._select(topLeftIndex.row(),
+                             topLeftIndex.column(),
+                             bottomRightIndex.row(),
+                             topLeftIndex.column())
+
+    def _mergeArray(self, merge):
+        isValid, topLeftIndex, bottomRightIndex, dimRows, dimColumns = self._getValidSelection()
         # it's a valid selection
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if count > 0:
+        if isValid and dimRows > 0 and dimColumns > 0:
+                # remove array
+                row = topLeftIndex.row()
+                column = topLeftIndex.column()
+                model = self.model()
+                if merge==enums.MergeDirectionEnum.MoveUpRemove:
+                    model.mergeArrayInRows(row, column, dimRows, dimColumns)
+                if merge==enums.MergeDirectionEnum.MoveLeftRemove:
+                    model.mergeArrayInColumns(row, column, dimRows, dimColumns)
+                # new selection
+                currentIndex = model.createIndex(row, column)
+                self.setCurrentIndex(currentIndex)
+                self.clearSelection()
+                if merge==enums.MergeDirectionEnum.MoveLeftRemove:
+                    self._select(row, column, row + dimRows -1, column)
+                else:
+                    self._select(row, column, row, column+ dimColumns-1)
+
+    def _insertColumns(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):
+        isValid, topLeftIndex, bottomRightIndex, _, count = self._getValidSelection()
+        # it's a valid selection
+        if isValid and count > 0:
                 # insert columns
                 column = topLeftIndex.column()
                 if insert == enums.InsertBlockDirectionEnum.AfterInsert:
@@ -526,13 +591,10 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              column+count-1)
 
-    def _removeColumns(self, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
+    def _removeColumns(self):
+        isValid, topLeftIndex, bottomRightIndex, _, count = self._getValidSelection()
         # it's a valid selection
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if count > 0:
+        if isValid and count > 0:
                 # remove columns
                 column = topLeftIndex.column()
                 model = self.model()
@@ -545,12 +607,9 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def _moveRows(self, move=enums.MoveBlockDirectionEnum.AfterMove, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.row() - topLeftIndex.row() + 1
-            if count > 0:
+    def _moveRows(self, move=enums.MoveBlockDirectionEnum.AfterMove):
+        isValid, topLeftIndex, bottomRightIndex, count, _ = self._getValidSelection()
+        if isValid and count > 0:
                 # move row
                 row = topLeftIndex.row()
                 destinationRow = row + 1
@@ -572,12 +631,9 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
-    def _moveColumns(self, move=enums.MoveBlockDirectionEnum.AfterMove, count=None):
-        isValid, topLeftIndex, bottomRightIndex = self._getValidSelection()
-        if isValid:
-            if count == None:
-                count = bottomRightIndex.column() - topLeftIndex.column() + 1
-            if count > 0:
+    def _moveColumns(self, move=enums.MoveBlockDirectionEnum.AfterMove):
+        isValid, topLeftIndex, bottomRightIndex, _, count = self._getValidSelection()
+        if isValid and count > 0:
                 # move column
                 column = topLeftIndex.column()
                 destinationColumn = column + 1
@@ -842,8 +898,16 @@ class QCsv(QTableView):
             self._removeRows()
             return
 
+        if action == self.mergeRowsAction:
+            self._mergeRows()
+            return
+
         if action == self.removeColumnsAction:
             self._removeColumns()
+            return
+
+        if action == self.mergeColumnsAction:
+            self._mergeColumns()
             return
 
         # insert edit
@@ -864,6 +928,7 @@ class QCsv(QTableView):
                 self._insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
+        # remove edit
         if action == self.removeEdit:
             option = QRadioButtonDialog.getSelectItem('Remove',
                                                       ['Shift cells left',
@@ -879,6 +944,24 @@ class QCsv(QTableView):
                 self._removeRows()
             if option == 3:
                 self._removeColumns()
+            return
+
+        # merge edit
+        if action == self.mergeEdit:
+            option = QRadioButtonDialog.getSelectItem('Merge',
+                                                      ['Shift cells left',
+                                                       'Shift cells up',
+                                                       'Merge entire row',
+                                                       'Merge entire column'],
+                                                      parent=self)
+            if option == 0:
+                self._mergeArray(merge=enums.MergeDirectionEnum.MoveLeftRemove)
+            if option == 1:
+                self._mergeArray(merge=enums.MergeDirectionEnum.MoveUpRemove)
+            if option == 2:
+                self._mergeRows()
+            if option == 3:
+                self._mergeColumns()
             return
 
         if action == self.moveRowTopAction:
@@ -937,6 +1020,14 @@ class QCsv(QTableView):
             self._insertEmptyArray(insert=enums.InsertDirectionEnum.BottomInsert)
             return
 
+        if action == self.mergeCellsLeftAction:
+            self._mergeArray(merge=enums.MergeDirectionEnum.MoveLeftRemove)
+            return
+
+        if action == self.mergeCellsTopAction:
+            self._mergeArray(merge=enums.MergeDirectionEnum.MoveUpRemove)
+            return
+
         if action == self.selectAllEdit:
             self.selectAll()
             return
@@ -964,6 +1055,8 @@ class QCsv(QTableView):
         self.insertEdit.setShortcut('Ctrl+Ins')
         self.removeEdit = self._editMenu.addAction(self.tr('Remove...'))
         self.removeEdit.setShortcut('Ctrl+Delete')
+        self.mergeEdit = self._editMenu.addAction(self.tr('Merge...'))
+        self.mergeEdit.setShortcut('Ctrl+M')
         self.deleteEdit = self._editMenu.addAction(QIcon(':images/eraser.png'), self.tr('Delete content'))
         self.deleteEdit.setShortcut(QKeySequence.Delete)
         self.selectAllEdit = self._editMenu.addAction(QIcon(':images/all.png'), self.tr('Select All'))
@@ -1020,7 +1113,8 @@ class QCsv(QTableView):
         self.removeCellMoveUpAction = self.editCellsMenu.addAction(QIcon(':tools/removecelltop.png'), self.tr('Remove and move up'))
         self.removeCellMoveLeftAction = self.editCellsMenu.addAction(QIcon(':tools/removecellleft.png'), self.tr('Remove and move to the left'))
         self.editCellsMenu.addSeparator()
-        self.mergeCellsAction = self.editCellsMenu.addAction(QIcon(':tools/mergecells.png'), self.tr('Merge'))
+        self.mergeCellsTopAction = self.editCellsMenu.addAction(QIcon(':tools/mergecellstop.png'), self.tr('Merge and move up'))
+        self.mergeCellsLeftAction = self.editCellsMenu.addAction(QIcon(':tools/mergecellsleft.png'), self.tr('Merge and move to the left'))
         self._editMenu.addSeparator()
         # copy special submenu
         self.copySpecialMenu = self._editMenu.addMenu(self.tr('Copy Special'))

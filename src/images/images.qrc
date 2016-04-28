@@ -57,7 +57,8 @@
 	<file alias="addcellright.png">tools/addcellright.png</file>
 	<file alias="addcellbottom.png">tools/addcellbottom.png</file>
 	<file alias="addcelltop.png">tools/addcelltop.png</file>
-	<file alias="mergecells.png">tools/mergecells.png</file>
+	<file alias="mergecellsleft.png">tools/mergecellsleft.png</file>
+	<file alias="mergecellstop.png">tools/mergecellstop.png</file>
 	<file alias="removecellleft.png">tools/removecellleft.png</file>
 	<file alias="removecelltop.png">tools/removecelltop.png</file>
 </qresource>

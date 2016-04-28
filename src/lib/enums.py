@@ -33,3 +33,8 @@ class MoveDirectionEnum(object):
 class RemoveDirectionEnum(object):
     MoveUpRemove = 0
     MoveLeftRemove = 1
+
+
+class MergeDirectionEnum(object):
+    MoveUpRemove = 0
+    MoveLeftRemove = 1
