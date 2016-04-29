@@ -555,22 +555,20 @@ class Sheet(object):
         # get array
         array = self.getArray(startRow, startColumn, dimRows, dimColumns)
         # merge array
-        merged = []
+        mergedArray = []
         for xcolumn in xrange(array.shape[1]):
             acolumns = array[:, xcolumn]
-### problema con QString pq no crear numpy array vacio con un fill , las dimensiones ya las sabes = (1,dimColumns) 
-            acolumns = [helper.QStringToUnicode(value) for value in acolumns if value]
-###
-            value = separator.join(acolumns)
-### problema con QString
-            merged.append([value])  ## merged.append([self.__valueClass(value)])
-###
+            if self.__valueClass == QString:
+                acolumns = [helper.QStringToUnicode(value) for value in acolumns if value]
+                value = separator.join(acolumns)
+                mergedArray.append(self.__valueClass(value))
+            else:
+                acolumns = [value for value in acolumns if value]
+                value = separator.join(acolumns)
+                mergedArray.append(value)
         # convert array to numpy array
-        merged = np.array(merged, dtype=object).reshape(1, dimColumns)
-### problema con QString
-        for nitem in xrange(merged.size):
-            merged.flat[nitem] = self.__valueClass(merged.flat[nitem])
-###
+        merged = np.empty((1, dimColumns), dtype=object)      # numpy array error with QString arrays
+        merged[:] = [mergedArray]                             # http://stackoverflow.com/q/36931732/2270217
         # remove array to merged
         self.removeArrayInRows(startRow, startColumn, dimRows, dimColumns)
         # insert merged array
@@ -597,22 +595,20 @@ class Sheet(object):
         # get array
         array = self.getArray(startRow, startColumn, dimRows, dimColumns)
         # merge array
-        merged = []
+        mergedArray = []
         for xrow in xrange(array.shape[0]):
             arows = array[xrow, :]
-### problema con QString
-            arows = [helper.QStringToUnicode(value) for value in arows if value]
-###
-            value = separator.join(arows)
-### problema con QString
-            merged.append([value])  ## merged.append([self.__valueClass(value)])
-###
+            if self.__valueClass == QString:
+                arows = [helper.QStringToUnicode(value) for value in arows if value]
+                value = separator.join(arows)
+                mergedArray.append([self.__valueClass(value)])
+            else:
+                arows = [value for value in arows if value]
+                value = separator.join(arows)
+                mergedArray.append([value])
         # convert array to numpy array
-        merged = np.array(merged, dtype=object).reshape(dimRows, 1)
-### problema con QString
-        for nitem in xrange(merged.size):
-            merged.flat[nitem] = self.__valueClass(merged.flat[nitem])
-###
+        merged = np.empty((dimRows, 1), dtype=object)      # numpy array error with QString arrays
+        merged[:] = mergedArray                            # http://stackoverflow.com/q/36931732/2270217
         # remove array to merged
         self.removeArrayInColumns(startRow, startColumn, dimRows, dimColumns)
         # insert merged array
@@ -625,4 +621,7 @@ class Sheet(object):
                                  self.rowCount(),
                                  columns,
                                  separator)
+
+
+
 
