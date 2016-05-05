@@ -342,6 +342,24 @@ class MyTableModel(QAbstractTableModel):
         self.dataChanged.emit(topLeft, bottomRight)
         return True
 
+
+
+##class CommandRemoveRows(QUndoCommand):
+##
+##    def __init__(self, outer, description):
+##        super(CommandRemoveRows, self).__init__(description)
+##        self.outer = outer
+##        self.selectionModel = self.outer.selectionModel()
+##
+##    def redo(self):
+##        self.data = self.outer.document.value(0, 0)
+##        self.outer.setSelectionModel(self.selectionModel)
+##        self.outer._removeRows()
+##
+##    def undo(self):
+##        self.outer.document.setValue(0, 0, self.data)
+
+
 #
 # class QCsv
 #
@@ -895,6 +913,8 @@ class QCsv(QTableView):
             return
 
         if action == self.removeRowsAction:
+##            command = CommandRemoveRows(self, 'Remove rows')
+##            self.undoStack.push(command)
             self._removeRows()
             return
 
@@ -1034,6 +1054,14 @@ class QCsv(QTableView):
 
         if action == self.deleteEdit:
             self._deleteCells()
+            return
+
+        if action == self.undoEdit:
+            self.undoStack.undo()
+            return
+
+        if action == self.redoEdit:
+            self.undoStack.redo()
             return
 
     def _addEditMenu(self):
@@ -1420,6 +1448,9 @@ class QCsv(QTableView):
         self._addEditMenu()
         self.contextMenuRequested.connect(self._csvcontextMenuRequestedEvent)
         self.selectionChanged_.connect(self._csvSelectionChangedEvent)
+
+        # undo stack
+        self.undoStack = QUndoStack(self)
 
 ##       self.setSortingEnabled(True)
 ##        # table model proxy
