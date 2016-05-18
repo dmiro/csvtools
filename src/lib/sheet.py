@@ -166,7 +166,7 @@ class Sheet(object):
         # check
         if startRow < 0:
             raise IndexError('startRow must be positive')
-        if rows:
+        if rows != None:
             # expand columns array
             maxColumnSize = max(max(len(row) for row in rows), self.columnCount())
             rows = self.__expandColumnsArray(rows, maxColumnSize-1)
@@ -195,7 +195,7 @@ class Sheet(object):
         # check
         if startColumn < 0:
             raise IndexError('startColumn must be positive')
-        if columns:
+        if columns != None:
             # expand columns array
             missingRows = max(self.rowCount() - len(columns), 0)
             if missingRows > 0:
@@ -464,7 +464,7 @@ class Sheet(object):
                         result.append([numRow, numCol, dataCell])
         return result
 
-    def getArray(self, startRow, startColumn, dimRows, dimColumns):
+    def getArray(self, startRow, startColumn, dimRows, dimColumns, transpose=False):
         # checks
         if startRow < 0:
             raise IndexError('startRow must be positive')
@@ -480,7 +480,10 @@ class Sheet(object):
         self.__expand(endRow, endColumn)
         array = self.__arrayData[startRow:endRow, startColumn:endColumn]
         self.__constraint()
-        return copy.deepcopy(array)
+        if transpose:
+            return np.transpose(copy.deepcopy(array))
+        else:
+            return copy.deepcopy(array)
 
     def moveArrayInRows(self, startRow, startColumn, dimRows, dimColumns, destRow, destColumn):
         # checks

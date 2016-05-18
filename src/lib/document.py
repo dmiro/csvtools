@@ -6,14 +6,14 @@ import xlrd
 from PyQt4.QtCore import *
 import io
 import cchardet
-from lib.sheet import Sheet
+from lib.commandsheet import CommandSheet
 
 class QABCMeta(pyqtWrapperType, ABCMeta):   # problem in your case is that the classes you try to inherit from
     pass                                    # have different metaclasses:
                                             # http://www.gulon.co.uk/2012/12/28/pyqt4-qobjects-and-metaclasses/
 
 
-class Document(QObject, Sheet):
+class Document(QObject, CommandSheet):
     __metaclass__ = QABCMeta
 
     loadRequested = pyqtSignal()
@@ -23,9 +23,9 @@ class Document(QObject, Sheet):
                  filename,
                  **kvparams):               # it's mandatory for serialization/deserialization purposes
 
-        QObject.__init__(self)                   # in multiple inheritance it's hard to use super
-        Sheet.__init__(self, valueClass=QString) # super(Document, self).__init__(valueClass=QString)
-                                                 # http://www.gossamer-threads.com/lists/python/python/445708
+        QObject.__init__(self)                          # in multiple inheritance it's hard to use super
+        CommandSheet.__init__(self, valueClass=QString) # super(Document, self).__init__(valueClass=QString)
+                                                        # http://www.gossamer-threads.com/lists/python/python/445708
         self.filename = filename
         self.data_ = []
         self.encoding_ = ''
