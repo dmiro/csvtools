@@ -4,7 +4,7 @@ import lib.helper as helper
 
 
 @helper.singleton
-class QGlobalUndoStack(QUndoStack):
+class QGlobalUndoStack(QUndoGroup):
   pass
 
 

@@ -1,7 +1,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import lib.enums as enums
-from lib.undostack import globalUndoStack
+import lib.undostack as undostack
 from lib.sheet import Sheet
 
 
@@ -42,23 +42,64 @@ class CommandRemoveColumns(QUndoCommand):
 
 class CommandSheet(Sheet):
 
+ #   undoRedoRequested = pyqtSignal(object)
+
     #
     # init
     #
 
     def __init__(self, valueClass, arrayData=None):
         super(CommandSheet, self).__init__(valueClass, arrayData)
+        self.stack = QUndoStack()
+        undostack.globalUndoStack.addStack(self.stack)
 
+    #
+    # del
+    #
+
+    def __del__(self):
+        try:
+            self.stack.setClean()
+            globalUndoStack.removeStack(self.stack)
+        except:
+            pass
 
     #
     # public
     #
 
+    def undo(self):
+        index = self.stack.index()
+        print 'undo', index
+        if index > 0:
+            index = index-1
+            command = self.stack.command(index)
+            print 'command', command.text()
+            if command:
+                data = 'hello' #command.data
+                self.stack.undo()
+          #      self.undoRedoRequested.emit(data)
+                return data
+        return None
+
+    def redo(self):
+        index = self.stack.index()
+        print 'redo', index
+        if index < self.stack.count():
+            command = self.stack.command(index)
+            print 'command', command.text()
+            if command:
+                data = 'hello' #command.data
+                self.stack.redo()
+          #      self.undoRedoRequested.emit(data)
+                return data
+        return None
+
     def setValue(self, row, column, cellValue):
         command = CommandSetValue(self, row, column, cellValue)
-        globalUndoStack.push(command)
+        self.stack.push(command)
 
     def removeColumns(self, startColumn, count):
         command = CommandRemoveColumns(self, startColumn, count)
-        globalUndoStack.push(command)
+        self.stack.push(command)
 

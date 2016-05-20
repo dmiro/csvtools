@@ -7,7 +7,6 @@ import lib.enums as enums
 import lib.exports
 import lib.imports
 import lib.images_rc
-import lib.undostack as undostack
 from widgets.qradiobuttondialog import QRadioButtonDialog
 from datetime import datetime
 import os
@@ -269,14 +268,14 @@ class MyTableModel(QAbstractTableModel):
     def removeRow(self, row, parent = QModelIndex()):
         return self.removeRows(row, 1, parent)
 
-    def removeColumns(self, column, count, parent = QModelIndex()):
-        self.beginRemoveColumns(parent, column, count)
-        self.document.removeColumns(column, count)
-        self.endRemoveColumns()
-        return True
-
-    def removeColumn(self, column, parent = QModelIndex()):
-        return self.removeColumns(column, 1, parent)
+##    def removeColumns(self, column, count, parent = QModelIndex()):
+##        self.beginRemoveColumns(parent, column, count)
+##        self.document.removeColumns(column, count)
+##        self.endRemoveColumns()
+##        return True
+##
+##    def removeColumn(self, column, parent = QModelIndex()):
+##        return self.removeColumns(column, 1, parent)
 
     def moveRows(self, sourceRow, count, destinationRow, parent = QModelIndex()):
         self.beginInsertRows(parent, sourceRow, sourceRow+count)
@@ -376,6 +375,34 @@ class QCsv(QTableView):
             data = model.headerData(column, orientation = Qt.Horizontal)
             result.append(data.toString())
         return result
+
+    def _getValidSelection2(self):
+        """
+        selects the first SelectRange and returns an anonymous info class about it:
+          isValid = True, if select range exist
+          topLeftIndex
+          bottomRightIndex
+          dimRows
+          dimColumn
+        """
+        selectionModel = self.selectionModel()
+        selectionRanges = selectionModel.selection()
+        if len(selectionRanges) == 1:
+            topLeftIndex = selectionRanges[0].topLeft()
+            bottomRightIndex = selectionRanges[0].bottomRight()
+            # if top-left corner selection is inside data area
+            if topLeftIndex.row() < self.document.rowCount():
+                if topLeftIndex.column() < self.document.columnCount():
+                    return helper.SimpleNamespace(isValid = True,
+                                                  topLeftIndex = topLeftIndex,
+                                                  bottomRightIndex = bottomRightIndex,
+                                                  dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1,
+                                                  dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1)
+        return helper.SimpleNamespace(isValid = False,
+                                      topLeftIndex = None,
+                                      bottomRightIndex = None,
+                                      dimRows = 0,
+                                      dimColumns = 0)
 
     def _getValidSelection(self):
         """
@@ -593,21 +620,23 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              column+count-1)
 
+    @helper.waiting
     def _removeColumns(self):
-        isValid, topLeftIndex, bottomRightIndex, _, count = self._getValidSelection()
-        # it's a valid selection
-        if isValid and count > 0:
-                # remove columns
-                column = topLeftIndex.column()
-                model = self.model()
-                model.removeColumns(column, count)
+        selection = self._getValidSelection2()
+        if selection.isValid:
+            column = selection.topLeftIndex.column()
+            count = selection.dimColumns
+            if count > 0:
+                self.document.removeColumns(column, count)
+                self.update()
+         
                 # new selection
-                self.setCurrentIndex(topLeftIndex)
+                self.setCurrentIndex(selection.topLeftIndex)
                 self.clearSelection()
-                self._select(topLeftIndex.row(),
-                             topLeftIndex.column(),
-                             bottomRightIndex.row(),
-                             bottomRightIndex.column())
+                self._select(selection.topLeftIndex.row(),
+                             selection.topLeftIndex.column(),
+                             selection.bottomRightIndex.row(),
+                             selection.bottomRightIndex.column())
 
     def _moveRows(self, move=enums.MoveBlockDirectionEnum.AfterMove):
         isValid, topLeftIndex, bottomRightIndex, count, _ = self._getValidSelection()
@@ -1039,11 +1068,13 @@ class QCsv(QTableView):
             return
 
         if action == self.undoEdit:
-            undostack.globalUndoStack.undo()
+            data = self.document.undo()
+            print data
             return
 
         if action == self.redoEdit:
-            undostack.globalUndoStack.redo()
+            data = self.document.redo()
+            print data
             return
 
     def _addEditMenu(self):
@@ -1363,7 +1394,7 @@ class QCsv(QTableView):
         return self._editMenu
 
     def edit (self, index, trigger, event):
-        """override the method 'edit' to cancel the area copied to the clipboard if
+        """override method 'edit' to cancel area copied to the clipboard if
         the user edits inside the area"""
         editing = QTableView.edit(self, index, trigger, event)
         # view's state is now EditingState
