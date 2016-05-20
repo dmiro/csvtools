@@ -18,20 +18,20 @@ import os
 ##        return lvalue < rvalue
 
 
-class StringSortModel(QSortFilterProxyModel):
-    def lessThan(self, left, right):
-        lvalue = left.data().toString().toUpper()
-        rvalue = right.data().toString().toUpper()
-        return lvalue < rvalue
+##class StringSortModel(QSortFilterProxyModel):
+##    def lessThan(self, left, right):
+##        lvalue = left.data().toString().toUpper()
+##        rvalue = right.data().toString().toUpper()
+##        return lvalue < rvalue
 
 
-class MyTableView(QTableView):
-    def __init__(self, average, items, sum_, parent = None, *args):
-        QTableView.__init__(self, parent, *args)
-        self.average = average
-        self.items = items
-        self.sum_ = sum_
-        self.setSortingEnabled(True)
+##class MyTableView(QTableView):
+##    def __init__(self, average, items, sum_, parent = None, *args):
+##        QTableView.__init__(self, parent, *args)
+##        self.average = average
+##        self.items = items
+##        self.sum_ = sum_
+##        self.setSortingEnabled(True)
 
 #
 # class QItemDataBorderDelegate
@@ -97,17 +97,17 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
         return super(QItemDataBorderDelegate, self).paint(painter, option, index)
 
 #
-# class MyTableModel
+# class QCsvModel
 #
 
-class MyTableModel(QAbstractTableModel):
+class QCsvModel(QAbstractTableModel):
 
     #
     # init
     #
 
     def __init__(self, document, headerrow=False, parent=None, *args):
-        QAbstractTableModel.__init__(self, parent, *args)
+        super(QCsvModel, self).__init__(parent, *args)
         self.headerrow= headerrow
         self.document= document
         self.pointSize= QFont().pointSize()
@@ -601,23 +601,26 @@ class QCsv(QTableView):
                 else:
                     self._select(row, column, row, column+ dimColumns-1)
 
+    @helper.waiting
     def _insertColumns(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):
-        isValid, topLeftIndex, bottomRightIndex, _, count = self._getValidSelection()
-        # it's a valid selection
-        if isValid and count > 0:
-                # insert columns
-                column = topLeftIndex.column()
+        selection = self._getValidSelection2()
+        if selection.isValid:
+            column = selection.topLeftIndex.column()
+            count = selection.dimColumns
+            if count > 0:
                 if insert == enums.InsertBlockDirectionEnum.AfterInsert:
                     column = column + count
-                model = self.model()
-                model.insertColumns(column, count)
+                self.document.insertEmptyColumns(column, count)
+                self.update()
+
                 # new selection
-                currentIndex = model.createIndex(topLeftIndex.row(), column)
+                model = self.model()
+                currentIndex = model.createIndex(selection.topLeftIndex.row(), column)
                 self.setCurrentIndex(currentIndex)
                 self.clearSelection()
-                self._select(topLeftIndex.row(),
+                self._select(selection.topLeftIndex.row(),
                              column,
-                             bottomRightIndex.row(),
+                             selection.bottomRightIndex.row(),
                              column+count-1)
 
     @helper.waiting
@@ -629,7 +632,7 @@ class QCsv(QTableView):
             if count > 0:
                 self.document.removeColumns(column, count)
                 self.update()
-         
+
                 # new selection
                 self.setCurrentIndex(selection.topLeftIndex)
                 self.clearSelection()
@@ -1381,13 +1384,13 @@ class QCsv(QTableView):
                      model.columnDataCount()-1)
 
     def loadRequested(self):
-        model = MyTableModel(self.document, config.config_headerrow)
+        model = QCsvModel(self.document, config.config_headerrow)
         self.setModel(model)
 
     def setDocument(self, document):
         self.document = document
         self.document.loadRequested.connect(self.loadRequested)
-        model = MyTableModel(self.document, config.config_headerrow)
+        model = QCsvModel(self.document, config.config_headerrow)
         self.setModel(model)
 
     def editMenu(self):
