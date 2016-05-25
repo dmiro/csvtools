@@ -4,12 +4,19 @@ import lib.enums as enums
 import lib.undostack as undostack
 from lib.sheet import Sheet
 
+class QUndoSelectionCommand(QUndoCommand):
 
-class CommandSetValue(QUndoCommand):
+    def __init__(self, description, undoSelection, redoSelection):
+        super(QUndoSelectionCommand, self).__init__(description)
+        self.undoSelection = undoSelection
+        self.redoSelection = redoSelection
 
-    def __init__(self, sheet, row, column, cellValue):
+
+class CommandSetValue(QUndoSelectionCommand):
+
+    def __init__(self, sheet, row, column, cellValue, undoSelection, redoSelection):
         description = 'set value at %d %d' % (row, column)
-        super(CommandSetValue, self).__init__(description)
+        super(CommandSetValue, self).__init__(description, undoSelection, redoSelection)
         self.sheet = super(CommandSheet, sheet)
         self.row = row
         self.column = column
@@ -23,11 +30,11 @@ class CommandSetValue(QUndoCommand):
         self.sheet.setValue(self.row, self.column, self.value)
 
 
-class CommandRemoveColumns(QUndoCommand):
+class CommandRemoveColumns(QUndoSelectionCommand):
 
-    def __init__(self, sheet, startColumn, count):
+    def __init__(self, sheet, startColumn, count, undoSelection, redoSelection):
         description = 'remove %d columns at %d column' % (count, startColumn)
-        super(CommandRemoveColumns, self).__init__(description)
+        super(CommandRemoveColumns, self).__init__(description, undoSelection, redoSelection)
         self.sheet = super(CommandSheet, sheet)
         self.startColumn = startColumn
         self.count = count
@@ -51,6 +58,8 @@ class CommandSheet(Sheet):
     def __init__(self, valueClass, arrayData=None):
         super(CommandSheet, self).__init__(valueClass, arrayData)
         self.stack = QUndoStack()
+        #self.redoAction = self.stack.createRedoAction(self)
+        #self.undoAction = self.stack.createUndoAction(self)
         undostack.globalUndoStack.addStack(self.stack)
 
     #
@@ -76,7 +85,7 @@ class CommandSheet(Sheet):
             command = self.stack.command(index)
             print 'command', command.text()
             if command:
-                data = 'hello' #command.data
+                data = command.redoSelection
                 self.stack.undo()
           #      self.undoRedoRequested.emit(data)
                 return data
@@ -89,17 +98,17 @@ class CommandSheet(Sheet):
             command = self.stack.command(index)
             print 'command', command.text()
             if command:
-                data = 'hello' #command.data
+                data = command.redoSelection
                 self.stack.redo()
           #      self.undoRedoRequested.emit(data)
                 return data
         return None
 
     def setValue(self, row, column, cellValue):
-        command = CommandSetValue(self, row, column, cellValue)
+        command = CommandSetValue(self, row, column, cellValue, None, None)
         self.stack.push(command)
 
-    def removeColumns(self, startColumn, count):
-        command = CommandRemoveColumns(self, startColumn, count)
+    def removeColumns(self, startColumn, count, undoSelection, redoSelection):
+        command = CommandRemoveColumns(self, startColumn, count, undoSelection, redoSelection)
         self.stack.push(command)
 

@@ -376,6 +376,18 @@ class QCsv(QTableView):
             result.append(data.toString())
         return result
 
+############
+
+    def _getCurrentSelection(self):
+        selectionModel = self.selectionModel()
+        return selectionModel.selection()
+
+    def _getNewSelection(self, topLeftRow, topLeftColumn, bottomRightRow, bottomRightColumn):
+        model = self.model()
+        topLeft = model.createIndex(topLeftRow, topLeftColumn)
+        bottomRight = model.createIndex(bottomRightRow, bottomRightColumn)
+        return QItemSelection(topLeft, bottomRight)
+
     def _getValidSelection2(self):
         """
         selects the first SelectRange and returns an anonymous info class about it:
@@ -385,8 +397,7 @@ class QCsv(QTableView):
           dimRows
           dimColumn
         """
-        selectionModel = self.selectionModel()
-        selectionRanges = selectionModel.selection()
+        selectionRanges = self._getCurrentSelection()
         if len(selectionRanges) == 1:
             topLeftIndex = selectionRanges[0].topLeft()
             bottomRightIndex = selectionRanges[0].bottomRight()
@@ -413,8 +424,7 @@ class QCsv(QTableView):
           dimRows
           dimColumn
         """
-        selectionModel = self.selectionModel()
-        selectionRanges = selectionModel.selection()
+        selectionRanges = self._getCurrentSelection()
         if len(selectionRanges)==1:
             model = self.model()
             topLeftIndex = selectionRanges[0].topLeft()
@@ -436,6 +446,17 @@ class QCsv(QTableView):
         # select items
         selectionModel = self.selectionModel()
         selectionModel.select(selection, QItemSelectionModel.Select)
+
+    def _setSelection(self, selection):
+        self.update()
+        self.clearSelection()
+        if selection != None:
+            if len(selection) > 0:
+                self.setCurrentIndex(selection[0].topLeft())
+                selectionModel = self.selectionModel()
+                selectionModel.select(selection, QItemSelectionModel.Select)
+
+##############
 
     def _insertRows(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):
         isValid, topLeftIndex, bottomRightIndex, count, _ = self._getValidSelection()
@@ -630,16 +651,13 @@ class QCsv(QTableView):
             column = selection.topLeftIndex.column()
             count = selection.dimColumns
             if count > 0:
-                self.document.removeColumns(column, count)
-                self.update()
-
-                # new selection
-                self.setCurrentIndex(selection.topLeftIndex)
-                self.clearSelection()
-                self._select(selection.topLeftIndex.row(),
-                             selection.topLeftIndex.column(),
-                             selection.bottomRightIndex.row(),
-                             selection.bottomRightIndex.column())
+                undoSelection = self._getCurrentSelection()
+                redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
+                                                      selection.topLeftIndex.column(),
+                                                      selection.bottomRightIndex.row(),
+                                                      selection.bottomRightIndex.column())
+                self.document.removeColumns(column, count, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
 
     def _moveRows(self, move=enums.MoveBlockDirectionEnum.AfterMove):
         isValid, topLeftIndex, bottomRightIndex, count, _ = self._getValidSelection()
@@ -1071,13 +1089,13 @@ class QCsv(QTableView):
             return
 
         if action == self.undoEdit:
-            data = self.document.undo()
-            print data
+            undoSelection = self.document.undo()
+            self._setSelection(undoSelection)
             return
 
         if action == self.redoEdit:
-            data = self.document.redo()
-            print data
+            redoSelection = self.document.redo()
+            self._setSelection(redoSelection)
             return
 
     def _addEditMenu(self):
