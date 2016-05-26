@@ -15,7 +15,7 @@ class QUndoSelectionCommand(QUndoCommand):
 class CommandSetValue(QUndoSelectionCommand):
 
     def __init__(self, sheet, row, column, cellValue, undoSelection, redoSelection):
-        description = 'set value at %d %d' % (row, column)
+        description = 'set value at [row:%d, col:%d]' % (row, column)
         super(CommandSetValue, self).__init__(description, undoSelection, redoSelection)
         self.sheet = super(CommandSheet, sheet)
         self.row = row
@@ -30,10 +30,26 @@ class CommandSetValue(QUndoSelectionCommand):
         self.sheet.setValue(self.row, self.column, self.value)
 
 
+class CommandInsertEmptyColumns(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startColumn, count, undoSelection, redoSelection):
+        description = 'insert %d empty columns at [col:%d]' % (count, startColumn)
+        super(CommandInsertEmptyColumns, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = super(CommandSheet, sheet)
+        self.startColumn = startColumn
+        self.count = count
+
+    def redo(self):
+        self.sheet.insertEmptyColumns(self.startColumn, self.count)
+
+    def undo(self):
+        self.sheet.removeColumns(self.startColumn, self.count)
+
+
 class CommandRemoveColumns(QUndoSelectionCommand):
 
     def __init__(self, sheet, startColumn, count, undoSelection, redoSelection):
-        description = 'remove %d columns at %d column' % (count, startColumn)
+        description = 'remove %d columns at [col:%d]' % (count, startColumn)
         super(CommandRemoveColumns, self).__init__(description, undoSelection, redoSelection)
         self.sheet = super(CommandSheet, sheet)
         self.startColumn = startColumn
@@ -48,8 +64,6 @@ class CommandRemoveColumns(QUndoSelectionCommand):
 
 
 class CommandSheet(Sheet):
-
- #   undoRedoRequested = pyqtSignal(object)
 
     #
     # init
@@ -87,7 +101,6 @@ class CommandSheet(Sheet):
             if command:
                 data = command.redoSelection
                 self.stack.undo()
-          #      self.undoRedoRequested.emit(data)
                 return data
         return None
 
@@ -100,12 +113,15 @@ class CommandSheet(Sheet):
             if command:
                 data = command.redoSelection
                 self.stack.redo()
-          #      self.undoRedoRequested.emit(data)
                 return data
         return None
 
     def setValue(self, row, column, cellValue):
         command = CommandSetValue(self, row, column, cellValue, None, None)
+        self.stack.push(command)
+
+    def insertEmptyColumns(self, startColumn, count, undoSelection, redoSelection):
+        command = CommandInsertEmptyColumns(self, startColumn, count, undoSelection, redoSelection)
         self.stack.push(command)
 
     def removeColumns(self, startColumn, count, undoSelection, redoSelection):

@@ -626,23 +626,30 @@ class QCsv(QTableView):
     def _insertColumns(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):
         selection = self._getValidSelection2()
         if selection.isValid:
-            column = selection.topLeftIndex.column()
             count = selection.dimColumns
+            if insert == enums.InsertBlockDirectionEnum.AfterInsert:
+                column = selection.topLeftIndex.column() + count
+            else:
+                column = selection.topLeftIndex.column()
             if count > 0:
-                if insert == enums.InsertBlockDirectionEnum.AfterInsert:
-                    column = column + count
-                self.document.insertEmptyColumns(column, count)
-                self.update()
+                undoSelection = self._getCurrentSelection()
+                redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
+                                                      column,
+                                                      selection.bottomRightIndex.row(),
+                                                      column + count - 1)
+                self.document.insertEmptyColumns(column, count, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
 
-                # new selection
-                model = self.model()
-                currentIndex = model.createIndex(selection.topLeftIndex.row(), column)
-                self.setCurrentIndex(currentIndex)
-                self.clearSelection()
-                self._select(selection.topLeftIndex.row(),
-                             column,
-                             selection.bottomRightIndex.row(),
-                             column+count-1)
+##                self.update()
+##                # new selection
+##                model = self.model()
+##                currentIndex = model.createIndex(selection.topLeftIndex.row(), column)
+##                self.setCurrentIndex(currentIndex)
+##                self.clearSelection()
+##                self._select(selection.topLeftIndex.row(),
+##                             column,
+##                             selection.bottomRightIndex.row(),
+##                             column+count-1)
 
     @helper.waiting
     def _removeColumns(self):
