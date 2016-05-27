@@ -165,6 +165,12 @@ class QCsvModel(QAbstractTableModel):
             return self.columnDataCount()
         return column
 
+    def dataChangedEmit(self):
+        topLeftIndex = self.createIndex(self.rowCorner, self.columnCorner)
+        bottomRightIndex = self.createIndex(self.rowCorner + self.rowCount(),
+                                            self.columnCorner + self.columnCount())
+        self.dataChanged.emit(topLeftIndex, bottomRightIndex)
+
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if self.headerrow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return QVariant(self.document.value(0, section))
@@ -448,7 +454,9 @@ class QCsv(QTableView):
         selectionModel.select(selection, QItemSelectionModel.Select)
 
     def _setSelection(self, selection):
-        self.update()
+        model = self.model()
+        model.dataChangedEmit()
+        #self.update()
         self.clearSelection()
         if selection != None:
             if len(selection) > 0:
@@ -639,17 +647,6 @@ class QCsv(QTableView):
                                                       column + count - 1)
                 self.document.insertEmptyColumns(column, count, undoSelection, redoSelection)
                 self._setSelection(redoSelection)
-
-##                self.update()
-##                # new selection
-##                model = self.model()
-##                currentIndex = model.createIndex(selection.topLeftIndex.row(), column)
-##                self.setCurrentIndex(currentIndex)
-##                self.clearSelection()
-##                self._select(selection.topLeftIndex.row(),
-##                             column,
-##                             selection.bottomRightIndex.row(),
-##                             column+count-1)
 
     @helper.waiting
     def _removeColumns(self):

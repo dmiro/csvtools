@@ -13,7 +13,7 @@ class QABCMeta(pyqtWrapperType, ABCMeta):   # problem in your case is that the c
                                             # http://www.gulon.co.uk/2012/12/28/pyqt4-qobjects-and-metaclasses/
 
 
-class Document(QObject, CommandSheet):
+class Document(CommandSheet):
     __metaclass__ = QABCMeta
 
     loadRequested = pyqtSignal()
@@ -23,9 +23,7 @@ class Document(QObject, CommandSheet):
                  filename,
                  **kvparams):               # it's mandatory for serialization/deserialization purposes
 
-        QObject.__init__(self)                          # in multiple inheritance it's hard to use super
-        CommandSheet.__init__(self, valueClass=QString) # super(Document, self).__init__(valueClass=QString)
-                                                        # http://www.gossamer-threads.com/lists/python/python/445708
+        super(Document, self).__init__(valueClass=QString)
         self.filename = filename
         self.data_ = []
         self.encoding_ = ''

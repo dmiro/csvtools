@@ -63,19 +63,24 @@ class CommandRemoveColumns(QUndoSelectionCommand):
         self.sheet.insertColumns(self.startColumn, self.array)
 
 
-class CommandSheet(Sheet):
+class CommandSheet(QObject, Sheet):
+
+    redoTextChanged = pyqtSignal(str)
+    undoTextChanged = pyqtSignal(str)
 
     #
     # init
     #
 
     def __init__(self, valueClass, arrayData=None):
-        super(CommandSheet, self).__init__(valueClass, arrayData)
+        QObject.__init__(self)                          # in multiple inheritance it's hard to use super
+        Sheet.__init__(self, valueClass, arrayData)     # super(CommandSheet, self).__init__(valueClass, arrayData)
+                                                        # http://www.gossamer-threads.com/lists/python/python/445708
         self.stack = QUndoStack()
-        #self.redoAction = self.stack.createRedoAction(self)
-        #self.undoAction = self.stack.createUndoAction(self)
         undostack.globalUndoStack.addStack(self.stack)
-
+        self.stack.redoTextChanged.connect(lambda msg: self.redoTextChanged.emit(msg))
+        self.stack.undoTextChanged.connect(lambda msg: self.undoTextChanged.emit(msg))
+    
     #
     # del
     #
@@ -99,7 +104,7 @@ class CommandSheet(Sheet):
             command = self.stack.command(index)
             print 'command', command.text()
             if command:
-                data = command.redoSelection
+                data = command.undoSelection
                 self.stack.undo()
                 return data
         return None
