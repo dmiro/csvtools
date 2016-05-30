@@ -15,7 +15,7 @@ class QUndoSelectionCommand(QUndoCommand):
 class CommandSetValue(QUndoSelectionCommand):
 
     def __init__(self, sheet, row, column, cellValue, undoSelection, redoSelection):
-        description = 'set value at [row:%d, col:%d]' % (row, column)
+        description = 'set value at [{},{}]'.format(row, column)
         super(CommandSetValue, self).__init__(description, undoSelection, redoSelection)
         self.sheet = super(CommandSheet, sheet)
         self.row = row
@@ -33,7 +33,7 @@ class CommandSetValue(QUndoSelectionCommand):
 class CommandInsertEmptyColumns(QUndoSelectionCommand):
 
     def __init__(self, sheet, startColumn, count, undoSelection, redoSelection):
-        description = 'insert %d empty columns at [col:%d]' % (count, startColumn)
+        description = 'insert {} empty columns at [:,{}]'.format(count, startColumn)
         super(CommandInsertEmptyColumns, self).__init__(description, undoSelection, redoSelection)
         self.sheet = super(CommandSheet, sheet)
         self.startColumn = startColumn
@@ -49,7 +49,7 @@ class CommandInsertEmptyColumns(QUndoSelectionCommand):
 class CommandRemoveColumns(QUndoSelectionCommand):
 
     def __init__(self, sheet, startColumn, count, undoSelection, redoSelection):
-        description = 'remove %d columns at [col:%d]' % (count, startColumn)
+        description = 'remove {} columns at [:,{}]'.format(count, startColumn)
         super(CommandRemoveColumns, self).__init__(description, undoSelection, redoSelection)
         self.sheet = super(CommandSheet, sheet)
         self.startColumn = startColumn
@@ -65,8 +65,8 @@ class CommandRemoveColumns(QUndoSelectionCommand):
 
 class CommandSheet(QObject, Sheet):
 
-    redoTextChanged = pyqtSignal(str)
-    undoTextChanged = pyqtSignal(str)
+    redoTextChanged = pyqtSignal(str, bool)
+    undoTextChanged = pyqtSignal(str, bool)
 
     #
     # init
@@ -78,9 +78,9 @@ class CommandSheet(QObject, Sheet):
                                                         # http://www.gossamer-threads.com/lists/python/python/445708
         self.stack = QUndoStack()
         undostack.globalUndoStack.addStack(self.stack)
-        self.stack.redoTextChanged.connect(lambda msg: self.redoTextChanged.emit(msg))
-        self.stack.undoTextChanged.connect(lambda msg: self.undoTextChanged.emit(msg))
-    
+        self.stack.redoTextChanged.connect(lambda msg: self.redoTextChanged.emit(msg, self.stack.canRedo()))
+        self.stack.undoTextChanged.connect(lambda msg: self.undoTextChanged.emit(msg, self.stack.canUndo()))
+
     #
     # del
     #
@@ -98,11 +98,9 @@ class CommandSheet(QObject, Sheet):
 
     def undo(self):
         index = self.stack.index()
-        print 'undo', index
         if index > 0:
             index = index-1
             command = self.stack.command(index)
-            print 'command', command.text()
             if command:
                 data = command.undoSelection
                 self.stack.undo()
@@ -111,10 +109,8 @@ class CommandSheet(QObject, Sheet):
 
     def redo(self):
         index = self.stack.index()
-        print 'redo', index
         if index < self.stack.count():
             command = self.stack.command(index)
-            print 'command', command.text()
             if command:
                 data = command.redoSelection
                 self.stack.redo()

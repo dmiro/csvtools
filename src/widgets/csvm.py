@@ -365,9 +365,11 @@ class QCsv(QTableView):
                 action.setDisabled(disabled)
 
     def _setEditMenuDisabled(self, disabled):
-        self._setMenuDisabled(self._editMenu, disabled)
-        self._setMenuDisabled(self.copySpecialMenu, disabled)
-        self._setMenuDisabled(self.copyToPythonMenu, disabled)
+        pass
+        # falta repasar, ¿hace falta? si es así, evaluar cada opcion del menu.
+        #self._setMenuDisabled(self._editMenu, disabled)
+        #self._setMenuDisabled(self.copySpecialMenu, disabled)
+        #self._setMenuDisabled(self.copyToPythonMenu, disabled)
 
     def selectionChanged (self, selected, deselected):
         self.selectionChanged_.emit()
@@ -1108,8 +1110,10 @@ class QCsv(QTableView):
         self._editMenu = QMenu(self.tr('Edit'))
         self.undoEdit = self._editMenu.addAction(QIcon(':images/undo.png'), self.tr('Undo'))
         self.undoEdit.setShortcut(QKeySequence.Undo)
+        self.undoEdit.setEnabled(False)
         self.redoEdit = self._editMenu.addAction(QIcon(':images/redo.png'), self.tr('Redo'))
         self.redoEdit.setShortcut(QKeySequence.Redo)
+        self.redoEdit.setEnabled(False)
         self._editMenu.addSeparator()
         self.cuteToClipboard = self._editMenu.addAction(QIcon(':images/cut.png'), self.tr('Cut'))
         self.cuteToClipboard.setShortcut(QKeySequence.Cut)
@@ -1289,6 +1293,14 @@ class QCsv(QTableView):
             return
         super(QCsv, self).timerEvent(timerEvent)
 
+    def _redoTextChanged(self, msg, enable):
+        self.redoEdit.setEnabled(enable)
+        self.redoEdit.setText('Redo {}'.format(msg))
+
+    def _undoTextChanged(self, msg, enable):
+        self.undoEdit.setEnabled(enable)
+        self.undoEdit.setText('Undo {}'.format(msg))
+
     #
     # public
     #
@@ -1412,6 +1424,8 @@ class QCsv(QTableView):
     def setDocument(self, document):
         self.document = document
         self.document.loadRequested.connect(self.loadRequested)
+        self.document.redoTextChanged.connect(self._redoTextChanged)
+        self.document.undoTextChanged.connect(self._undoTextChanged)
         model = QCsvModel(self.document, config.config_headerrow)
         self.setModel(model)
 
