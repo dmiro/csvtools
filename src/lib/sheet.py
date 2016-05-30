@@ -523,24 +523,24 @@ class Sheet(object):
         self.insertArrayInColumns(destRow, destColumn, array)
         return True
 
-    def moveRows(self, startRow, count, destRow):
+    def moveRows(self, startRow, count, destinationRow):
          self.moveArrayInRows(startRow,
                               0,
                               count,
                               self.columnCount(),
-                              destRow,
+                              destinationRow,
                               0)
 
     def moveRow(self, originRow, destinationRow):
         self.moveRows(originRow, 1, destinationRow)
 
-    def moveColumns(self, startColumn, count, destColumn):
+    def moveColumns(self, startColumn, count, destinationColumn):
         self.moveArrayInColumns(0,
                                 startColumn,
                                 self.rowCount(),
                                 count,
                                 0,
-                                destColumn)
+                                destinationColumn)
 
     def moveColumn(self, originColumn, destinationColumn):
         self.moveColumns(originColumn, 1, destinationColumn)

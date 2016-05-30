@@ -63,6 +63,40 @@ class CommandRemoveColumns(QUndoSelectionCommand):
         self.sheet.insertColumns(self.startColumn, self.array)
 
 
+class CommandMoveRows(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, count, destinationRow, undoSelection, redoSelection):
+        description = 'move {} rows from [{},:] to [{},:]'.format(count, startRow, destinationRow)
+        super(CommandMoveRows, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = super(CommandSheet, sheet)
+        self.startRow = startRow
+        self.count = count
+        self.destinationRow = destinationRow
+
+    def redo(self):
+        self.sheet.moveRows(self.startRow, self.count, self.destinationRow)
+
+    def undo(self):
+        self.sheet.moveRows(self.destinationRow, self.count, self.startRow)
+
+
+class CommandMoveColumns(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startColumn, count, destinationColumn, undoSelection, redoSelection):
+        description = 'move {} columns from [:,{}] to [:,{}]'.format(count, startColumn, destinationColumn)
+        super(CommandMoveColumns, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = super(CommandSheet, sheet)
+        self.startColumn = startColumn
+        self.count = count
+        self.destinationColumn = destinationColumn
+
+    def redo(self):
+        self.sheet.moveColumns(self.startColumn, self.count, self.destinationColumn)
+
+    def undo(self):
+        self.sheet.moveColumns(self.destinationColumn, self.count, self.startColumn)
+
+
 class CommandSheet(QObject, Sheet):
 
     redoTextChanged = pyqtSignal(str, bool)
@@ -129,3 +163,10 @@ class CommandSheet(QObject, Sheet):
         command = CommandRemoveColumns(self, startColumn, count, undoSelection, redoSelection)
         self.stack.push(command)
 
+    def moveRows(self, startRow, count, destinationRow, undoSelection, redoSelection):
+        command = CommandMoveRows(self, startRow, count, destinationRow, undoSelection, redoSelection)
+        self.stack.push(command)
+
+    def moveColumns(self, startColumn, count, destinationColumn, undoSelection, redoSelection):
+        command = CommandMoveColumns(self, startColumn, count, destinationColumn, undoSelection, redoSelection)
+        self.stack.push(command)

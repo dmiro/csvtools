@@ -641,6 +641,7 @@ class QCsv(QTableView):
                 column = selection.topLeftIndex.column() + count
             else:
                 column = selection.topLeftIndex.column()
+            # ok
             if count > 0:
                 undoSelection = self._getCurrentSelection()
                 redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
@@ -656,6 +657,7 @@ class QCsv(QTableView):
         if selection.isValid:
             column = selection.topLeftIndex.column()
             count = selection.dimColumns
+            # ok
             if count > 0:
                 undoSelection = self._getCurrentSelection()
                 redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
@@ -665,53 +667,57 @@ class QCsv(QTableView):
                 self.document.removeColumns(column, count, undoSelection, redoSelection)
                 self._setSelection(redoSelection)
 
+    @helper.waiting
     def _moveRows(self, move=enums.MoveBlockDirectionEnum.AfterMove):
-        isValid, topLeftIndex, bottomRightIndex, count, _ = self._getValidSelection()
-        if isValid and count > 0:
-                # move row
-                row = topLeftIndex.row()
-                destinationRow = row + 1
+        selection = self._getValidSelection2()
+        if selection.isValid:
+            count = selection.dimRows
+            # ok
+            if count > 0:
                 if move == enums.MoveBlockDirectionEnum.BeforeMove:
-                    destinationRow = row - 1
-                model = self.model()
-                model.moveRows(row, count, destinationRow)
-                # new selection
-                if move == enums.MoveBlockDirectionEnum.AfterMove:
-                    topLeftIndex = model.createIndex(topLeftIndex.row()+1, topLeftIndex.column())
-                    bottomRightIndex = model.createIndex(bottomRightIndex.row()+1, bottomRightIndex.column())
+                    startRow = selection.topLeftIndex.row()
+                    destinationRow = startRow - 1
+                    undoSelection = self._getCurrentSelection()
+                    redoSelection = self._getNewSelection(selection.topLeftIndex.row() - 1,
+                                                          selection.topLeftIndex.column(),
+                                                          selection.bottomRightIndex.row() - 1,
+                                                          selection.bottomRightIndex.column())
                 else:
-                    topLeftIndex = model.createIndex(topLeftIndex.row()-1, topLeftIndex.column())
-                    bottomRightIndex = model.createIndex(bottomRightIndex.row()-1, bottomRightIndex.column())
-                self.setCurrentIndex(topLeftIndex)
-                self.clearSelection()
-                self._select(topLeftIndex.row(),
-                             topLeftIndex.column(),
-                             bottomRightIndex.row(),
-                             bottomRightIndex.column())
+                    startRow = selection.topLeftIndex.row()
+                    destinationRow = startRow + 1
+                    undoSelection = self._getCurrentSelection()
+                    redoSelection = self._getNewSelection(selection.topLeftIndex.row() + 1,
+                                                          selection.topLeftIndex.column(),
+                                                          selection.bottomRightIndex.row() + 1,
+                                                          selection.bottomRightIndex.column())
+                self.document.moveRows(startRow, count, destinationRow, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
 
+    @helper.waiting
     def _moveColumns(self, move=enums.MoveBlockDirectionEnum.AfterMove):
-        isValid, topLeftIndex, bottomRightIndex, _, count = self._getValidSelection()
-        if isValid and count > 0:
-                # move column
-                column = topLeftIndex.column()
-                destinationColumn = column + 1
+        selection = self._getValidSelection2()
+        if selection.isValid:
+            count = selection.dimColumns
+            # ok
+            if count > 0:
                 if move == enums.MoveBlockDirectionEnum.BeforeMove:
-                    destinationColumn = column - 1
-                model = self.model()
-                model.moveColumns(column, count, destinationColumn)
-                # new selection
-                if move == enums.MoveBlockDirectionEnum.AfterMove:
-                    topLeftIndex = model.createIndex(topLeftIndex.row(), topLeftIndex.column()+1)
-                    bottomRightIndex = model.createIndex(bottomRightIndex.row(), bottomRightIndex.column()+1)
+                    startColumn = selection.topLeftIndex.column()
+                    destinationColumn = startColumn - 1
+                    undoSelection = self._getCurrentSelection()
+                    redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
+                                                          selection.topLeftIndex.column() - 1,
+                                                          selection.bottomRightIndex.row(),
+                                                          selection.bottomRightIndex.column() - 1)
                 else:
-                    topLeftIndex = model.createIndex(topLeftIndex.row(), topLeftIndex.column()-1)
-                    bottomRightIndex = model.createIndex(bottomRightIndex.row(), bottomRightIndex.column()-1)
-                self.setCurrentIndex(topLeftIndex)
-                self.clearSelection()
-                self._select(topLeftIndex.row(),
-                             topLeftIndex.column(),
-                             bottomRightIndex.row(),
-                             bottomRightIndex.column())
+                    startColumn = selection.topLeftIndex.column()
+                    destinationColumn = startColumn + 1
+                    undoSelection = self._getCurrentSelection()
+                    redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
+                                                          selection.topLeftIndex.column() + 1,
+                                                          selection.bottomRightIndex.row(),
+                                                          selection.bottomRightIndex.column() + 1)
+                self.document.moveColumns(startColumn, count, destinationColumn, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
 
     def _deleteCells(self, selectionRanges=None):
         # if not selection range especified then get current selection range
