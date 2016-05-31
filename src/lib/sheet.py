@@ -14,7 +14,7 @@ class Sheet(object):
 
     def __init__(self, valueClass, arrayData=None):
         self.__valueClass = valueClass
-        if arrayData:
+        if arrayData != None:
             self.setArrayData(arrayData)
         else:
             self.setArrayData([])
@@ -26,7 +26,7 @@ class Sheet(object):
 
     def __expandColumnsArray(self, arrayData, column):
         """expand up column specified in a python array """
-        if arrayData:
+        if arrayData != None:
             # columns
             for row in arrayData:
                 missingColumns = column - len(row) + 1
@@ -545,7 +545,7 @@ class Sheet(object):
     def moveColumn(self, originColumn, destinationColumn):
         self.moveColumns(originColumn, 1, destinationColumn)
 
-    def mergeArrayInRows(self, startRow, startColumn, dimRows, dimColumns, separator=' '):
+    def mergeArrayInRows(self, startRow, startColumn, dimRows, dimColumns, separator=None):
         # checks
         if startRow < 0:
             raise IndexError('startRow must be positive')
@@ -555,6 +555,8 @@ class Sheet(object):
             raise IndexError('dimRows must be higher than zero')
         if dimColumns < 1:
             raise IndexError('dimColumns must be higher than zero')
+        if separator == None:
+            separator = ' '
         # get array
         array = self.getArray(startRow, startColumn, dimRows, dimColumns)
         # merge array
@@ -578,14 +580,14 @@ class Sheet(object):
         self.insertArrayInRows(startRow, startColumn, merged)
         return True
 
-    def mergeRows(self, startRow, rows, separator=' '):
+    def mergeRows(self, startRow, rows, separator=None):
         self.mergeArrayInRows(startRow,
                               0,
                               rows,
                               self.columnCount(),
                               separator)
 
-    def mergeArrayInColumns(self, startRow, startColumn, dimRows, dimColumns, separator=' '):
+    def mergeArrayInColumns(self, startRow, startColumn, dimRows, dimColumns, separator=None):
         # checks
         if startRow < 0:
             raise IndexError('startRow must be positive')
@@ -595,6 +597,8 @@ class Sheet(object):
             raise IndexError('dimRows must be higher than zero')
         if dimColumns < 1:
             raise IndexError('dimColumns must be higher than zero')
+        if separator == None:
+            separator = ' '
         # get array
         array = self.getArray(startRow, startColumn, dimRows, dimColumns)
         # merge array
@@ -618,7 +622,7 @@ class Sheet(object):
         self.insertArrayInColumns(startRow, startColumn, merged)
         return True
 
-    def mergeColumns(self, startColumn, columns, separator=' '):
+    def mergeColumns(self, startColumn, columns, separator=None):
         self.mergeArrayInColumns(0,
                                  startColumn,
                                  self.rowCount(),

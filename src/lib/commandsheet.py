@@ -97,6 +97,44 @@ class CommandMoveColumns(QUndoSelectionCommand):
         self.sheet.moveColumns(self.destinationColumn, self.count, self.startColumn)
 
 
+class CommandMergeRows(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, rows, separator, undoSelection, redoSelection):
+        description = 'merge {} rows at [{},:]'.format(rows, startRow)
+        super(CommandMergeRows, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = super(CommandSheet, sheet)
+        self.startRow = startRow
+        self.rows = rows
+        self.separator = separator
+
+    def redo(self):
+        self.array = self.sheet.getArray(self.startRow, 0, self.rows, self.sheet.columnCount())
+        self.sheet.mergeRows(self.startRow, self.rows, self.separator)
+
+    def undo(self):
+        self.sheet.removeRows(self.startRow, 1)
+        self.sheet.insertRows(self.startRow, self.array)
+
+
+class CommandMergeColumns(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startColumn, columns, separator, undoSelection, redoSelection):
+        description = 'merge {} columns at [:,{}]'.format(columns, startColumn)
+        super(CommandMergeColumns, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = super(CommandSheet, sheet)
+        self.startColumn = startColumn
+        self.columns = columns
+        self.separator = separator
+
+    def redo(self):
+        self.array = self.sheet.getArray(0, self.startColumn, self.sheet.rowCount(), self.columns)
+        self.sheet.mergeColumns(self.startColumn, self.columns, self.separator)
+
+    def undo(self):
+        self.sheet.removeColumns(self.startColumn, 1)
+        self.sheet.insertColumns(self.startColumn, self.array)
+
+
 class CommandSheet(QObject, Sheet):
 
     redoTextChanged = pyqtSignal(str, bool)
@@ -107,7 +145,7 @@ class CommandSheet(QObject, Sheet):
     #
 
     def __init__(self, valueClass, arrayData=None):
-        QObject.__init__(self)                          # in multiple inheritance it's hard to use super
+        QObject.__init__(self)                          # in multiple inheritance it's hard to use
         Sheet.__init__(self, valueClass, arrayData)     # super(CommandSheet, self).__init__(valueClass, arrayData)
                                                         # http://www.gossamer-threads.com/lists/python/python/445708
         self.stack = QUndoStack()
@@ -170,3 +208,12 @@ class CommandSheet(QObject, Sheet):
     def moveColumns(self, startColumn, count, destinationColumn, undoSelection, redoSelection):
         command = CommandMoveColumns(self, startColumn, count, destinationColumn, undoSelection, redoSelection)
         self.stack.push(command)
+
+    def mergeRows(self, startRow, rows, separator, undoSelection, redoSelection):
+        command = CommandMergeRows(self, startRow, rows, separator, undoSelection, redoSelection)
+        self.stack.push(command)
+
+    def mergeColumns(self, startColumn, columns, separator, undoSelection, redoSelection):
+        command = CommandMergeColumns(self, startColumn, columns, separator, undoSelection, redoSelection)
+        self.stack.push(command)
+

@@ -581,35 +581,37 @@ class QCsv(QTableView):
                              bottomRightIndex.row(),
                              bottomRightIndex.column())
 
+    @helper.waiting
     def _mergeRows(self):
-        isValid, topLeftIndex, bottomRightIndex, count, _ = self._getValidSelection()
-        if isValid and count > 1:
-                # merge rows
-                row = topLeftIndex.row()
-                model = self.model()
-                model.mergeRows(row, count)
-                # new selection
-                self.setCurrentIndex(topLeftIndex)
-                self.clearSelection()
-                self._select(topLeftIndex.row(),
-                             topLeftIndex.column(),
-                             topLeftIndex.row(),
-                             bottomRightIndex.column())
+        selection = self._getValidSelection2()
+        if selection.isValid:
+            count = selection.dimRows
+            startRow = selection.topLeftIndex.row()
+            # ok
+            if count > 1:
+                undoSelection = self._getCurrentSelection()
+                redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
+                                                      selection.topLeftIndex.column(),
+                                                      selection.topLeftIndex.row(),
+                                                      selection.bottomRightIndex.column())
+                self.document.mergeRows(startRow, count, None, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
 
+    @helper.waiting
     def _mergeColumns(self):
-        isValid, topLeftIndex, bottomRightIndex, _, count = self._getValidSelection()
-        if isValid and count > 1:
-                # merge rows
-                column = topLeftIndex.column()
-                model = self.model()
-                model.mergeColumns(column, count)
-                # new selection
-                self.setCurrentIndex(topLeftIndex)
-                self.clearSelection()
-                self._select(topLeftIndex.row(),
-                             topLeftIndex.column(),
-                             bottomRightIndex.row(),
-                             topLeftIndex.column())
+        selection = self._getValidSelection2()
+        if selection.isValid:
+            count = selection.dimColumns
+            startColumn = selection.topLeftIndex.column()
+            # ok
+            if count > 1:
+                undoSelection = self._getCurrentSelection()
+                redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
+                                                      selection.topLeftIndex.column(),
+                                                      selection.bottomRightIndex.row(),
+                                                      selection.topLeftIndex.column())
+                self.document.mergeColumns(startColumn, count, None, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
 
     def _mergeArray(self, merge):
         isValid, topLeftIndex, bottomRightIndex, dimRows, dimColumns = self._getValidSelection()
