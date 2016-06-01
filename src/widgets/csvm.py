@@ -613,26 +613,25 @@ class QCsv(QTableView):
                 self.document.mergeColumns(startColumn, count, None, undoSelection, redoSelection)
                 self._setSelection(redoSelection)
 
+    @helper.waiting
     def _mergeArray(self, merge):
-        isValid, topLeftIndex, bottomRightIndex, dimRows, dimColumns = self._getValidSelection()
-        # it's a valid selection
-        if isValid and dimRows > 0 and dimColumns > 0:
-                # remove array
-                row = topLeftIndex.row()
-                column = topLeftIndex.column()
-                model = self.model()
-                if merge==enums.MergeDirectionEnum.MoveUpRemove:
-                    model.mergeArrayInRows(row, column, dimRows, dimColumns)
+        selection = self._getValidSelection2()
+        if selection.isValid:
+            startRow = selection.topLeftIndex.row()
+            startColumn = selection.topLeftIndex.column()
+            dimRows = selection.dimRows
+            dimColumns = selection.dimColumns
+            # ok
+            if dimRows > 0 and dimColumns > 0:
                 if merge==enums.MergeDirectionEnum.MoveLeftRemove:
-                    model.mergeArrayInColumns(row, column, dimRows, dimColumns)
-                # new selection
-                currentIndex = model.createIndex(row, column)
-                self.setCurrentIndex(currentIndex)
-                self.clearSelection()
-                if merge==enums.MergeDirectionEnum.MoveLeftRemove:
-                    self._select(row, column, row + dimRows -1, column)
+                    undoSelection = self._getCurrentSelection()
+                    redoSelection = self._getNewSelection(startRow, startColumn, startRow + dimRows -1, startColumn)
+                    self.document.mergeArrayInColumns(startRow, startColumn, dimRows, dimColumns, None, undoSelection, redoSelection)
                 else:
-                    self._select(row, column, row, column+ dimColumns-1)
+                    undoSelection = self._getCurrentSelection()
+                    redoSelection = self._getNewSelection(startRow, startColumn, startRow, startColumn + dimColumns - 1)
+                    self.document.mergeArrayInRows(startRow, startColumn, dimRows, dimColumns, None, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
 
     @helper.waiting
     def _insertColumns(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):

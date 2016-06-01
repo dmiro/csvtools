@@ -134,6 +134,45 @@ class CommandMergeColumns(QUndoSelectionCommand):
         self.sheet.removeColumns(self.startColumn, 1)
         self.sheet.insertColumns(self.startColumn, self.array)
 
+class CommandMergeArrayInRows(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, startColumn, dimRows, dimColumns, separator, undoSelection, redoSelection):
+        description = 'merge array {}x{} in rows at [{},{}]'.format(startRow, startColumn, dimRows, dimColumns)
+        super(CommandMergeArrayInRows, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = super(CommandSheet, sheet)
+        self.startRow = startRow
+        self.startColumn = startColumn
+        self.dimRows = dimRows
+        self.dimColumns = dimColumns
+        self.separator = separator
+
+    def redo(self):
+        self.array = self.sheet.getArray(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+        self.sheet.mergeArrayInRows(self.startRow, self.startColumn, self.dimRows, self.dimColumns, self.separator)
+
+    def undo(self):
+        self.sheet.removeArrayInRows(self.startRow, self.startColumn, 1, self.dimColumns)
+        self.sheet.insertArrayInRows(self.startRow, self.startColumn, self.array)
+
+class CommandMergeArrayInColumns(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, startColumn, dimRows, dimColumns, separator, undoSelection, redoSelection):
+        description = 'merge array {}x{} in columns at [{},{}]'.format(startRow, startColumn, dimRows, dimColumns)
+        super(CommandMergeArrayInColumns, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = super(CommandSheet, sheet)
+        self.startRow = startRow
+        self.startColumn = startColumn
+        self.dimRows = dimRows
+        self.dimColumns = dimColumns
+        self.separator = separator
+
+    def redo(self):
+        self.array = self.sheet.getArray(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+        self.sheet.mergeArrayInColumns(self.startRow, self.startColumn, self.dimRows, self.dimColumns, self.separator)
+
+    def undo(self):
+        self.sheet.removeArrayInColumns(self.startRow, self.startColumn, self.dimRows, 1)
+        self.sheet.insertArrayInColumns(self.startRow, self.startColumn, self.array)
 
 class CommandSheet(QObject, Sheet):
 
@@ -217,3 +256,10 @@ class CommandSheet(QObject, Sheet):
         command = CommandMergeColumns(self, startColumn, columns, separator, undoSelection, redoSelection)
         self.stack.push(command)
 
+    def mergeArrayInRows(self, startRow, startColumn, dimRows, dimColumns, separator, undoSelection, redoSelection):
+        command = CommandMergeArrayInRows(self, startRow, startColumn, dimRows, dimColumns, separator, undoSelection, redoSelection)
+        self.stack.push(command)
+
+    def mergeArrayInColumns(self, startRow, startColumn, dimRows, dimColumns, separator, undoSelection, redoSelection):
+        command = CommandMergeArrayInColumns(self, startRow, startColumn, dimRows, dimColumns, separator, undoSelection, redoSelection)
+        self.stack.push(command)
