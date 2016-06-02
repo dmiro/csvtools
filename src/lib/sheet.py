@@ -61,6 +61,19 @@ class Sheet(object):
               all(item in (None, '') for item in self.__arrayData[:, -1]):
                 self.__arrayData = np.delete(self.__arrayData, -1, 1)
 
+    def __getNumpyArray(self, sourceArray):
+        if sourceArray != None:
+            dimRows = len(sourceArray)
+            if dimRows:
+                dimColumns = max(len(row) for row in sourceArray)
+            else:
+                dimColumns = 0
+            numpyArray = np.empty((dimRows, dimColumns), dtype=object)  # numpy array error with QString arrays
+            numpyArray[:] = sourceArray                                 # http://stackoverflow.com/q/36931732/2270217
+            return numpyArray
+        else:
+            return None
+
     #
     # public
     #
@@ -72,20 +85,15 @@ class Sheet(object):
 
     def setArrayData(self, arrayData):
         """set array"""
-        # all rows must have the same number of columns
+        # all rows must have the same columns number
         if arrayData:
             maxColumnSize = max(len(row) for row in arrayData)
             for row in arrayData:
                 missingColumns = maxColumnSize - len(row)
                 if missingColumns > 0:
                     row.extend([None for _ in xrange(missingColumns)])
-                    #row.extend([self.__valueClass() for _ in xrange(missingColumns)])
-        # array -> numpy array & delete dimensions with a single element
-        self.__arrayData = np.array(arrayData, dtype=object).squeeze()
-        # obtain column dim if it's undefined
-        if len(self.__arrayData.shape) == 1:
-            if self.__arrayData.shape[0] > 0:
-                self.__arrayData = self.__arrayData.reshape(len(arrayData), -1)
+        # array to numpy array
+        self.__arrayData = self.__getNumpyArray(arrayData)
 
     def rowCount(self):
         """get row count"""
@@ -300,7 +308,7 @@ class Sheet(object):
             raise IndexError('startRow must be positive')
         if startColumn < 0:
             raise IndexError('startColumn must be positive')
-        sourceArray = np.array(array, dtype=object)
+        sourceArray = self.__getNumpyArray(array)
         if sourceArray.size > 0:
             # get source shapes
             sourceRows = sourceArray.shape[0]
@@ -484,6 +492,49 @@ class Sheet(object):
             return np.transpose(copy.deepcopy(array))
         else:
             return copy.deepcopy(array)
+
+    def setArray(self, startRow, startColumn, array):
+        """paste array at the given coordinates
+        """
+        # checks
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
+        # set array
+        sourceArray = self.__getNumpyArray(array)
+        if sourceArray.size > 0:
+            dimRows = sourceArray.shape[0]
+            dimColumns = sourceArray.shape[1]
+            self.removeArrayInRows(startRow, startColumn, dimRows, dimColumns)
+            self.insertArrayInRows(startRow, startColumn, array)
+
+    def setArrayRepeater(self, startRow, startColumn, dimRows, dimColumns, array):
+        """paste array in the coordinates indicated repeating the glue-down selection
+        """
+        # checks
+        if startRow < 0:
+            raise IndexError('startRow must be positive')
+        if startColumn < 0:
+            raise IndexError('startColumn must be positive')
+        if dimRows < 1:
+            raise IndexError('dimRows must be higher than zero')
+        if dimColumns < 1:
+            raise IndexError('dimColumns must be higher than zero')
+        # set array repeater
+        sourceArray = self.__getNumpyArray(array)
+        if sourceArray.size > 0:
+            dimArrayRows = sourceArray.shape[0]
+            dimArrayColumns = sourceArray.shape[1]
+            repeatInSelection = ((dimRows % dimArrayRows) + (dimColumns % dimArrayColumns) == 0)
+            if repeatInSelection:
+                for numRow in xrange(dimRows / dimArrayRows):
+                    for numColumn in xrange(dimColumns / dimArrayColumns):
+                        self.setArray(startRow + (dimArrayRows * numRow),
+                                      startColumn + (dimArrayColumns * numColumn),
+                                      array)
+            else:
+                self.setArray(startRow, startColumn, array)
 
     def moveArrayInRows(self, startRow, startColumn, dimRows, dimColumns, destRow, destColumn):
         # checks

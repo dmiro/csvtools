@@ -56,11 +56,11 @@ class CommandRemoveRows(QUndoSelectionCommand):
         self.count = count
 
     def redo(self):
-        self.array = self.sheet.getArray(self.startRow,  0, self.count, self.sheet.columnCount())
+        self.redoArray = self.sheet.getArray(self.startRow,  0, self.count, self.sheet.columnCount())
         self.sheet.removeRows(self.startRow, self.count)
 
     def undo(self):
-        self.sheet.insertRows(self.startRow, self.array)
+        self.sheet.insertRows(self.startRow, self.redoArray)
 
 
 class CommandRemoveColumns(QUndoSelectionCommand):
@@ -73,11 +73,11 @@ class CommandRemoveColumns(QUndoSelectionCommand):
         self.count = count
 
     def redo(self):
-        self.array = self.sheet.getArray(0, self.startColumn, self.sheet.rowCount(), self.count)
+        self.redoArray = self.sheet.getArray(0, self.startColumn, self.sheet.rowCount(), self.count)
         self.sheet.removeColumns(self.startColumn, self.count)
 
     def undo(self):
-        self.sheet.insertColumns(self.startColumn, self.array)
+        self.sheet.insertColumns(self.startColumn, self.redoArray)
 
 
 class CommandMoveRows(QUndoSelectionCommand):
@@ -125,12 +125,12 @@ class CommandMergeRows(QUndoSelectionCommand):
         self.separator = separator
 
     def redo(self):
-        self.array = self.sheet.getArray(self.startRow, 0, self.rows, self.sheet.columnCount())
+        self.redoArray = self.sheet.getArray(self.startRow, 0, self.rows, self.sheet.columnCount())
         self.sheet.mergeRows(self.startRow, self.rows, self.separator)
 
     def undo(self):
         self.sheet.removeRows(self.startRow, 1)
-        self.sheet.insertRows(self.startRow, self.array)
+        self.sheet.insertRows(self.startRow, self.redoArray)
 
 
 class CommandMergeColumns(QUndoSelectionCommand):
@@ -144,12 +144,12 @@ class CommandMergeColumns(QUndoSelectionCommand):
         self.separator = separator
 
     def redo(self):
-        self.array = self.sheet.getArray(0, self.startColumn, self.sheet.rowCount(), self.columns)
+        self.redoArray = self.sheet.getArray(0, self.startColumn, self.sheet.rowCount(), self.columns)
         self.sheet.mergeColumns(self.startColumn, self.columns, self.separator)
 
     def undo(self):
         self.sheet.removeColumns(self.startColumn, 1)
-        self.sheet.insertColumns(self.startColumn, self.array)
+        self.sheet.insertColumns(self.startColumn, self.redoArray)
 
 class CommandMergeArrayInRows(QUndoSelectionCommand):
 
@@ -164,12 +164,12 @@ class CommandMergeArrayInRows(QUndoSelectionCommand):
         self.separator = separator
 
     def redo(self):
-        self.array = self.sheet.getArray(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+        self.redoArray = self.sheet.getArray(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
         self.sheet.mergeArrayInRows(self.startRow, self.startColumn, self.dimRows, self.dimColumns, self.separator)
 
     def undo(self):
         self.sheet.removeArrayInRows(self.startRow, self.startColumn, 1, self.dimColumns)
-        self.sheet.insertArrayInRows(self.startRow, self.startColumn, self.array)
+        self.sheet.insertArrayInRows(self.startRow, self.startColumn, self.redoArray)
 
 class CommandMergeArrayInColumns(QUndoSelectionCommand):
 
@@ -184,12 +184,12 @@ class CommandMergeArrayInColumns(QUndoSelectionCommand):
         self.separator = separator
 
     def redo(self):
-        self.array = self.sheet.getArray(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+        self.redoArray = self.sheet.getArray(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
         self.sheet.mergeArrayInColumns(self.startRow, self.startColumn, self.dimRows, self.dimColumns, self.separator)
 
     def undo(self):
         self.sheet.removeArrayInColumns(self.startRow, self.startColumn, self.dimRows, 1)
-        self.sheet.insertArrayInColumns(self.startRow, self.startColumn, self.array)
+        self.sheet.insertArrayInColumns(self.startRow, self.startColumn, self.redoArray)
 
 
 class CommandMoveArrayInColumns(QUndoSelectionCommand):
@@ -230,6 +230,37 @@ class CommandMoveArrayInRows(QUndoSelectionCommand):
 
     def undo(self):
         self.sheet.moveArrayInRows(self.destRow, self.destColumn, self.dimRows, self.dimColumns, self.startRow, self.startColumn)
+
+
+class CommandSetArrayRepeater(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, startColumn, dimRows, dimColumns, array, undoSelection, redoSelection):
+        description = 'set array {}x{} to [{},{}]'.format(dimRows, dimColumns, startRow, startColumn)
+        super(CommandSetArrayRepeater, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = super(CommandSheet, sheet)
+        self.startRow = startRow
+        self.startColumn = startColumn
+        self.dimRows = dimRows
+        self.dimColumns = dimColumns
+        self.array = array
+        # get row and column dimensions array to redo operation
+        self.dimArrayRows = dimRows
+        self.dimArrayColumns = dimColumns
+        if array != None:
+            dim = len(array)
+            if dimRows < dim:
+                self.dimArrayRows = dim
+            if dim:
+                dim = max(len(row) for row in array)
+                if dimColumns < dim:
+                    self.dimArrayColumns = dim
+
+    def redo(self):
+        self.redoArray = self.sheet.getArray(self.startRow, self.startColumn, self.dimArrayRows, self.dimArrayColumns)
+        self.sheet.setArrayRepeater(self.startRow, self.startColumn, self.dimRows, self.dimColumns, self.array)
+
+    def undo(self):
+        self.sheet.setArray(self.startRow, self.startColumn, self.redoArray)
 
 
 class CommandSheet(QObject, Sheet):
@@ -332,3 +363,8 @@ class CommandSheet(QObject, Sheet):
     def moveArrayInRows(self, startRow, startColumn, dimRows, dimColumns, destRow, destColumn, undoSelection, redoSelection):
         command = CommandMoveArrayInRows(self, startRow, startColumn, dimRows, dimColumns, destRow, destColumn, undoSelection, redoSelection)
         self.stack.push(command)
+
+    def setArrayRepeater(self, startRow, startColumn, dimRows, dimColumns, array, undoSelection, redoSelection):
+        command = CommandSetArrayRepeater(self, startRow, startColumn, dimRows, dimColumns, array, undoSelection, redoSelection)
+        self.stack.push(command)
+

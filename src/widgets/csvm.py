@@ -409,15 +409,16 @@ class QCsv(QTableView):
         if len(selectionRanges) == 1:
             topLeftIndex = selectionRanges[0].topLeft()
             bottomRightIndex = selectionRanges[0].bottomRight()
-            # if top-left corner selection is inside data area
-            if topLeftIndex.row() < self.document.rowCount():
-                if topLeftIndex.column() < self.document.columnCount():
-                    return helper.SimpleNamespace(isValid = True,
-                                                  topLeftIndex = topLeftIndex,
-                                                  bottomRightIndex = bottomRightIndex,
-                                                  dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1,
-                                                  dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1)
+            # Is valid if top-left corner selection is inside data area
+            isValid =  (topLeftIndex.row() < self.document.rowCount()) and (topLeftIndex.column() < self.document.columnCount())
+            return helper.SimpleNamespace(isValid = isValid,
+                                          hasData = True,
+                                          topLeftIndex = topLeftIndex,
+                                          bottomRightIndex = bottomRightIndex,
+                                          dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1,
+                                          dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1)
         return helper.SimpleNamespace(isValid = False,
+                                      hasData = False,
                                       topLeftIndex = None,
                                       bottomRightIndex = None,
                                       dimRows = 0,
@@ -455,10 +456,9 @@ class QCsv(QTableView):
         selectionModel = self.selectionModel()
         selectionModel.select(selection, QItemSelectionModel.Select)
 
-    def _setSelection(self, selection):
+    def _setSelection(self, selection=None):
         model = self.model()
         model.dataChangedEmit()
-        #self.update()
         self.clearSelection()
         if selection != None:
             if len(selection) > 0:
@@ -726,7 +726,7 @@ class QCsv(QTableView):
                 self._setSelection(redoSelection)
 
     def _deleteCells(self, selectionRanges=None):
-        # if not selection range especified then get current selection range
+        # if no range, then get current selected range
         if selectionRanges == None:
             selectionModel = self.selectionModel()
             selectionRanges = selectionModel.selection()
@@ -774,69 +774,20 @@ class QCsv(QTableView):
                     result.insert(0, header)
         return result
 
-    def _rectangularAreaToTopLeftIndex(self, matrix, topLeftIndexRow, topLeftIndexColumn):
-        """paste rectangular are to selected left-upper corner"""
-        numRows = len(matrix)
-        numColumns = len(matrix[0])
-        model = self.model()
-        modelNumRows = model.rowCount()
-        modelNumCols = model.columnCount()
-        if topLeftIndexColumn+numColumns > modelNumCols:                                    # the number of columns we have to paste, starting at the selected cell,
-            model.insertColumns(modelNumCols, numColumns-(modelNumCols-topLeftIndexColumn)) # go beyond how many columns exist. insert the amount of columns we need
-                                                                                            # to accomodate the paste
-
-
-        if topLeftIndexRow+numRows > modelNumRows:                                          # the number of rows we have to paste, starting at the selected cell,
-            model.insertRows(modelNumRows, numRows-(modelNumRows-topLeftIndexRow))          # go beyond how many rows exist. insert the amount of rows we need to
-                                                                                            # accomodate the paste
-
-
-        model.blockSignals(True)                                                            # block signals so that the "dataChanged" signal from setData doesn't
-                                                                                            # update the view for every cell we set
-        for rowIndex, row in enumerate(matrix):
-            for colIndex, value in enumerate(row):
-                index = model.createIndex(topLeftIndexRow+rowIndex, topLeftIndexColumn+colIndex)
-                model.setData(index, QVariant(value))
-        model.blockSignals(False)                                                           # unblock the signal and emit dataChangesd ourselves to update all
-                                                                                            # the view at once
-        topLeftIndex = model.createIndex(topLeftIndexRow, topLeftIndexColumn)
-        bottomRightIndex = model.createIndex(topLeftIndexRow+numRows, topLeftIndexColumn+numColumns)
-        model.dataChanged.emit(topLeftIndex, bottomRightIndex)
-
-    def _rectangularAreaToSelectedIndex(self, matrix):
-        """paste rectangular are to selected left-upper corner"""
-        selectionRanges = self.selectionModel().selection()
-        if len(selectionRanges)==1:
-            selectionRange = selectionRanges[0]
-            numRowsData = len(matrix)
-            if numRowsData > 0:
-                numColumnsData = len(matrix[0])
-                if numColumnsData > 0:
-                    # get size of selection
-                    topLeftIndex = selectionRange.topLeft()
-                    topLeftIndexRow = topLeftIndex.row()
-                    topLeftIndexColumn = topLeftIndex.column()
-                    numRowsSelection = selectionRange.bottomRight().row() - topLeftIndexRow + 1
-                    numColumnsSelection = selectionRange.bottomRight().column() - topLeftIndexColumn + 1
-                    # repeat paste
-                    repeatInSelection = ((numRowsSelection % numRowsData) + (numColumnsSelection % numColumnsData) == 0)
-                    if repeatInSelection:
-                        for numRow in xrange(numRowsSelection / numRowsData):
-                            for numColumn in xrange(numColumnsSelection / numColumnsData):
-                                self._rectangularAreaToTopLeftIndex(matrix,
-                                                                    topLeftIndexRow + (numRowsData * numRow),
-                                                                    topLeftIndexColumn = topLeftIndexColumn + (numColumnsData * numColumn))
-                    # single paste
-                    else:
-                        self._rectangularAreaToTopLeftIndex(matrix,
-                                                            topLeftIndexRow,
-                                                            topLeftIndexColumn)
-                        self.setCurrentIndex(topLeftIndex)
-                        self.clearSelection()
-                        self._select(topLeftIndexRow,
-                                     topLeftIndexColumn,
-                                     topLeftIndexRow + numRowsData - 1,
-                                     topLeftIndexColumn + numColumnsData - 1)
+    @helper.waiting
+    def _rectangularAreaToSelectedIndex(self, array):
+        selection = self._getValidSelection2()
+        if selection.hasData:
+            dimRows = selection.dimRows
+            dimColumns = selection.dimColumns
+            # ok
+            if dimRows > 0 and dimColumns > 0:
+                startRow = selection.topLeftIndex.row()
+                startColumn = selection.topLeftIndex.column()
+                undoSelection = self._getCurrentSelection()
+                redoSelection = self._getCurrentSelection()
+                self.document.setArrayRepeater(startRow, startColumn, dimRows, dimColumns, array, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
 
     def _globalCut(self):
         selectionModel = self.selectionModel()
@@ -993,7 +944,7 @@ class QCsv(QTableView):
             if option == 1:
                 self._insertEmptyArray(insert=enums.InsertDirectionEnum.TopInsert)
             if option == 2:
-                self.insertRows(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
+                self._insertRows(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             if option == 3:
                 self._insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
