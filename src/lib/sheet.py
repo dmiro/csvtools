@@ -629,6 +629,3 @@ class Sheet(object):
                                  columns,
                                  separator)
 
-
-
-
