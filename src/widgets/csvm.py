@@ -399,30 +399,77 @@ class QCsv(QTableView):
     def _getValidSelection2(self):
         """
         selects the first SelectRange and returns an anonymous info class about it:
-          isValid = True, if select range exist
-          topLeftIndex
-          bottomRightIndex
-          dimRows
-          dimColumn
+            #
+            hasData:            true if there are one or more selections
+            isValid:            true if single select range exist and entire selection is inside data area
+            isSingleSelection:  true if single select range exist and selection is out or inside data area
+            #
+            topLeftIndex:       top-left index of the first range selection
+            bottomRightIndex:   bottom-right index of the first range selection
+            dimRows:            row dimension of the first range selection
+            dimColumns:         column dimension of the first range selection
+            #
+            minTopLeftIndex:    top-left index of the min coordinate from selected indexes
+            maxBottomRightIndex:bottom-right index of the min coordinate from selected indexes
+            minMaxDimRows:      row dimension of the selected indexes
+            minMaxDimColumns:   column dimension of the selected indexes
+            #
+            selectedRanges:     selected ranges collection
+            selectedIndexes:    selected indexes collection
         """
-        selectionRanges = self._getCurrentSelection()
-        if len(selectionRanges) == 1:
-            topLeftIndex = selectionRanges[0].topLeft()
-            bottomRightIndex = selectionRanges[0].bottomRight()
-            # Is valid if top-left corner selection is inside data area
-            isValid =  (topLeftIndex.row() < self.document.rowCount()) and (topLeftIndex.column() < self.document.columnCount())
-            return helper.SimpleNamespace(isValid = isValid,
-                                          hasData = True,
-                                          topLeftIndex = topLeftIndex,
-                                          bottomRightIndex = bottomRightIndex,
-                                          dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1,
-                                          dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1)
-        return helper.SimpleNamespace(isValid = False,
-                                      hasData = False,
+        selectedRanges = self._getCurrentSelection()
+        selectedIndexes = selectedRanges.indexes()
+        lenSelectedRanges = len(selectedRanges)
+        if lenSelectedRanges > 0:
+            topLeftIndex = selectedRanges[0].topLeft()
+            bottomRightIndex = selectedRanges[0].bottomRight()
+            if lenSelectedRanges == 1:
+                isValid =  (topLeftIndex.row() < self.document.rowCount()) and (topLeftIndex.column() < self.document.columnCount())
+                return helper.SimpleNamespace(hasData = True,
+                                              isValid = isValid,
+                                              isSingleSelection = True,
+                                              topLeftIndex = topLeftIndex,
+                                              bottomRightIndex = bottomRightIndex,
+                                              dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1,
+                                              dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1,
+                                              minTopLeftIndex = topLeftIndex,
+                                              maxBottomRightIndex = bottomRightIndex,
+                                              minMaxDimRows = bottomRightIndex.row() - topLeftIndex.row() + 1,
+                                              minMaxDimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1,
+                                              selectedRanges = selectedRanges,
+                                              selectedIndexes = selectedIndexes)
+            else:
+                model = self.model()
+                minTopLeftIndex = model.createIndex(min([index.row() for index in selectedIndexes]),
+                                                    min([index.column() for index in selectedIndexes]))
+                maxBottomRightIndex = model.createIndex(max([index.row() for index in selectedIndexes]),
+                                                        max([index.column() for index in selectedIndexes]))
+                return helper.SimpleNamespace(hasData = True,
+                                              isValid = False,
+                                              isSingleSelection = True,
+                                              topLeftIndex = topLeftIndex,
+                                              bottomRightIndex = bottomRightIndex,
+                                              dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1,
+                                              dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1,
+                                              minTopLeftIndex = minTopLeftIndex,
+                                              maxBottomRightIndex = maxBottomRightIndex,
+                                              minMaxDimRows = maxBottomRightIndex.row() - minTopLeftIndex.row() + 1,
+                                              minMaxDimColumns = maxBottomRightIndex.column() - minTopLeftIndex.column() + 1,
+                                              selectedRanges = selectedRanges,
+                                              selectedIndexes = selectedIndexes)
+        return helper.SimpleNamespace(hasData = False,
+                                      isValid = False,
+                                      isSingleSelection = False,
                                       topLeftIndex = None,
                                       bottomRightIndex = None,
                                       dimRows = 0,
-                                      dimColumns = 0)
+                                      dimColumns = 0,
+                                      minTopLeftIndex = None,
+                                      maxBottomRightIndex = None,
+                                      minMaxDimRows = 0,
+                                      minMaxDimColumns = 0,
+                                      selectedRanges = None,
+                                      selectedIndexes = None)
 
     def _getValidSelection(self):
         """
@@ -741,43 +788,39 @@ class QCsv(QTableView):
             dimColumns = bottomRightIndex.column() - column + 1
             model.deleteCells(row, column, dimRows, dimColumns)
 
+    @helper.waiting
     def _selectedIndexesToRectangularArea(self, includeHeaderRows=False):
         """copy and convert selected indexes to string matrix"""
-        result = None
-        topLeftIndex = None
-        bottomRightIndex = None
-        selectedIndexes = self.selectedIndexes()
-        if selectedIndexes:
-            # get mix&max coordinates area from selected indexes
-            topLeftIndex, bottomRightIndex = self._getMinMaxCoordinates(selectedIndexes)
-            minColumn = topLeftIndex.column()
-            minRow = topLeftIndex.row()
-            maxColumn = bottomRightIndex.column()
-            maxRow = bottomRightIndex.row()
+        selection = self._getValidSelection2()
+        if selection.hasData:
             # get a two dimension matrix with default value ''
             result = []
-            for _ in range(maxRow-minRow+1):
-                row = [QString('') for _ in range(maxColumn-minColumn+1)]
+            for _ in range(selection.minMaxDimRows):
+                row = [QString('') for _ in range(selection.minMaxDimColumns)]
                 result.append(row)
             # set values in two dimension matrix
-            for selectedIndex in selectedIndexes:
-                column = selectedIndex.column()
+            minRow = selection.minTopLeftIndex.row()
+            minColumn = selection.minTopLeftIndex.column()
+            maxRow = selection.maxBottomRightIndex.row()
+            maxColumn = selection.maxBottomRightIndex.column()
+            for selectedIndex in selection.selectedIndexes:
                 row = selectedIndex.row()
-                data = selectedIndex.data()
-                text = data.toString()
-                result[row-minRow][column-minColumn] = text
+                column = selectedIndex.column()
+                result[row-minRow][column-minColumn] = self.document.value(row, column)
             # add header rows
             if includeHeaderRows:
                 headerRows = self._getHeaderRows()
                 if headerRows:
                     header = headerRows[minColumn:maxColumn+1]
                     result.insert(0, header)
-        return result
+            return result
+        else:
+            return None
 
     @helper.waiting
     def _rectangularAreaToSelectedIndex(self, array):
         selection = self._getValidSelection2()
-        if selection.hasData:
+        if selection.isSingleSelection:
             dimRows = selection.dimRows
             dimColumns = selection.dimColumns
             # ok
@@ -1189,26 +1232,6 @@ class QCsv(QTableView):
     def _csvcontextMenuRequestedEvent(self, selectedIndexes, globalPoint):
         """show popup edit menu"""
         self._editMenu.exec_(globalPoint)
-
-    def _getMinMaxCoordinates(self, selectedIndexes):
-        """get min and max coordinates from selected indexes"""
-        minColumn = selectedIndexes[0].column()
-        minRow = selectedIndexes[0].row()
-        maxColumn = selectedIndexes[0].column()
-        maxRow = selectedIndexes[0].row()
-        for selectedIndex in selectedIndexes:
-            if selectedIndex.column() < minColumn:
-                minColumn = selectedIndex.column()
-            if selectedIndex.row() < minRow:
-                minRow = selectedIndex.row()
-            if selectedIndex.column() > maxColumn:
-                maxColumn = selectedIndex.column()
-            if selectedIndex.row() > maxRow:
-                maxRow = selectedIndex.row()
-        model = self.model()
-        topLeftIndex = model.createIndex(minRow, minColumn)
-        bottomRightIndex = model.createIndex(maxRow, maxColumn)
-        return topLeftIndex, bottomRightIndex
 
     def _clipboardCancelEvent(self, r):
         if self.lastSelectionRanges:
