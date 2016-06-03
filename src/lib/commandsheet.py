@@ -29,6 +29,20 @@ class CommandSetValue(QUndoSelectionCommand):
     def undo(self):
         self.sheet.setValue(self.row, self.column, self.value)
 
+class CommandInsertEmptyRows(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, count, undoSelection, redoSelection):
+        description = 'insert {} empty rows at [{},:]'.format(count, startRow)
+        super(CommandInsertEmptyRows, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = super(CommandSheet, sheet)
+        self.startRow = startRow
+        self.count = count
+
+    def redo(self):
+        self.sheet.insertEmptyRows(self.startRow, self.count)
+
+    def undo(self):
+        self.sheet.removeRows(self.startRow, self.count)
 
 class CommandInsertEmptyColumns(QUndoSelectionCommand):
 
@@ -318,6 +332,10 @@ class CommandSheet(QObject, Sheet):
 
     def setValue(self, row, column, cellValue):
         command = CommandSetValue(self, row, column, cellValue, None, None)
+        self.stack.push(command)
+
+    def insertEmptyRows(self, startRow, count, undoSelection, redoSelection):
+        command = CommandInsertEmptyRows(self, startRow, count, undoSelection, redoSelection)
         self.stack.push(command)
 
     def insertEmptyColumns(self, startColumn, count, undoSelection, redoSelection):

@@ -515,25 +515,6 @@ class QCsv(QTableView):
 
 ##############
 
-    def _insertRows(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):
-        isValid, topLeftIndex, bottomRightIndex, count, _ = self._getValidSelection()
-        # it's a valid selection
-        if isValid and count > 0:
-                # insert rows
-                row = topLeftIndex.row()
-                if insert == enums.InsertBlockDirectionEnum.AfterInsert:
-                    row = row + count
-                model = self.model()
-                model.insertRows(row, count)
-                # new selection
-                currentIndex = model.createIndex(row, topLeftIndex.column())
-                self.setCurrentIndex(currentIndex)
-                self.clearSelection()
-                self._select(row,
-                     topLeftIndex.column(),
-                     row+count-1,
-                     bottomRightIndex.column())
-
     def _insertEmptyArray(self, insert=enums.InsertDirectionEnum.TopInsert):
         isValid, topLeftIndex, bottomRightIndex, dimRows, dimColumns = self._getValidSelection()
         # it's a valid selection
@@ -670,22 +651,41 @@ class QCsv(QTableView):
                 self._setSelection(redoSelection)
 
     @helper.waiting
+    def _insertRows(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):
+        selection = self._getValidSelection2()
+        if selection.isValid:
+            count = selection.dimRows
+            if insert == enums.InsertBlockDirectionEnum.AfterInsert:
+                startRow = selection.topLeftIndex.row() + count
+            else:
+                startRow = selection.topLeftIndex.row()
+            # ok
+            if count > 0:
+                undoSelection = self._getCurrentSelection()
+                redoSelection = self._getNewSelection(startRow,
+                                                      selection.topLeftIndex.column(),
+                                                      startRow + count - 1,
+                                                      selection.bottomRightIndex.column())
+                self.document.insertEmptyRows(startRow, count, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
+
+    @helper.waiting
     def _insertColumns(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):
         selection = self._getValidSelection2()
         if selection.isValid:
             count = selection.dimColumns
             if insert == enums.InsertBlockDirectionEnum.AfterInsert:
-                column = selection.topLeftIndex.column() + count
+                startColumn = selection.topLeftIndex.column() + count
             else:
-                column = selection.topLeftIndex.column()
+                startColumn = selection.topLeftIndex.column()
             # ok
             if count > 0:
                 undoSelection = self._getCurrentSelection()
                 redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
-                                                      column,
+                                                      startColumn,
                                                       selection.bottomRightIndex.row(),
-                                                      column + count - 1)
-                self.document.insertEmptyColumns(column, count, undoSelection, redoSelection)
+                                                      startColumn + count - 1)
+                self.document.insertEmptyColumns(startColumn, count, undoSelection, redoSelection)
                 self._setSelection(redoSelection)
 
     @helper.waiting
