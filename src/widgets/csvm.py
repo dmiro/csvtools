@@ -396,26 +396,31 @@ class QCsv(QTableView):
         bottomRight = model.createIndex(bottomRightRow, bottomRightColumn)
         return QItemSelection(topLeft, bottomRight)
 
-    def _getValidSelection2(self):
+    def __getDataSelection(self):
         """
-        selects the first SelectRange and returns an anonymous info class about it:
-            #
-            hasData:            true if there are one or more selections
-            isValid:            true if single select range exist and entire selection is inside data area
-            isSingleSelection:  true if single select range exist and selection is out or inside data area
-            #
-            topLeftIndex:       top-left index of the first range selection
-            bottomRightIndex:   bottom-right index of the first range selection
-            dimRows:            row dimension of the first range selection
-            dimColumns:         column dimension of the first range selection
-            #
-            minTopLeftIndex:    top-left index of the min coordinate from selected indexes
-            maxBottomRightIndex:bottom-right index of the min coordinate from selected indexes
-            minMaxDimRows:      row dimension of the selected indexes
-            minMaxDimColumns:   column dimension of the selected indexes
-            #
-            selectedRanges:     selected ranges collection
-            selectedIndexes:    selected indexes collection
+        Get detailed information about selection ranges and returns an anonymous info class with data info.
+        #
+        hasData:            true if there are one or more selections
+        isSingleSelection:  true if has data and single select range exist
+        isInnerSingleSelection:true if single select range exist and entire selection is inside data area
+        isMultipleSelection:true if there are multiple selection
+        #
+        topLeftIndex:       top-left index of the first range selection
+        bottomRightIndex:   bottom-right index of the first range selection
+        dimRows:            row dimension of the first range selection
+        dimColumns:         column dimension of the first range selection
+        #
+        minTopLeftIndex:    top-left index of the min coordinate from selected indexes
+        maxBottomRightIndex:bottom-right index of the min coordinate from selected indexes
+        minMaxDimRows:      row dimension of the selected indexes
+        minMaxDimColumns:   column dimension of the selected indexes
+        minRow:             top-left row of the min coordinate from selected indexes
+        minColumn:          top-left column of the min coordinate from selected indexes
+        maxRow:             bottom-right row of the min coordinate from selected indexes
+        maxcolumn:          bottom-right column of the min coordinate from selected indexes
+        #
+        selectedRanges:     selected ranges collection
+        selectedIndexes:    selected indexes collection
         """
         selectedRanges = self._getCurrentSelection()
         selectedIndexes = selectedRanges.indexes()
@@ -424,10 +429,11 @@ class QCsv(QTableView):
             topLeftIndex = selectedRanges[0].topLeft()
             bottomRightIndex = selectedRanges[0].bottomRight()
             if lenSelectedRanges == 1:
-                isValid =  (topLeftIndex.row() < self.document.rowCount()) and (topLeftIndex.column() < self.document.columnCount())
+                isInnerSingleSelection =  (topLeftIndex.row() < self.document.rowCount()) and (topLeftIndex.column() < self.document.columnCount())
                 return helper.SimpleNamespace(hasData = True,
-                                              isValid = isValid,
                                               isSingleSelection = True,
+                                              isInnerSingleSelection = isInnerSingleSelection,
+                                              isMultipleSelection = False,
                                               topLeftIndex = topLeftIndex,
                                               bottomRightIndex = bottomRightIndex,
                                               dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1,
@@ -436,6 +442,10 @@ class QCsv(QTableView):
                                               maxBottomRightIndex = bottomRightIndex,
                                               minMaxDimRows = bottomRightIndex.row() - topLeftIndex.row() + 1,
                                               minMaxDimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1,
+                                              minRow = topLeftIndex.row(),
+                                              minColumn = topLeftIndex.column(),
+                                              maxRow = bottomRightIndex.row(),
+                                              maxColumn = bottomRightIndex.column(),
                                               selectedRanges = selectedRanges,
                                               selectedIndexes = selectedIndexes)
             else:
@@ -445,8 +455,9 @@ class QCsv(QTableView):
                 maxBottomRightIndex = model.createIndex(max([index.row() for index in selectedIndexes]),
                                                         max([index.column() for index in selectedIndexes]))
                 return helper.SimpleNamespace(hasData = True,
-                                              isValid = False,
-                                              isSingleSelection = True,
+                                              isSingleSelection = False,
+                                              isInnerSingleSelection = False,
+                                              isMultipleSelection = True,
                                               topLeftIndex = topLeftIndex,
                                               bottomRightIndex = bottomRightIndex,
                                               dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1,
@@ -455,11 +466,16 @@ class QCsv(QTableView):
                                               maxBottomRightIndex = maxBottomRightIndex,
                                               minMaxDimRows = maxBottomRightIndex.row() - minTopLeftIndex.row() + 1,
                                               minMaxDimColumns = maxBottomRightIndex.column() - minTopLeftIndex.column() + 1,
+                                              minRow = minTopLeftIndex.row(),
+                                              minColumn = minTopLeftIndex.column(),
+                                              maxRow = maxBottomRightIndex.row(),
+                                              maxColumn = maxBottomRightIndex.column(),
                                               selectedRanges = selectedRanges,
                                               selectedIndexes = selectedIndexes)
         return helper.SimpleNamespace(hasData = False,
-                                      isValid = False,
                                       isSingleSelection = False,
+                                      isInnerSingleSelection = False,
+                                      isMultipleSelection = False,
                                       topLeftIndex = None,
                                       bottomRightIndex = None,
                                       dimRows = 0,
@@ -468,6 +484,10 @@ class QCsv(QTableView):
                                       maxBottomRightIndex = None,
                                       minMaxDimRows = 0,
                                       minMaxDimColumns = 0,
+                                      minRow = 0,
+                                      minColumn = 0,
+                                      maxRow = 0,
+                                      maxColumn = 0,
                                       selectedRanges = None,
                                       selectedIndexes = None)
 
@@ -565,8 +585,8 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _moveArray(self, move):
-        selection = self._getValidSelection2()
-        if selection.isValid:
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
             dimRows = selection.dimRows
             dimColumns = selection.dimColumns
             if dimRows > 0 and dimColumns > 0:
@@ -600,8 +620,8 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _mergeRows(self):
-        selection = self._getValidSelection2()
-        if selection.isValid:
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
             count = selection.dimRows
             startRow = selection.topLeftIndex.row()
             # ok
@@ -616,8 +636,8 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _mergeColumns(self):
-        selection = self._getValidSelection2()
-        if selection.isValid:
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
             count = selection.dimColumns
             startColumn = selection.topLeftIndex.column()
             # ok
@@ -632,8 +652,8 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _mergeArray(self, merge):
-        selection = self._getValidSelection2()
-        if selection.isValid:
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
             startRow = selection.topLeftIndex.row()
             startColumn = selection.topLeftIndex.column()
             dimRows = selection.dimRows
@@ -652,8 +672,8 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _insertRows(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):
-        selection = self._getValidSelection2()
-        if selection.isValid:
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
             count = selection.dimRows
             if insert == enums.InsertBlockDirectionEnum.AfterInsert:
                 startRow = selection.topLeftIndex.row() + count
@@ -671,8 +691,8 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _insertColumns(self, insert=enums.InsertBlockDirectionEnum.BeforeInsert):
-        selection = self._getValidSelection2()
-        if selection.isValid:
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
             count = selection.dimColumns
             if insert == enums.InsertBlockDirectionEnum.AfterInsert:
                 startColumn = selection.topLeftIndex.column() + count
@@ -690,8 +710,8 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _removeRows(self):
-        selection = self._getValidSelection2()
-        if selection.isValid:
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
             startRow = selection.topLeftIndex.row()
             count = selection.dimRows
             # ok
@@ -706,8 +726,8 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _removeColumns(self):
-        selection = self._getValidSelection2()
-        if selection.isValid:
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
             startColumn = selection.topLeftIndex.column()
             count = selection.dimColumns
             # ok
@@ -722,8 +742,8 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _moveRows(self, move=enums.MoveBlockDirectionEnum.AfterMove):
-        selection = self._getValidSelection2()
-        if selection.isValid:
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
             count = selection.dimRows
             # ok
             if count > 0:
@@ -748,8 +768,8 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _moveColumns(self, move=enums.MoveBlockDirectionEnum.AfterMove):
-        selection = self._getValidSelection2()
-        if selection.isValid:
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
             count = selection.dimColumns
             # ok
             if count > 0:
@@ -791,7 +811,7 @@ class QCsv(QTableView):
     @helper.waiting
     def _selectedIndexesToRectangularArea(self, includeHeaderRows=False):
         """copy and convert selected indexes to string matrix"""
-        selection = self._getValidSelection2()
+        selection = self.__getDataSelection()
         if selection.hasData:
             # get a two dimension matrix with default value ''
             result = []
@@ -799,19 +819,15 @@ class QCsv(QTableView):
                 row = [QString('') for _ in range(selection.minMaxDimColumns)]
                 result.append(row)
             # set values in two dimension matrix
-            minRow = selection.minTopLeftIndex.row()
-            minColumn = selection.minTopLeftIndex.column()
-            maxRow = selection.maxBottomRightIndex.row()
-            maxColumn = selection.maxBottomRightIndex.column()
             for selectedIndex in selection.selectedIndexes:
                 row = selectedIndex.row()
                 column = selectedIndex.column()
-                result[row-minRow][column-minColumn] = self.document.value(row, column)
+                result[row-selection.minRow][column-selection.minColumn] = self.document.value(row, column)
             # add header rows
             if includeHeaderRows:
                 headerRows = self._getHeaderRows()
                 if headerRows:
-                    header = headerRows[minColumn:maxColumn+1]
+                    header = headerRows[selection.minColumn:selection.maxColumn+1]
                     result.insert(0, header)
             return result
         else:
@@ -819,7 +835,7 @@ class QCsv(QTableView):
 
     @helper.waiting
     def _rectangularAreaToSelectedIndex(self, array):
-        selection = self._getValidSelection2()
+        selection = self.__getDataSelection()
         if selection.isSingleSelection:
             dimRows = selection.dimRows
             dimColumns = selection.dimColumns
