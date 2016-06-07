@@ -14,19 +14,27 @@ class QStatus(QStatusBar):
     # private
     #
 
-    def _normalFontSize(self):
+    def __normalFontSize(self):
         """get normal fontsize"""
-        return PointSizes[self.normalIndexSize-1]
+        return PointSizes[self.normalIndexSize]
 
-    def _fontSize(self):
+    def __fontSize(self):
         """get current fontsize"""
-        return PointSizes[self.slider.value()-1]
+        return PointSizes[self.slider.value()]
 
-    def _percentageFontSize(self):
+    def __setFontSize(self, size):
+        """set fontsize"""
+        if size in PointSizes:
+            index = PointSizes.index(size)
+            self.slider.setValue(index)
+        else:
+            self.slider.setValue(self.normalIndexSize)
+
+    def __percentageFontSize(self):
         """get percentage fontsize"""
-        return (self._fontSize()*100) / self._normalFontSize()
+        return (self.__fontSize() * 100) / self.__normalFontSize()
 
-    def _setLabelValue(self, labelWidget, stringFormat, value):
+    def __setLabelValue(self, labelWidget, stringFormat, value):
         if value:
             labelWidget.setText(stringFormat.format(value))
             labelWidget.setVisible(True)
@@ -35,7 +43,7 @@ class QStatus(QStatusBar):
             labelWidget.setText('')
             labelWidget.setVisible(False)
 
-    def _setLabelToolTip(self, labelWidget, stringFormat, value):
+    def __setLabelToolTip(self, labelWidget, stringFormat, value):
         if value:
             labelWidget.setToolTip(stringFormat.format(value))
             labelWidget.setVisible(True)
@@ -48,17 +56,17 @@ class QStatus(QStatusBar):
     # event
     #
 
-    def _sliderValueChangedEvent(self, value):
-        self.changedFontSize.emit(self._fontSize())
-        self.percent.setText('{0:d}%'.format(self._percentageFontSize()))
+    def __sliderValueChangedEvent(self, value):
+        self.changedFontSize.emit(self.__fontSize())
+        self.percent.setText('{0:d}%'.format(self.__percentageFontSize()))
 
-    def _miniconClickedEvent(self):
+    def __miniconClickedEvent(self):
         value = self.slider.value()
-        self.slider.setValue(value-1)
+        self.slider.setValue(value - 1)
 
-    def _maxiconClickedEvent(self):
+    def __maxiconClickedEvent(self):
         value = self.slider.value()
-        self.slider.setValue(value+1)
+        self.slider.setValue(value + 1)
 
     #
     # public
@@ -67,18 +75,19 @@ class QStatus(QStatusBar):
     changedFontSize = pyqtSignal(int)
 
     def setValues(self, linesValue, columnsValue, sizeValue, encodingValue,
-                  modifiedValue, itemsValue, averageValue, sum_Value):
+                  modifiedValue, itemsValue, averageValue, sum_Value, fontSizeValue):
         self.sliderWidget.setEnabled(False)
-        self._setLabelValue(self.lines, '  Lines={0:d}  ', linesValue)
-        self._setLabelValue(self.columns, '  Columns={0:d}  ', columnsValue)
-        self._setLabelValue(self.size, '  Size={0:s}  ', sizeValue)
-        self._setLabelValue(self.encoding, '  Encoding={0:s}  ', encodingValue)
-        self._setLabelValue(self.modified, '  Modified={0:s}  ', modifiedValue)
-        self._setLabelValue(self.average, '  Average={0:.2f}  ', averageValue)
-        self._setLabelToolTip(self.average, 'Average={0:f}', averageValue)
-        self._setLabelValue(self.items, '  Items={0:d}  ', itemsValue)
-        self._setLabelValue(self.sum_, '  Sum={0:.2f}  ', sum_Value)
-        self._setLabelToolTip(self.sum_, 'Sum={0:f}', sum_Value)
+        self.__setLabelValue(self.lines, '  Lines={0:d}  ', linesValue)
+        self.__setLabelValue(self.columns, '  Columns={0:d}  ', columnsValue)
+        self.__setLabelValue(self.size, '  Size={0:s}  ', sizeValue)
+        self.__setLabelValue(self.encoding, '  Encoding={0:s}  ', encodingValue)
+        self.__setLabelValue(self.modified, '  Modified={0:s}  ', modifiedValue)
+        self.__setLabelValue(self.average, '  Average={0:.2f}  ', averageValue)
+        self.__setLabelToolTip(self.average, 'Average={0:f}', averageValue)
+        self.__setLabelValue(self.items, '  Items={0:d}  ', itemsValue)
+        self.__setLabelValue(self.sum_, '  Sum={0:.2f}  ', sum_Value)
+        self.__setLabelToolTip(self.sum_, 'Sum={0:f}', sum_Value)
+        self.__setFontSize(fontSizeValue)
 
     #
     # init
@@ -92,23 +101,23 @@ class QStatus(QStatusBar):
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setRange(1, len(PointSizes))
         self.slider.setTickInterval(1)
-        self.slider.setValue(self.normalIndexSize+1)
+        self.slider.setValue(self.normalIndexSize)# + 1)
         self.slider.setSingleStep(1)
         self.slider.setFixedWidth(100)
         self.slider.setToolTip(self.tr('Ajustar nivel de escala'))
-        self.slider.valueChanged.connect(self._sliderValueChangedEvent)
+        self.slider.valueChanged.connect(self.__sliderValueChangedEvent)
 
         # min button slider
         self.minicon = QLabelClickable()
         self.minicon.setPixmap(QPixmap(':images/min.png').scaled(12, 12, Qt.KeepAspectRatio))
-        self.minicon.clicked.connect(self._miniconClickedEvent)
+        self.minicon.clicked.connect(self.__miniconClickedEvent)
 
         # max button slider
         self.maxicon = QLabelClickable()
         self.maxicon.setPixmap(QPixmap(':images/max.png').scaled(12, 12, Qt.KeepAspectRatio))
-        self.maxicon.clicked.connect(self._maxiconClickedEvent)
+        self.maxicon.clicked.connect(self.__maxiconClickedEvent)
 
-        # slider + min & max buttons
+        # slider + zoom in/out buttons
         self.sliderLayout = QHBoxLayout()
         self.sliderLayout.addWidget(self.minicon)
         self.sliderLayout.addWidget(self.slider)
@@ -146,4 +155,4 @@ class QStatus(QStatusBar):
         self.setContentsMargins(0, 0, 0, 0)
 
         # init
-        self.setValues(None, None, None, None, None, None, None, None)
+        self.setValues(None, None, None, None, None, None, None, None, None)

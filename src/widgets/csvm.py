@@ -371,10 +371,6 @@ class QCsv(QTableView):
         #self._setMenuDisabled(self.copySpecialMenu, disabled)
         #self._setMenuDisabled(self.copyToPythonMenu, disabled)
 
-    def selectionChanged (self, selected, deselected):
-        self.selectionChanged_.emit()
-        return QTableView.selectionChanged (self, selected, deselected)
-
     def _getHeaderRows(self):
         result = []
         model = self.model()
@@ -1278,9 +1274,27 @@ class QCsv(QTableView):
         if len(self.selectedIndexes()) > 0:
             self.contextMenuRequested.emit(self.selectedIndexes(), self.mapToGlobal(point))
 
+    def _redoTextChanged(self, msg, enable):
+        self.redoEdit.setEnabled(enable)
+        self.redoEdit.setText('Redo {}'.format(msg))
+
+    def _undoTextChanged(self, msg, enable):
+        self.undoEdit.setEnabled(enable)
+        self.undoEdit.setText('Undo {}'.format(msg))
+
+    #
+    # override
+    #
+
+    def selectionChanged (self, selected, deselected):
+        """override method 'selectionChanged' to emit my own event
+        """
+        self.selectionChanged_.emit()
+        return super(QCsv, self).selectionChanged (selected, deselected)
+
     def timerEvent(self, timerEvent):
-        """override the method 'timerEvent' to give effect to the borders around
-        the areas copied to clipboard"""
+        """override method 'timerEvent' to give effect to the borders around the areas copied to clipboard
+        """
         timerId = timerEvent.timerId()
         if self.lastSelectionRangesTimerId == timerId:
             if self.lastSelectionRanges:
@@ -1295,13 +1309,24 @@ class QCsv(QTableView):
             return
         super(QCsv, self).timerEvent(timerEvent)
 
-    def _redoTextChanged(self, msg, enable):
-        self.redoEdit.setEnabled(enable)
-        self.redoEdit.setText('Redo {}'.format(msg))
+    def zoom(self, rate):
+        value = self.pointSizeValue()
+        value = value + rate
+        if value > 0:
+           self.setPointSize(value)
+           self.selectionChanged_.emit()
 
-    def _undoTextChanged(self, msg, enable):
-        self.undoEdit.setEnabled(enable)
-        self.undoEdit.setText('Undo {}'.format(msg))
+    def wheelEvent (self, wheelEvent):
+        """ctrl + wheel mouse = zoom in/out"""
+        if (wheelEvent.modifiers() & Qt.ControlModifier):
+            # zoom out
+            if wheelEvent.delta() < 0:
+                self.zoom(-1)
+            # zoom in
+            elif wheelEvent.delta() > 0:
+                self.zoom(+1)
+        else:
+            super(QCsv, self).wheelEvent(wheelEvent)
 
     #
     # public
@@ -1361,8 +1386,14 @@ class QCsv(QTableView):
     def itemsValue(self):
         return len(self.selectedIndexes())
 
+    def pointSizeValue(self):
+        model = self.model()
+        print 'model.pointSize',model.pointSize
+        return model.pointSize
+
     def setPointSize(self, pointSize):
         model = self.model()
+        print 'model.setPointSize',model.pointSize
         model.setPointSize(pointSize)
 
     def setSelectCell(self, row, column):

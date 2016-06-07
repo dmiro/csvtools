@@ -290,15 +290,15 @@ class MainWindow(QMainWindow):
         if csv:
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
                                      csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
-                                     csv.averageValue(), csv.sumValue())
+                                     csv.averageValue(), csv.sumValue(), csv.pointSizeValue())
         else:
-            self.statusBar.setValues(None, None, None, None, None, None, None, None)
+            self.statusBar.setValues(None, None, None, None, None, None, None, None, None)
 
     def statusBarChangedFontSizeEvent(self, fontSize):
-        for index in range(self.tab.count()):
-            csv = self.tab.widget(index)
-            csv.setPointSize(fontSize)
-            csv.resizeRowsToContents()
+        #for index in range(self.tab.count()):
+        #    csv = self.tab.widget(index)
+        #    csv.setPointSize(fontSize)
+        #    csv.resizeRowsToContents()
         csv = self.tab.currentWidget()
         csv.setPointSize(fontSize)
         csv.resizeRowsToContents()
@@ -331,7 +331,7 @@ class MainWindow(QMainWindow):
             self.allFilePathsToClipboard.setDisabled(False)
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
                                      csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
-                                     csv.averageValue(), csv.sumValue())
+                                     csv.averageValue(), csv.sumValue(), csv.pointSizeValue())
 
         else:
             try:
@@ -343,7 +343,7 @@ class MainWindow(QMainWindow):
             self.closeFile.setDisabled(True)
             self.filePathToClipboard.setDisabled(True)
             self.allFilePathsToClipboard.setDisabled(True)
-            self.statusBar.setValues(None, None, None, None, None, None, None, None)
+            self.statusBar.setValues(None, None, None, None, None, None, None, None, None)
 
     def tabBarcustomContextMenuRequestedEvent(self, point):
         tab = self.tab.tabBar()
