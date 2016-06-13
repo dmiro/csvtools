@@ -8,20 +8,21 @@ class Pointsizes(object):
 
     @staticmethod
     def min():
-        return 0
+        return 1
 
     @staticmethod
     def max():
-        return len(StandardPointSizes) - 1
-      
-    @staticmethod        
+        return len(StandardPointSizes)
+
+    @staticmethod
     def normal():
-        return StandardPointSizes.index(QFont().pointSize())
+        fontSize = QFont().pointSize()
+        return Pointsizes.toPointSize(fontSize)
 
     @staticmethod
     def percentage(value):
-        fontSize = StandardPointSizes[value]
-        normalFontSize = StandardPointSizes[Pointsizes.normal()]
+        fontSize = Pointsizes.toFontSize(value)
+        normalFontSize = Pointsizes.toFontSize(Pointsizes.normal())
         return (fontSize * 100) / normalFontSize
 
     @staticmethod
@@ -38,12 +39,12 @@ class Pointsizes(object):
     @staticmethod
     def toFontSize(value):
         value = Pointsizes.zoom(value, 0)
-        return StandardPointSizes[value]
+        return StandardPointSizes[value - 1]
 
     @staticmethod
     def toPointSize(value):
         if value in StandardPointSizes:
-            return StandardPointSizes.index(value)
+            return StandardPointSizes.index(value) + 1
         else:
             if value < min(StandardPointSizes):
                 return Pointsizes.min()
@@ -52,5 +53,5 @@ class Pointsizes(object):
             else:
                 for fontSize in StandardPointSizes:
                     if fontSize > value:
-                        return StandardPointSizes.index(fontSize)
+                        return StandardPointSizes.index(fontSize) + 1
                 return Pointsizes.normal()

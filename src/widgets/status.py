@@ -2,11 +2,9 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from widgets.helpers.qlabelclickable import QLabelClickable
 from widgets.helpers.qelidedlabel import QElidedLabel
+from lib.pointsizes import Pointsizes
 import sys
 import lib.images_rc
-
-# Standard font point sizes
-PointSizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
 
 class QStatus(QStatusBar):
 
@@ -14,25 +12,11 @@ class QStatus(QStatusBar):
     # private
     #
 
-    def __normalFontSize(self):
-        """get normal fontsize"""
-        return PointSizes[self.normalIndexSize]
-
-    def __fontSize(self):
-        """get current fontsize"""
-        return PointSizes[self.slider.value()]
-
-    def __setFontSize(self, size):
-        """set fontsize"""
-        if size in PointSizes:
-            index = PointSizes.index(size)
-            self.slider.setValue(index)
+    def __setPointSizeValue(self, value):
+        if value:
+            self.slider.setValue(value)
         else:
-            self.slider.setValue(self.normalIndexSize)
-
-    def __percentageFontSize(self):
-        """get percentage fontsize"""
-        return (self.__fontSize() * 100) / self.__normalFontSize()
+            self.slider.setValue(Pointsizes.normal())
 
     def __setLabelValue(self, labelWidget, stringFormat, value):
         if value:
@@ -57,8 +41,9 @@ class QStatus(QStatusBar):
     #
 
     def __sliderValueChangedEvent(self, value):
-        self.changedFontSize.emit(self.__fontSize())
-        self.percent.setText('{0:d}%'.format(self.__percentageFontSize()))
+        pointSize = self.slider.value()
+        self.changedFontSize.emit(pointSize)
+        self.percent.setText('{0:d}%'.format(Pointsizes.percentage(pointSize)))
 
     def __miniconClickedEvent(self):
         value = self.slider.value()
@@ -75,7 +60,7 @@ class QStatus(QStatusBar):
     changedFontSize = pyqtSignal(int)
 
     def setValues(self, linesValue, columnsValue, sizeValue, encodingValue,
-                  modifiedValue, itemsValue, averageValue, sum_Value, fontSizeValue):
+                  modifiedValue, itemsValue, averageValue, sum_Value, pointSize):
         self.sliderWidget.setEnabled(False)
         self.__setLabelValue(self.lines, '  Lines={0:d}  ', linesValue)
         self.__setLabelValue(self.columns, '  Columns={0:d}  ', columnsValue)
@@ -87,7 +72,7 @@ class QStatus(QStatusBar):
         self.__setLabelValue(self.items, '  Items={0:d}  ', itemsValue)
         self.__setLabelValue(self.sum_, '  Sum={0:.2f}  ', sum_Value)
         self.__setLabelToolTip(self.sum_, 'Sum={0:f}', sum_Value)
-        self.__setFontSize(fontSizeValue)
+        self.__setPointSizeValue(pointSize)
 
     #
     # init
@@ -95,13 +80,12 @@ class QStatus(QStatusBar):
 
     def __init__(self, *args):
         QWidget.__init__(self, *args)
-        self.normalIndexSize = PointSizes.index(QFont().pointSize())
 
         # slider
         self.slider = QSlider(Qt.Horizontal)
-        self.slider.setRange(1, len(PointSizes))
+        self.slider.setRange(Pointsizes.min(), Pointsizes.max())
         self.slider.setTickInterval(1)
-        self.slider.setValue(self.normalIndexSize)# + 1)
+        self.slider.setValue(Pointsizes.normal())
         self.slider.setSingleStep(1)
         self.slider.setFixedWidth(100)
         self.slider.setToolTip(self.tr('Ajustar nivel de escala'))
@@ -146,7 +130,10 @@ class QStatus(QStatusBar):
         self.addWidget(self.average)
 
         # zoom
-        self.percent= QLabel('100%')
+        self.percent = QLabel()
+        pointSize = self.slider.value()
+        self.percent.setText('{0:d}%'.format(Pointsizes.percentage(pointSize)))
+
         self.percent.setFixedWidth(35)
         self.addPermanentWidget(self.sliderWidget)
         self.addPermanentWidget(self.percent)

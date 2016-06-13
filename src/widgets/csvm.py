@@ -8,6 +8,7 @@ import lib.exports
 import lib.imports
 import lib.images_rc
 from widgets.qradiobuttondialog import QRadioButtonDialog
+from lib.pointsizes import Pointsizes
 from datetime import datetime
 import os
 
@@ -110,7 +111,7 @@ class QCsvModel(QAbstractTableModel):
         super(QCsvModel, self).__init__(parent, *args)
         self.headerrow= headerrow
         self.document= document
-        self.pointSize= QFont().pointSize()
+        self.setPointSize(Pointsizes.normal())
         self.columnCorner = 0
         self.rowCorner = 0
 
@@ -134,9 +135,13 @@ class QCsvModel(QAbstractTableModel):
         self.columnCorner = value
         self.endInsertColumns()
 
-    def setPointSize(self, pointSize):
+    def setPointSize(self, value):
         """set font size"""
-        self.pointSize = pointSize
+        self.__pointSize = value
+        self.__fontSize = Pointsizes.toFontSize(value)
+
+    def pointSize(self):
+        return self.__pointSize
 
     def rowDataCount(self, parent=QModelIndex()):
         """get row count real data"""
@@ -176,7 +181,7 @@ class QCsvModel(QAbstractTableModel):
             return QVariant(self.document.value(0, section))
         elif role == Qt.FontRole:
             font = QFont()
-            font.setPointSize(self.pointSize)
+            font.setPointSize(self.__fontSize)
             return font
         return QAbstractTableModel.headerData(self, section, orientation, role)
 
@@ -187,7 +192,7 @@ class QCsvModel(QAbstractTableModel):
             #return QFont('Courier New', 6, QFont.Bold);
             #return QFont('Courier New', self.size, QFont.Bold);
             font = QFont()
-            font.setPointSize(self.pointSize)
+            font.setPointSize(self.__fontSize)
             return font
         elif role == Qt.DisplayRole or role == Qt.EditRole:
             rowIndex = index.row()
@@ -1311,10 +1316,9 @@ class QCsv(QTableView):
 
     def zoom(self, rate):
         value = self.pointSizeValue()
-        value = value + rate
-        if value > 0:
-           self.setPointSize(value)
-           self.selectionChanged_.emit()
+        value = Pointsizes.zoom(value, rate)
+        self.setPointSize(value)
+        self.selectionChanged_.emit()
 
     def wheelEvent (self, wheelEvent):
         """ctrl + wheel mouse = zoom in/out"""
@@ -1388,13 +1392,13 @@ class QCsv(QTableView):
 
     def pointSizeValue(self):
         model = self.model()
-        print 'model.pointSize',model.pointSize
-        return model.pointSize
+        return model.pointSize()
 
-    def setPointSize(self, pointSize):
+    def setPointSize(self, value):
         model = self.model()
-        print 'model.setPointSize',model.pointSize
-        model.setPointSize(pointSize)
+        model.setPointSize(value)
+        model.dataChangedEmit()
+        self.resizeRowsToContents()
 
     def setSelectCell(self, row, column):
         model = self.model()

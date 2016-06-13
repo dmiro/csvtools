@@ -295,13 +295,8 @@ class MainWindow(QMainWindow):
             self.statusBar.setValues(None, None, None, None, None, None, None, None, None)
 
     def statusBarChangedFontSizeEvent(self, fontSize):
-        #for index in range(self.tab.count()):
-        #    csv = self.tab.widget(index)
-        #    csv.setPointSize(fontSize)
-        #    csv.resizeRowsToContents()
         csv = self.tab.currentWidget()
         csv.setPointSize(fontSize)
-        csv.resizeRowsToContents()
 
     def tabCloseRequestedEvent(self, index):
         """event when a tab is closed: remove tab & update config"""
