@@ -140,7 +140,12 @@ class CommandMergeRows(QUndoSelectionCommand):
 
     def redo(self):
         self.redoArray = self.sheet.getArray(self.startRow, 0, self.rows, self.sheet.columnCount())
-        self.sheet.mergeRows(self.startRow, self.rows, self.separator)
+        #self.sheet.mergeRows(self.startRow, self.rows, self.separator)
+        self.sheet.mergeArrayInRows(self.startRow,
+                                    0,
+                                    self.rows,
+                                    self.sheet.columnCount(),
+                                    self.separator)
 
     def undo(self):
         self.sheet.removeRows(self.startRow, 1)
@@ -159,7 +164,12 @@ class CommandMergeColumns(QUndoSelectionCommand):
 
     def redo(self):
         self.redoArray = self.sheet.getArray(0, self.startColumn, self.sheet.rowCount(), self.columns)
-        self.sheet.mergeColumns(self.startColumn, self.columns, self.separator)
+        #self.sheet.mergeColumns(self.startColumn, self.columns, self.separator)
+        self.sheet.mergeArrayInColumns(0,
+                                       self.startColumn,
+                                       self.sheet.rowCount(),
+                                       self.columns,
+                                       self.separator)
 
     def undo(self):
         self.sheet.removeColumns(self.startColumn, 1)
