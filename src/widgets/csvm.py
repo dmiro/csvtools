@@ -563,26 +563,24 @@ class QCsv(QTableView):
                              row + dimRows - 1,
                              column + dimColumns - 1)
 
+    @helper.waiting
     def _removeArray(self, remove=enums.RemoveDirectionEnum.MoveLeftRemove):
-        isValid, topLeftIndex, bottomRightIndex, dimRows, dimColumns = self._getValidSelection()
-        # it's a valid selection
-        if isValid and dimRows > 0 and dimColumns > 0:
-                # remove array
-                row = topLeftIndex.row()
-                column = topLeftIndex.column()
-                model = self.model()
-                if remove==enums.RemoveDirectionEnum.MoveUpRemove:
-                    model.removeArrayInRows(row, column, dimRows, dimColumns)
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
+            dimRows = selection.dimRows
+            dimColumns = selection.dimColumns
+            if dimRows > 0 and dimColumns > 0:
+                startRow = selection.topLeftIndex.row()
+                startColumn = selection.topLeftIndex.column()
+                if remove == enums.MoveDirectionEnum.LeftMove:
+                    undoSelection = self._getCurrentSelection()
+                    redoSelection = self._getNewSelection(startRow, startColumn, startRow + dimRows - 1, startColumn + dimColumns - 1)
+                    self.document.removeArrayInRows(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
                 if remove==enums.RemoveDirectionEnum.MoveLeftRemove:
-                    model.removeArrayInColumns(row, column, dimRows, dimColumns)
-                # new selection
-                currentIndex = model.createIndex(row, column)
-                self.setCurrentIndex(currentIndex)
-                self.clearSelection()
-                self._select(row,
-                             column,
-                             row + dimRows - 1,
-                             column + dimColumns - 1)
+                    undoSelection = self._getCurrentSelection()
+                    redoSelection = self._getNewSelection(startRow, startColumn, startRow + dimRows - 1, startColumn + dimColumns - 1)
+                    self.document.removeArrayInColumns(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
 
     @helper.waiting
     def _moveArray(self, move):

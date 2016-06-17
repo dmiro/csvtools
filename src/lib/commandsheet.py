@@ -287,6 +287,44 @@ class CommandSetArrayRepeater(QUndoSelectionCommand):
         self.sheet.setArray(self.startRow, self.startColumn, self.redoArray)
 
 
+class CommandRemoveArrayInColumns(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
+        description = 'remove array {}x{} at [{},{}]'.format(dimRows, dimColumns, startRow, startColumn)
+        super(CommandRemoveArrayInColumns, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = sheet
+        self.startRow = startRow
+        self.startColumn = startColumn
+        self.dimRows = dimRows
+        self.dimColumns = dimColumns
+
+    def redo(self):
+        self.redoArray = self.sheet.getArray(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+        self.sheet.removeArrayInColumns(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+
+    def undo(self):
+        self.sheet.insertArrayInColumns(self.startRow, self.startColumn, self.redoArray)
+
+
+class CommandRemoveArrayInRows(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
+        description = 'remove array {}x{} at [{},{}]'.format(dimRows, dimColumns, startRow, startColumn)
+        super(CommandRemoveArrayInRows, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = sheet
+        self.startRow = startRow
+        self.startColumn = startColumn
+        self.dimRows = dimRows
+        self.dimColumns = dimColumns
+
+    def redo(self):
+        self.redoArray = self.sheet.getArray(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+        self.sheet.removeArrayInRows(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+
+    def undo(self):
+        self.sheet.insertArrayInRows(self.startRow, self.startColumn, self.redoArray)
+
+
 class CommandSheet(QObject):
 
     redoTextChanged = pyqtSignal(str, bool)
@@ -428,13 +466,13 @@ class CommandSheet(QObject):
     def insertEmptyCellsInRows(self, startRow, startColumn, dimRows, dimColumns):
         self.sheet.insertEmptyCellsInRows(startRow, startColumn, dimRows, dimColumns)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def removeArrayInColumns(self, startRow, startColumn, dimRows, dimColumns):
-        self.sheet.removeArrayInColumns(startRow, startColumn, dimRows, dimColumns)
+    def removeArrayInColumns(self, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
+        command = CommandRemoveArrayInColumns(self.sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+        self.stack.push(command)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def removeArrayInRows(self, startRow, startColumn, dimRows, dimColumns):
-        self.sheet.removeArrayInRows(startRow, startColumn, dimRows, dimColumns)
+    def removeArrayInRows(self, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
+        command = CommandRemoveArrayInRows(self.sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+        self.stack.push(command)
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def deleteCells(self, startRow, startColumn, dimRows, dimColumns):
