@@ -228,95 +228,23 @@ class QCsvModel(QAbstractTableModel):
     def flags(self, index):
         return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-    def insertRows(self, row, count, parent = QModelIndex()):
-        self.beginInsertRows(parent, row, row+count)
-        self.document.insertEmptyRows(row, count)
-        self.endInsertRows()
-        return True
-
-    def insertRow(self, row, parent = QModelIndex()):
-        return self.insertRows(row, 1, parent)
-
-    def insertEmptyCellsInRows(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
-        self.beginInsertRows(parent, row, row + dimRows)
-        self.document.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
-        self.endInsertRows()
-        return True
-
-    def insertEmptyCellsInColumns(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
-        self.beginInsertColumns(parent, column, column + dimColumns)
-        self.document.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
-        self.endInsertColumns()
-        return True
-
-    def removeArrayInColumns(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
-        self.beginRemoveRows(parent, column, column + dimColumns)
-        self.document.removeArrayInColumns(row, column, dimRows, dimColumns)
-        self.endRemoveRows()
-        return True
-
-    def removeArrayInRows(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
-        self.beginRemoveRows(parent, column, column + dimColumns)
-        self.document.removeArrayInRows(row, column, dimRows, dimColumns)
-        self.endRemoveRows()
-        return True
-
-    def insertColumns(self, column, count, parent = QModelIndex()):
-        self.beginInsertColumns(parent, column, column+count)
-        self.document.insertEmptyColumns(column, count)
-        self.endInsertColumns()
-        return True
-
-    def insertColumn(self, column, parent = QModelIndex()):
-        return self.insertColumn(column, 1, parent)
-
-##    def removeRows(self, row, count, parent = QModelIndex()):
-##        self.beginRemoveRows(parent, row, count)
-##        self.document.removeRows(row, count)
-##        self.endRemoveRows()
-##        return True
-
-##    def removeRow(self, row, parent = QModelIndex()):
-##        return self.removeRows(row, 1, parent)
-
-##    def removeColumns(self, column, count, parent = QModelIndex()):
-##        self.beginRemoveColumns(parent, column, count)
-##        self.document.removeColumns(column, count)
-##        self.endRemoveColumns()
-##        return True
-##
-##    def removeColumn(self, column, parent = QModelIndex()):
-##        return self.removeColumns(column, 1, parent)
-
-##    def moveRows(self, sourceRow, count, destinationRow, parent = QModelIndex()):
-##        self.beginInsertRows(parent, sourceRow, sourceRow+count)
-##        self.document.moveRows(sourceRow, count, destinationRow)
+##    def insertRows(self, row, count, parent = QModelIndex()):
+##        self.beginInsertRows(parent, row, row+count)
+##        self.document.insertEmptyRows(row, count)
 ##        self.endInsertRows()
 ##        return True
 
-##    def moveRow(self, sourceRow, destinationRow, parent = QModelIndex()):
-##        return self.moveRows(sourceRow, 1, destinationRow, parent)
+##    def insertRow(self, row, parent = QModelIndex()):
+##        return self.insertRows(row, 1, parent)
 
-##    def moveArrayInRows(self, startRow, startColumn, dimRows, dimColumns, destRow, destColumn, parent = QModelIndex()):
-##        self.beginInsertRows(parent, startRow, startRow+dimRows)
-##        self.document.moveArrayInRows(startRow, startColumn, dimRows, dimColumns, destRow, destColumn)
-##        self.endInsertRows()
-##        return True
-
-##    def moveColumns(self, sourceColumn, count, destinationColumn, parent = QModelIndex()):
-##        self.beginInsertColumns(parent, sourceColumn, sourceColumn+count)
-##        self.document.moveColumns(sourceColumn, count, destinationColumn)
+##    def insertColumns(self, column, count, parent = QModelIndex()):
+##        self.beginInsertColumns(parent, column, column+count)
+##        self.document.insertEmptyColumns(column, count)
 ##        self.endInsertColumns()
 ##        return True
 
-##    def moveColumn(self, sourceColumn, destinationColumn, parent = QModelIndex()):
-##        return self.moveColumns(sourceColumn, 1, destinationColumn, parent)
-
-##    def moveArrayInColumns(self, startRow, startColumn, dimRows, dimColumns, destRow, destColumn, parent = QModelIndex()):
-##        self.beginInsertColumns(parent, startColumn, startColumn+dimColumns)
-##        self.document.moveArrayInColumns(startRow, startColumn, dimRows, dimColumns, destRow, destColumn)
-##        self.endInsertColumns()
-##        return True
+##    def insertColumn(self, column, parent = QModelIndex()):
+##        return self.insertColumn(column, 1, parent)
 
     def deleteCells(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
         self.document.deleteCells(row, column, dimRows, dimColumns)
@@ -324,35 +252,6 @@ class QCsvModel(QAbstractTableModel):
         bottomRight = self.createIndex(row+dimRows, column+dimColumns)
         self.dataChanged.emit(topLeft, bottomRight)
         return True
-
-    def mergeRows(self, startRow, rows, parent = QModelIndex()):
-        self.document.mergeRows(startRow, rows)
-        topLeft = self.createIndex(startRow, 0)
-        bottomRight = self.createIndex(startRow+rows, self.columnCount())
-        self.dataChanged.emit(topLeft, bottomRight)
-        return True
-
-    def mergeColumns(self, startColumn, columns, parent = QModelIndex()):
-        self.document.mergeColumns(startColumn, columns)
-        topLeft = self.createIndex(0, startColumn)
-        bottomRight = self.createIndex(self.rowCount(), startColumn+columns)
-        self.dataChanged.emit(topLeft, bottomRight)
-        return True
-
-    def mergeArrayInColumns(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
-        self.document.mergeArrayInColumns(row, column, dimRows, dimColumns)
-        topLeft = self.createIndex(row, column)
-        bottomRight = self.createIndex(row+dimRows, column+dimColumns)
-        self.dataChanged.emit(topLeft, bottomRight)
-        return True
-
-    def mergeArrayInRows(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
-        self.document.mergeArrayInRows(row, column, dimRows, dimColumns)
-        topLeft = self.createIndex(row, column)
-        bottomRight = self.createIndex(row+dimRows, column+dimColumns)
-        self.dataChanged.emit(topLeft, bottomRight)
-        return True
-
 
 #
 # class QCsv
@@ -534,34 +433,31 @@ class QCsv(QTableView):
                 selectionModel = self.selectionModel()
                 selectionModel.select(selection, QItemSelectionModel.Select)
 
-##############
-
+    @helper.waiting
     def _insertEmptyArray(self, insert=enums.InsertDirectionEnum.TopInsert):
-        isValid, topLeftIndex, bottomRightIndex, dimRows, dimColumns = self._getValidSelection()
-        # it's a valid selection
-        if isValid and dimRows > 0 and dimColumns > 0:
-                # insert array
-                row = topLeftIndex.row()
-                column = topLeftIndex.column()
-                model = self.model()
-                if insert==enums.InsertDirectionEnum.TopInsert:
-                    model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
-                elif insert==enums.InsertDirectionEnum.BottomInsert:
-                    row = row + dimRows
-                    model.insertEmptyCellsInRows(row, column, dimRows, dimColumns)
-                elif insert==enums.InsertDirectionEnum.LeftInsert:
-                    model.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
-                elif insert==enums.InsertDirectionEnum.RightInsert:
-                    column = column + dimColumns
-                    model.insertEmptyCellsInColumns(row, column, dimRows, dimColumns)
-                # new selection
-                currentIndex = model.createIndex(row, column)
-                self.setCurrentIndex(currentIndex)
-                self.clearSelection()
-                self._select(row,
-                             column,
-                             row + dimRows - 1,
-                             column + dimColumns - 1)
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
+            dimRows = selection.dimRows
+            dimColumns = selection.dimColumns
+            if dimRows > 0 and dimColumns > 0:
+                startRow = selection.topLeftIndex.row()
+                startColumn = selection.topLeftIndex.column()
+                undoSelection = self._getCurrentSelection()
+                if insert == enums.InsertDirectionEnum.TopInsert:
+                    redoSelection = self._getNewSelection(startRow, startColumn, startRow + dimRows - 1, startColumn + dimColumns - 1)
+                    self.document.insertEmptyCellsInRows(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+                if insert == enums.InsertDirectionEnum.BottomInsert:
+                    startRow = startRow + dimRows
+                    redoSelection = self._getNewSelection(startRow, startColumn, startRow + dimRows - 1, startColumn + dimColumns - 1)
+                    self.document.insertEmptyCellsInRows(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+                if insert == enums.InsertDirectionEnum.LeftInsert:
+                    redoSelection = self._getNewSelection(startRow, startColumn, startRow + dimRows - 1, startColumn + dimColumns - 1)
+                    self.document.insertEmptyCellsInColumns(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+                if insert == enums.InsertDirectionEnum.RightInsert:
+                    startColumn = startColumn + dimColumns
+                    redoSelection = self._getNewSelection(startRow, startColumn, startRow + dimRows - 1, startColumn + dimColumns - 1)
+                    self.document.insertEmptyCellsInColumns(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+                self._setSelection(redoSelection)
 
     @helper.waiting
     def _removeArray(self, remove=enums.RemoveDirectionEnum.MoveLeftRemove):
@@ -572,12 +468,11 @@ class QCsv(QTableView):
             if dimRows > 0 and dimColumns > 0:
                 startRow = selection.topLeftIndex.row()
                 startColumn = selection.topLeftIndex.column()
+                undoSelection = self._getCurrentSelection()
                 if remove == enums.MoveDirectionEnum.LeftMove:
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(startRow, startColumn, startRow + dimRows - 1, startColumn + dimColumns - 1)
                     self.document.removeArrayInRows(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
                 if remove==enums.RemoveDirectionEnum.MoveLeftRemove:
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(startRow, startColumn, startRow + dimRows - 1, startColumn + dimColumns - 1)
                     self.document.removeArrayInColumns(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
                 self._setSelection(redoSelection)
@@ -591,28 +486,25 @@ class QCsv(QTableView):
             if dimRows > 0 and dimColumns > 0:
                 startRow = selection.topLeftIndex.row()
                 startColumn = selection.topLeftIndex.column()
+                undoSelection = self._getCurrentSelection()
                 if move == enums.MoveDirectionEnum.LeftMove:
                     destRow = startRow
                     destColumn = startColumn - 1
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(destRow, destColumn, destRow + dimRows - 1, destColumn + dimColumns - 1)
                     self.document.moveArrayInColumns(startRow, startColumn, dimRows, dimColumns, destRow, destColumn, undoSelection, redoSelection)
                 if move == enums.MoveDirectionEnum.RightMove:
                     destRow = startRow
                     destColumn = startColumn + 1
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(destRow, destColumn, destRow + dimRows - 1, destColumn + dimColumns - 1)
                     self.document.moveArrayInColumns(startRow, startColumn, dimRows, dimColumns, destRow, destColumn, undoSelection, redoSelection)
                 if move == enums.MoveDirectionEnum.TopMove:
                     destRow = startRow - 1
                     destColumn = startColumn
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(destRow, destColumn, destRow + dimRows - 1, destColumn + dimColumns - 1)
                     self.document.moveArrayInRows(startRow, startColumn, dimRows, dimColumns, destRow, destColumn, undoSelection, redoSelection)
                 if move == enums.MoveDirectionEnum.BottomMove:
                     destRow = startRow + 1
                     destColumn = startColumn
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(destRow, destColumn, destRow + dimRows - 1, destColumn + dimColumns - 1)
                     self.document.moveArrayInRows(startRow, startColumn, dimRows, dimColumns, destRow, destColumn, undoSelection, redoSelection)
                 self._setSelection(redoSelection)
@@ -659,12 +551,11 @@ class QCsv(QTableView):
             dimColumns = selection.dimColumns
             # ok
             if dimRows > 0 and dimColumns > 0:
+                undoSelection = self._getCurrentSelection()
                 if merge==enums.MergeDirectionEnum.MoveLeftRemove:
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(startRow, startColumn, startRow + dimRows -1, startColumn)
                     self.document.mergeArrayInColumns(startRow, startColumn, dimRows, dimColumns, None, undoSelection, redoSelection)
                 else:
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(startRow, startColumn, startRow, startColumn + dimColumns - 1)
                     self.document.mergeArrayInRows(startRow, startColumn, dimRows, dimColumns, None, undoSelection, redoSelection)
                 self._setSelection(redoSelection)
@@ -746,10 +637,10 @@ class QCsv(QTableView):
             count = selection.dimRows
             # ok
             if count > 0:
+                undoSelection = self._getCurrentSelection()
                 if move == enums.MoveBlockDirectionEnum.BeforeMove:
                     startRow = selection.topLeftIndex.row()
                     destinationRow = startRow - 1
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(selection.topLeftIndex.row() - 1,
                                                           selection.topLeftIndex.column(),
                                                           selection.bottomRightIndex.row() - 1,
@@ -757,7 +648,6 @@ class QCsv(QTableView):
                 else:
                     startRow = selection.topLeftIndex.row()
                     destinationRow = startRow + 1
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(selection.topLeftIndex.row() + 1,
                                                           selection.topLeftIndex.column(),
                                                           selection.bottomRightIndex.row() + 1,
@@ -772,10 +662,10 @@ class QCsv(QTableView):
             count = selection.dimColumns
             # ok
             if count > 0:
+                undoSelection = self._getCurrentSelection()
                 if move == enums.MoveBlockDirectionEnum.BeforeMove:
                     startColumn = selection.topLeftIndex.column()
                     destinationColumn = startColumn - 1
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
                                                           selection.topLeftIndex.column() - 1,
                                                           selection.bottomRightIndex.row(),
@@ -783,7 +673,6 @@ class QCsv(QTableView):
                 else:
                     startColumn = selection.topLeftIndex.column()
                     destinationColumn = startColumn + 1
-                    undoSelection = self._getCurrentSelection()
                     redoSelection = self._getNewSelection(selection.topLeftIndex.row(),
                                                           selection.topLeftIndex.column() + 1,
                                                           selection.bottomRightIndex.row(),
@@ -791,6 +680,7 @@ class QCsv(QTableView):
                 self.document.moveColumns(startColumn, count, destinationColumn, undoSelection, redoSelection)
                 self._setSelection(redoSelection)
 
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def _deleteCells(self, selectionRanges=None):
         # if no range, then get current selected range
         if selectionRanges == None:
@@ -866,6 +756,7 @@ class QCsv(QTableView):
 
     def _editAction(self, action):
         textClip = None
+
         # copy to clipboard action
         if action == self.copyToClipboard or action == self.cuteToClipboard:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=False)
@@ -889,63 +780,109 @@ class QCsv(QTableView):
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toClipboard(matrix)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
         # copy Column Name(s) action
         elif action == self.copyHeaderColumnsToClipboard:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toClipboard([matrix[0]])
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
         # copy As JSON action
         elif action == self.copyAsJSON:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toJSON(matrix)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
         # copy As Delimited action
         elif action == self.copyAsDelimited:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toDelimitied(matrix)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
         # copy As Delimited action
         elif action == self.copyAsXML:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toXML(matrix)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
         # copy As Text action
         elif action == self.copyAsText:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toText(matrix)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
         # copy As HTML action
         elif action == self.copyAsHTML:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toHTML(matrix)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
         # copy Python Source Code As TEXT action
         elif action == self.copyPythonAsText:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonText(matrix)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
         # copy Python Source Code As TUPLE action
         elif action == self.copyPythonAsTuple:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonTuple(matrix)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
         # copy Python Source Code As LIST action
         elif action == self.copyPythonAsList:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonList(matrix)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
         # copy Python Source Code As DICT action
         elif action == self.copyPythonAsDict:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toPythonDict(matrix)
-
-        #
-        # at last copy result to clipboard
-        #
-        if textClip:
-            clipboard = QApplication.clipboard()
-            clipboard.setText(textClip, mode=QClipboard.Clipboard)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
             return
 
         # paste from clipboard action
@@ -957,34 +894,42 @@ class QCsv(QTableView):
             self._globalPaste()
             return
 
+        # insert column to the left
         if action == self.insertColumnLeftAction:
             self._insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
+        # insert column to the right
         if action == self.insertColumnRightAction:
             self._insertColumns(insert=enums.InsertBlockDirectionEnum.AfterInsert)
             return
 
+        # insert row to the top
         if action == self.insertRowTopAction:
             self._insertRows(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
+        # insert row to the bottom
         if action == self.insertRowBottomAction:
             self._insertRows(insert=enums.InsertBlockDirectionEnum.AfterInsert)
             return
 
+        # remove rows
         if action == self.removeRowsAction:
             self._removeRows()
             return
 
+        # merge rows
         if action == self.mergeRowsAction:
             self._mergeRows()
             return
 
+        # remove columns
         if action == self.removeColumnsAction:
             self._removeColumns()
             return
 
+        # merge columns
         if action == self.mergeColumnsAction:
             self._mergeColumns()
             return
@@ -1043,83 +988,103 @@ class QCsv(QTableView):
                 self._mergeColumns()
             return
 
+        # move row to the top
         if action == self.moveRowTopAction:
             self._moveRows(move=enums.MoveBlockDirectionEnum.BeforeMove)
             return
 
+        # move row to the bottom
         if action == self.moveRowBottomAction:
             self._moveRows(move=enums.MoveBlockDirectionEnum.AfterMove)
             return
 
+        # move column to the left
         if action == self.moveColumnLeftAction:
             self._moveColumns(move=enums.MoveBlockDirectionEnum.BeforeMove)
             return
 
+        # move column to the right
         if action == self.moveColumnRightAction:
             self._moveColumns(move=enums.MoveBlockDirectionEnum.AfterMove)
             return
 
+        # move cell to the left
         if action == self.moveCellLeftAction:
             self._moveArray(move=enums.MoveDirectionEnum.LeftMove)
             return
 
+        # move cell to the right
         if action == self.moveCellRightAction:
             self._moveArray(move=enums.MoveDirectionEnum.RightMove)
             return
 
+        # move cell to the top
         if action == self.moveCellTopAction:
             self._moveArray(move=enums.MoveDirectionEnum.TopMove)
             return
 
+        # move cell to the bottom
         if action == self.moveCellBottomAction:
             self._moveArray(move=enums.MoveDirectionEnum.BottomMove)
             return
 
+        # remove cell and up
         if action ==  self.removeCellMoveUpAction:
             self._removeArray(remove=enums.RemoveDirectionEnum.MoveUpRemove)
             return
 
+        # remove cell and left
         if action == self.removeCellMoveLeftAction:
             self._removeArray(remove=enums.RemoveDirectionEnum.MoveLeftRemove)
             return
 
+        # insert cell to the left
         if action == self.insertCellLeftAction:
             self._insertEmptyArray(insert=enums.InsertDirectionEnum.LeftInsert)
             return
 
+        # insert cell to the right
         if action == self.insertCellRightAction:
             self._insertEmptyArray(insert=enums.InsertDirectionEnum.RightInsert)
             return
 
+        # insert cell to the top
         if action == self.insertCellTopAction:
             self._insertEmptyArray(insert=enums.InsertDirectionEnum.TopInsert)
             return
 
+        # insert cell to the bottom
         if action == self.insertCellBottomAction:
             self._insertEmptyArray(insert=enums.InsertDirectionEnum.BottomInsert)
             return
 
+        # merge cells to the left
         if action == self.mergeCellsLeftAction:
             self._mergeArray(merge=enums.MergeDirectionEnum.MoveLeftRemove)
             return
 
+        # merge cells to the top
         if action == self.mergeCellsTopAction:
             self._mergeArray(merge=enums.MergeDirectionEnum.MoveUpRemove)
             return
 
+        # select all
         if action == self.selectAllEdit:
             self.selectAll()
             return
 
+        # delete cells
         if action == self.deleteEdit:
             self._deleteCells()
             return
 
+        # UNDO
         if action == self.undoEdit:
             undoSelection = self.document.undo()
             self._setSelection(undoSelection)
             return
 
+        # REDO
         if action == self.redoEdit:
             redoSelection = self.document.redo()
             self._setSelection(redoSelection)

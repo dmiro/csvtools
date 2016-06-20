@@ -140,12 +140,12 @@ class CommandMergeRows(QUndoSelectionCommand):
 
     def redo(self):
         self.redoArray = self.sheet.getArray(self.startRow, 0, self.rows, self.sheet.columnCount())
-        #self.sheet.mergeRows(self.startRow, self.rows, self.separator)
-        self.sheet.mergeArrayInRows(self.startRow,
-                                    0,
-                                    self.rows,
-                                    self.sheet.columnCount(),
-                                    self.separator)
+        self.sheet.mergeRows(self.startRow, self.rows, self.separator)
+        #self.sheet.mergeArrayInRows(self.startRow,
+        #                            0,
+        #                            self.rows,
+        #                            self.sheet.columnCount(),
+        #                            self.separator)
 
     def undo(self):
         self.sheet.removeRows(self.startRow, 1)
@@ -164,12 +164,12 @@ class CommandMergeColumns(QUndoSelectionCommand):
 
     def redo(self):
         self.redoArray = self.sheet.getArray(0, self.startColumn, self.sheet.rowCount(), self.columns)
-        #self.sheet.mergeColumns(self.startColumn, self.columns, self.separator)
-        self.sheet.mergeArrayInColumns(0,
-                                       self.startColumn,
-                                       self.sheet.rowCount(),
-                                       self.columns,
-                                       self.separator)
+        self.sheet.mergeColumns(self.startColumn, self.columns, self.separator)
+        #self.sheet.mergeArrayInColumns(0,
+        #                               self.startColumn,
+        #                               self.sheet.rowCount(),
+        #                               self.columns,
+        #                               self.separator)
 
     def undo(self):
         self.sheet.removeColumns(self.startColumn, 1)
@@ -325,6 +325,90 @@ class CommandRemoveArrayInRows(QUndoSelectionCommand):
         self.sheet.insertArrayInRows(self.startRow, self.startColumn, self.redoArray)
 
 
+class CommandInsertArrayInColumns(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, startColumn, array, undoSelection, redoSelection):
+        description = 'insert array in columns at [{},{}]'.format(startRow, startColumn)
+        super(CommandInsertArrayInColumns, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = sheet
+        self.array = array
+        self.startRow = startRow
+        self.startColumn = startColumn
+        # get row and column dimensions array to undo operation
+        if array != None:
+            self.dimRows = len(array)
+            self.dimColumns = max(len(row) for row in array)
+        else:
+            self.dimRows = 0
+            self.dimColumns = 0
+
+    def redo(self):
+        self.sheet.insertArrayInColumns(self.startRow, self.startColumn, self.array)
+
+    def undo(self):
+        self.sheet.removeArrayInColumns(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+
+
+class CommandInsertEmptyCellsInColumns(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
+        description = 'insert empty array {}x{} in columns at [{},{}]'.format(dimRows, dimColumns, startRow, startColumn)
+        super(CommandInsertEmptyCellsInColumns, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = sheet
+        self.startRow = startRow
+        self.startColumn = startColumn
+        self.dimRows = dimRows
+        self.dimColumns = dimColumns
+
+    def redo(self):
+        self.sheet.insertEmptyCellsInColumns(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+
+    def undo(self):
+        self.sheet.removeArrayInColumns(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+
+
+class CommandInsertArrayInRows(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, startColumn, array, undoSelection, redoSelection):
+        description = 'insert array in rows at [{},{}]'.format(startRow, startColumn)
+        super(CommandInsertArrayInRows, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = sheet
+        self.array = array
+        self.startRow = startRow
+        self.startColumn = startColumn
+        # get row and column dimensions array to undo operation
+        if array != None:
+            self.dimRows = len(array)
+            self.dimColumns = max(len(row) for row in array)
+        else:
+            self.dimRows = 0
+            self.dimColumns = 0
+
+    def redo(self):
+        self.sheet.insertArrayInRows(self.startRow, self.startColumn, self.array)
+
+    def undo(self):
+        self.sheet.removeArrayInRows(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+
+
+class CommandInsertEmptyCellsInRows(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
+        description = 'insert empty array {}x{} in rows at [{},{}]'.format(dimRows, dimColumns, startRow, startColumn)
+        super(CommandInsertEmptyCellsInRows, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = sheet
+        self.startRow = startRow
+        self.startColumn = startColumn
+        self.dimRows = dimRows
+        self.dimColumns = dimColumns
+
+    def redo(self):
+        self.sheet.insertEmptyCellsInRows(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+
+    def undo(self):
+        self.sheet.removeArrayInRows(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+
+
 class CommandSheet(QObject):
 
     redoTextChanged = pyqtSignal(str, bool)
@@ -450,21 +534,21 @@ class CommandSheet(QObject):
     def insertEmptyColumn(self, startColumn, undoSelection, redoSelection):
         self.insertEmptyColumns(startColumn, 1, undoSelection, redoSelection)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def insertArrayInColumns(self, startRow, startColumn, array):
-        self.sheet.insertArrayInColumns(startRow, startColumn, array)
+    def insertArrayInColumns(self, startRow, startColumn, array, undoSelection, redoSelection):
+        command = CommandInsertArrayInColumns(self.sheet, startRow, startColumn, array, undoSelection, redoSelection)
+        self.stack.push(command)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def insertEmptyCellsInColumns(self, startRow, startColumn, dimRows, dimColumns):
-        self.sheet.insertEmptyCellsInColumns(startRow, startColumn, dimRows, dimColumns)
+    def insertEmptyCellsInColumns(self, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
+        command = CommandInsertEmptyCellsInColumns(self.sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+        self.stack.push(command)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def insertArrayInRows(self, startRow, startColumn, array):
-        self.sheet.insertArrayInRows(startRow, startColumn, array)
+    def insertArrayInRows(self, startRow, startColumn, array, undoSelection, redoSelection):
+        command = CommandInsertArrayInRows(self.sheet, startRow, startColumn, array, undoSelection, redoSelection)
+        self.stack.push(command)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def insertEmptyCellsInRows(self, startRow, startColumn, dimRows, dimColumns):
-        self.sheet.insertEmptyCellsInRows(startRow, startColumn, dimRows, dimColumns)
+    def insertEmptyCellsInRows(self, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
+        command = CommandInsertEmptyCellsInRows(self.sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+        self.stack.push(command)
 
     def removeArrayInColumns(self, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
         command = CommandRemoveArrayInColumns(self.sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
