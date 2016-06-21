@@ -409,6 +409,42 @@ class CommandInsertEmptyCellsInRows(QUndoSelectionCommand):
         self.sheet.removeArrayInRows(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
 
 
+class CommandDeleteCells(QUndoSelectionCommand):
+
+    def __init__(self, sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
+        description = 'delete cells {}x{} at [{},{}]'.format(dimRows, dimColumns, startRow, startColumn)
+        super(CommandDeleteCells, self).__init__(description, undoSelection, redoSelection)
+        self.sheet = sheet
+        self.startRow = startRow
+        self.startColumn = startColumn
+        self.dimRows = dimRows
+        self.dimColumns = dimColumns
+
+    def redo(self):
+        self.redoArray = self.sheet.getArray(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+        self.sheet.deleteCells(self.startRow, self.startColumn, self.dimRows, self.dimColumns)
+
+    def undo(self):
+        self.sheet.setArray(self.startRow, self.startColumn, self.redoArray)
+
+##    def id(self):
+##        """Id is used in command compression. It must be an integer unique to this command's class.
+##        On QUndoStack.push(self, QUndoCommand cmd) If cmd's id is not -1, and if the id is the same as
+##        that of the most recently executed command, QUndoStack will attempt to merge the two commands
+##        by calling QUndoCommand.mergeWith()
+##        """
+##        return self.mergeId
+##
+##    def mergeWith (self, other):
+##        """Attempts to merge this command with command. Returns true on success; otherwise returns false."""
+##        if self.mergeId == other.id():
+##            print 'True'
+##            print 'startRow', other.startRow
+##            print 'startColumn', other.startColumn
+##            return True
+##        else:
+##            return False
+
 class CommandSheet(QObject):
 
     redoTextChanged = pyqtSignal(str, bool)
@@ -558,9 +594,9 @@ class CommandSheet(QObject):
         command = CommandRemoveArrayInRows(self.sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
         self.stack.push(command)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def deleteCells(self, startRow, startColumn, dimRows, dimColumns):
-        self.sheet.deleteCells(startRow, startColumn, dimRows, dimColumns)
+    def deleteCells(self, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection):
+        command = CommandDeleteCells(self.sheet, startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+        self.stack.push(command)
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # este no ---> def setArray(self, startRow, startColumn, array):

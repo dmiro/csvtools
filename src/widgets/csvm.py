@@ -284,8 +284,6 @@ class QCsv(QTableView):
             result.append(data.toString())
         return result
 
-############
-
     def _getCurrentSelection(self):
         selectionModel = self.selectionModel()
         return selectionModel.selection()
@@ -390,28 +388,6 @@ class QCsv(QTableView):
                                       maxColumn = 0,
                                       selectedRanges = None,
                                       selectedIndexes = None)
-
-    def _getValidSelection(self):
-        """
-        selects the first SelectRange and returns info about it:
-          True, if select range exist
-          topLeftIndex
-          bottomRightIndex
-          dimRows
-          dimColumn
-        """
-        selectionRanges = self._getCurrentSelection()
-        if len(selectionRanges)==1:
-            model = self.model()
-            topLeftIndex = selectionRanges[0].topLeft()
-            bottomRightIndex = selectionRanges[0].bottomRight()
-            # if top-left corner selection is inside data area
-            if topLeftIndex.row() < model.rowDataCount():
-                if topLeftIndex.column() < model.columnDataCount():
-                    dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
-                    dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
-                    return True, topLeftIndex, bottomRightIndex, dimRows, dimColumns
-        return False, None, None, 0, 0
 
     def _select(self, topLeftRow, topLeftColumn, bottomRightRow, bottomRightColumn):
         # create item selection
@@ -680,22 +656,25 @@ class QCsv(QTableView):
                 self.document.moveColumns(startColumn, count, destinationColumn, undoSelection, redoSelection)
                 self._setSelection(redoSelection)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def _deleteCells(self, selectionRanges=None):
-        # if no range, then get current selected range
-        if selectionRanges == None:
-            selectionModel = self.selectionModel()
-            selectionRanges = selectionModel.selection()
-        # delete cells
-        model = self.model()
-        for selectionRange in selectionRanges:
-            topLeftIndex = selectionRange.topLeft()
-            bottomRightIndex = selectionRange.bottomRight()
-            row = topLeftIndex.row()
-            column = topLeftIndex.column()
-            dimRows = bottomRightIndex.row() - row + 1
-            dimColumns = bottomRightIndex.column() - column + 1
-            model.deleteCells(row, column, dimRows, dimColumns)
+    @helper.waiting
+    def _deleteCells(self, dataSelection=None):
+        if dataSelection == None:
+            dataSelection = self.__getDataSelection()
+        if dataSelection.hasData:
+            undoSelection = self._getCurrentSelection()
+            redoSelection = self._getCurrentSelection()
+            mergeId = id(redoSelection)
+            self.document.beginMacro('pepe')
+            for selectedRange in dataSelection.selectedRanges:
+                topLeftIndex = selectedRange.topLeft()
+                bottomRightIndex = selectedRange.bottomRight()
+                startRow = topLeftIndex.row()
+                startColumn = topLeftIndex.column()
+                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+                self.document.deleteCells(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection, None)
+            self.document.endMacro()
+            self._setSelection(redoSelection)
 
     @helper.waiting
     def _selectedIndexesToRectangularArea(self, includeHeaderRows=False):
@@ -738,19 +717,18 @@ class QCsv(QTableView):
                 self._setSelection(redoSelection)
 
     def _globalCut(self):
-        selectionModel = self.selectionModel()
-        QCsv._cuteSelectionRanges = selectionModel.selection()
+        QCsv._cuteDataSelection = self.__getDataSelection()
         QCsv._cuteInstance = self
 
     @staticmethod
     def _globalPaste():
         clipboard = QApplication.clipboard()
         if clipboard.ownsClipboard():
-            if hasattr(QCsv, '_cuteSelectionRanges') and hasattr(QCsv, '_cuteInstance'):
-                if QCsv._cuteSelectionRanges:
-                    QCsv._cuteInstance._deleteCells(QCsv._cuteSelectionRanges)
+            if hasattr(QCsv, '_cuteDataSelection') and hasattr(QCsv, '_cuteInstance'):
+                if QCsv._cuteDataSelection:
+                    QCsv._cuteInstance._deleteCells(QCsv._cuteDataSelection)
                     QCsv._cuteInstance.cancelClipboardAction.trigger()
-                    QCsv._cuteSelectionRanges = None
+                    QCsv._cuteDataSelection = None
                     QCsv._cuteInstance = None
         return
 
@@ -1092,6 +1070,7 @@ class QCsv(QTableView):
 
     def _addEditMenu(self):
         """add EDIT menu"""
+
         # edit menu
         self._editMenu = QMenu(self.tr('Edit'))
         self.undoEdit = self._editMenu.addAction(QIcon(':images/undo.png'), self.tr('Undo'))
@@ -1118,6 +1097,7 @@ class QCsv(QTableView):
         self.selectAllEdit = self._editMenu.addAction(QIcon(':images/all.png'), self.tr('Select All'))
         self.selectAllEdit.setShortcut(QKeySequence.SelectAll)
         self._editMenu.addSeparator()
+
         # columns submenu
         self.editColumnsMenu = self._editMenu.addMenu(self.tr('Columns'))
         self.insertColumnLeftAction = self.editColumnsMenu.addAction(QIcon(':tools/addcolumnleft.png'), self.tr('Insert left'))
@@ -1132,6 +1112,7 @@ class QCsv(QTableView):
         self.editColumnsMenu.addSeparator()
         self.removeColumnsAction = self.editColumnsMenu.addAction(QIcon(':tools/removecolumn.png'), self.tr('Remove'))
         self.mergeColumnsAction = self.editColumnsMenu.addAction(QIcon(':tools/mergecolumns.png'), self.tr('Merge'))
+
         # rows submenu
         self.editRowsMenu = self._editMenu.addMenu(self.tr('Rows'))
         self.insertRowTopAction = self.editRowsMenu.addAction(QIcon(':tools/addrowtop.png'), self.tr('Insert top'))
@@ -1146,6 +1127,7 @@ class QCsv(QTableView):
         self.editRowsMenu.addSeparator()
         self.removeRowsAction = self.editRowsMenu.addAction(QIcon(':tools/removerow.png'), self.tr('Remove'))
         self.mergeRowsAction = self.editRowsMenu.addAction(QIcon(':tools/mergerows.png'), self.tr('Merge'))
+
         # cells submenu
         self.editCellsMenu = self._editMenu.addMenu(self.tr('Cells'))
         self.insertCellLeftAction = self.editCellsMenu.addAction(QIcon(':tools/addcellleft.png'), self.tr('Insert left'))
@@ -1172,6 +1154,7 @@ class QCsv(QTableView):
         self.mergeCellsTopAction = self.editCellsMenu.addAction(QIcon(':tools/mergecellstop.png'), self.tr('Merge and move up'))
         self.mergeCellsLeftAction = self.editCellsMenu.addAction(QIcon(':tools/mergecellsleft.png'), self.tr('Merge and move to the left'))
         self._editMenu.addSeparator()
+
         # copy special submenu
         self.copySpecialMenu = self._editMenu.addMenu(self.tr('Copy Special'))
         self.copyToSourceCodeMenu = self._editMenu.addMenu(self.tr('Copy to Source Code'))
@@ -1183,11 +1166,13 @@ class QCsv(QTableView):
         self.copyAsJSON = self.copySpecialMenu.addAction(self.tr('Copy As JSON'))
         self.copyAsXML = self.copySpecialMenu.addAction(self.tr('Copy As XML'))
         self.copyAsHTML = self.copySpecialMenu.addAction(self.tr('Copy As HTML'))
+
         # copy to Python source code sub-submenu
         self.copyPythonAsText = self.copyToPythonMenu.addAction(self.tr('As Text'))
         self.copyPythonAsTuple = self.copyToPythonMenu.addAction(self.tr('As Tuple'))
         self.copyPythonAsList = self.copyToPythonMenu.addAction(self.tr('As List'))
         self.copyPythonAsDict = self.copyToPythonMenu.addAction(self.tr('As Dict'))
+
         # connect menu action
         self._editMenu.triggered.connect(self._editAction)
 
@@ -1284,7 +1269,8 @@ class QCsv(QTableView):
         self.selectionChanged_.emit()
 
     def wheelEvent (self, wheelEvent):
-        """ctrl + wheel mouse = zoom in/out"""
+        """ctrl + wheel mouse = zoom in/out
+        """
         if (wheelEvent.modifiers() & Qt.ControlModifier):
             # zoom out
             if wheelEvent.delta() < 0:
