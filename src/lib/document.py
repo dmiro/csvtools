@@ -29,7 +29,6 @@ class Document(CommandSheet):
         self.encoding_ = ''
         self.canLoad = True
         self.canSave = False
-        self.dataModified = False
 
     @abstractmethod
     def load(self, linesToLoad=-1):
@@ -46,7 +45,6 @@ class Document(CommandSheet):
 
     @data.setter
     def data(self, value):
-        self.dataModified = True
         self.data_ = value
 
     @property

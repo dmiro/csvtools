@@ -664,16 +664,15 @@ class QCsv(QTableView):
             undoSelection = self._getCurrentSelection()
             redoSelection = self._getCurrentSelection()
             mergeId = id(redoSelection)
-            self.document.beginMacro('delete {} cells'.format(len(dataSelection.selectedIndexes)))
-            for selectedRange in dataSelection.selectedRanges:
-                topLeftIndex = selectedRange.topLeft()
-                bottomRightIndex = selectedRange.bottomRight()
-                startRow = topLeftIndex.row()
-                startColumn = topLeftIndex.column()
-                dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
-                dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
-                self.document.deleteCells(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
-            self.document.endMacro()
+            with self.document.macro('delete {} cells'.format(len(dataSelection.selectedIndexes))) as macro:
+                for selectedRange in dataSelection.selectedRanges:
+                    topLeftIndex = selectedRange.topLeft()
+                    bottomRightIndex = selectedRange.bottomRight()
+                    startRow = topLeftIndex.row()
+                    startColumn = topLeftIndex.column()
+                    dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+                    dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+                    macro.deleteCells(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
             self._setSelection(redoSelection)
 
     @helper.waiting

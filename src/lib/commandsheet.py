@@ -3,6 +3,8 @@ from PyQt4.QtGui import *
 import lib.enums as enums
 import lib.undostack as undostack
 from lib.sheet import Sheet
+from contextlib import contextmanager
+
 
 class QUndoSelectionCommand(QUndoCommand):
 
@@ -141,11 +143,6 @@ class CommandMergeRows(QUndoSelectionCommand):
     def redo(self):
         self.redoArray = self.sheet.getArray(self.startRow, 0, self.rows, self.sheet.columnCount())
         self.sheet.mergeRows(self.startRow, self.rows, self.separator)
-        #self.sheet.mergeArrayInRows(self.startRow,
-        #                            0,
-        #                            self.rows,
-        #                            self.sheet.columnCount(),
-        #                            self.separator)
 
     def undo(self):
         self.sheet.removeRows(self.startRow, 1)
@@ -165,11 +162,6 @@ class CommandMergeColumns(QUndoSelectionCommand):
     def redo(self):
         self.redoArray = self.sheet.getArray(0, self.startColumn, self.sheet.rowCount(), self.columns)
         self.sheet.mergeColumns(self.startColumn, self.columns, self.separator)
-        #self.sheet.mergeArrayInColumns(0,
-        #                               self.startColumn,
-        #                               self.sheet.rowCount(),
-        #                               self.columns,
-        #                               self.separator)
 
     def undo(self):
         self.sheet.removeColumns(self.startColumn, 1)
@@ -463,6 +455,7 @@ class CommandSheet(QObject):
         return self.sheet.arrayData()
 
     def setArrayData(self, arrayData):
+        self.stack.clear()
         self.sheet.setArrayData(arrayData)
 
     def rowCount(self):
@@ -473,6 +466,11 @@ class CommandSheet(QObject):
 
     def isEmpty(self):
         return self.sheet.isEmpty()
+
+    def hasChanges(self):
+        """sheet has changes"""
+        index = self.stack.index()
+        return index > 0
 
     def value(self, row, column):
         return self.sheet.value(row, column)
@@ -493,7 +491,7 @@ class CommandSheet(QObject):
             index = index-1
             command = self.stack.command(index)
             if command:
-                # if the command is a macro then retrieve the first command child
+                # if command is a macro then retrieve the first command child and return undoSelection
                 if command.childCount() > 0:
                     childCommand = command.child(0)
                     data = childCommand.undoSelection
@@ -508,7 +506,7 @@ class CommandSheet(QObject):
         if index < self.stack.count():
             command = self.stack.command(index)
             if command:
-                # if the command is a macro then retrieve the first command child
+                # if command is a macro then retrieve the first command child and return redoSelection
                 if command.childCount() > 0:
                     childCommand = command.child(0)
                     data = childCommand.redoSelection
@@ -518,11 +516,25 @@ class CommandSheet(QObject):
                 return data
         return None
 
+    #
+    # public begin and end macro
+    #
+
     def beginMacro(self, description):
         self.stack.beginMacro(description)
 
     def endMacro(self):
         self.stack.endMacro()
+
+    @contextmanager
+    def macro(self, description):
+        try:
+            self.beginMacro(description)
+            yield self
+        except:
+            raise
+        else:
+            self.endMacro()
 
     #
     # public undo command methods
@@ -547,8 +559,8 @@ class CommandSheet(QObject):
         self.removeRows(startRow, 1, undoSelection, redoSelection)
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def insertRows(self, startRow, rows):
-        self.sheet.insertRows(startRow, rows)
+    #def insertRows(self, startRow, rows):
+    #    self.sheet.insertRows(startRow, rows)
 
     def insertEmptyRows(self, startRow, count, undoSelection, redoSelection):
         command = CommandInsertEmptyRows(self.sheet, startRow, count, undoSelection, redoSelection)
@@ -558,8 +570,8 @@ class CommandSheet(QObject):
         self.insertEmptyRows(startRow, 1, undoSelection, redoSelection)
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def insertColumns(self, startColumn, columns):
-        self.sheet.insertColumns(startColumn, columns)
+    #def insertColumns(self, startColumn, columns):
+    #    self.sheet.insertColumns(startColumn, columns)
 
     def insertEmptyColumns(self, startColumn, count, undoSelection, redoSelection):
         command = CommandInsertEmptyColumns(self.sheet, startColumn, count, undoSelection, redoSelection)

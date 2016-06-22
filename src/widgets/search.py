@@ -100,8 +100,7 @@ class QSearch(QWidget):
 
     def _saveConfig(self):
         # text search
-        items = [QStringToUnicode(self.textSearch.itemText(i)) for i in range(self.textSearch.count())]
-        config.tools_searches = items
+        config.tools_searches = [QStringToUnicode(self.textSearch.itemText(i)) for i in range(self.textSearch.count())]
         # match mode
         config.tools_matchMode = self.matchMode.currentIndex()
         # match case

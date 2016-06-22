@@ -19,9 +19,8 @@ class QFavFolders(QDialog):
     def _saveConfig(self):
         # favorite folders
         model = self.favFoldersView.model()
-        data = [[str(model.item(index, 0).text()), str(model.item(index, 1).text())]
-                for index in range(model.rowCount())]
-        config.tools_favFolders = data
+        config.tools_favFolders = [[str(model.item(index, 0).text()), str(model.item(index, 1).text())]
+                                  for index in range(model.rowCount())]
 
     def _addFavFolderToModel(self, model, nameFolder, pathFolder):
         index = model.rowCount()

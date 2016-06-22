@@ -172,11 +172,8 @@ class QExplorer(QWidget):
             nameFolder = os.path.basename(pathFolder)
             nameFolder, ok = QInputDialog.getText(self, self.tr('Add Favorite'), self.tr('Enter favorite name:'), text=nameFolder)
             if ok and nameFolder:
-                # recuperar
-                favFolders = config.tools_favFolders
-                favFolders.append([str(nameFolder), pathFolder])
-                # salvar
-                config.tools_favFolders = favFolders
+                # append fav folder
+                config.tools_favFolders.append([str(nameFolder), pathFolder])
                 # refresh favorites
                 self._loadFavoriteFolderConfig()
     #

@@ -55,9 +55,17 @@ class MainWindow(QMainWindow):
         self.refreshRecentFileActions()
         self.saveSessionFile()
 
-    @waiting
     def reload(self, csv):
-        csv.document.load()
+        @waiting
+        def _reload():
+            csv.document.load()
+
+        if csv.document.hasChanges():
+            reloadMsg = self.tr('Are you sure you want to reload the current file and lose your changes?')
+            reply = QMessageBox.question(self, self.tr('Message'), reloadMsg, QMessageBox.Yes, QMessageBox.No)
+            if reply == QMessageBox.No:
+                return
+        _reload()
 
     def openCsv(self, filenames):
         if filenames:
@@ -187,8 +195,8 @@ class MainWindow(QMainWindow):
 
     def exitDialogAction(self):
         """exit dialog"""
-        quitmsg = self.tr('Are you sure you want to exit?')
-        reply = QMessageBox.question(self, self.tr('Message'), quitmsg, QMessageBox.Yes, QMessageBox.No)
+        quitMsg = self.tr('Are you sure you want to exit?')
+        reply = QMessageBox.question(self, self.tr('Message'), quitMsg, QMessageBox.Yes, QMessageBox.No)
         if reply == QMessageBox.Yes:
             exit()
 
