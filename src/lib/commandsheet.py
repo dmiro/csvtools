@@ -427,24 +427,6 @@ class CommandDeleteCells(QUndoSelectionCommand):
     def undo(self):
         self.sheet.setArray(self.startRow, self.startColumn, self.redoArray)
 
-##    def id(self):
-##        """Id is used in command compression. It must be an integer unique to this command's class.
-##        On QUndoStack.push(self, QUndoCommand cmd) If cmd's id is not -1, and if the id is the same as
-##        that of the most recently executed command, QUndoStack will attempt to merge the two commands
-##        by calling QUndoCommand.mergeWith()
-##        """
-##        return self.mergeId
-##
-##    def mergeWith (self, other):
-##        """Attempts to merge this command with command. Returns true on success; otherwise returns false."""
-##        if self.mergeId == other.id():
-##            print 'True'
-##            print 'startRow', other.startRow
-##            print 'startColumn', other.startColumn
-##            return True
-##        else:
-##            return False
-
 class CommandSheet(QObject):
 
     redoTextChanged = pyqtSignal(str, bool)
@@ -511,7 +493,12 @@ class CommandSheet(QObject):
             index = index-1
             command = self.stack.command(index)
             if command:
-                data = command.undoSelection
+                # if the command is a macro then retrieve the first command child
+                if command.childCount() > 0:
+                    childCommand = command.child(0)
+                    data = childCommand.undoSelection
+                else:
+                    data = command.undoSelection
                 self.stack.undo()
                 return data
         return None
@@ -521,10 +508,21 @@ class CommandSheet(QObject):
         if index < self.stack.count():
             command = self.stack.command(index)
             if command:
-                data = command.redoSelection
+                # if the command is a macro then retrieve the first command child
+                if command.childCount() > 0:
+                    childCommand = command.child(0)
+                    data = childCommand.redoSelection
+                else:
+                    data = command.redoSelection
                 self.stack.redo()
                 return data
         return None
+
+    def beginMacro(self, description):
+        self.stack.beginMacro(description)
+
+    def endMacro(self):
+        self.stack.endMacro()
 
     #
     # public undo command methods
@@ -641,25 +639,4 @@ class CommandSheet(QObject):
     def mergeColumns(self, startColumn, columns, separator, undoSelection, redoSelection):
         command = CommandMergeColumns(self.sheet, startColumn, columns, separator, undoSelection, redoSelection)
         self.stack.push(command)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
