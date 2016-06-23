@@ -109,8 +109,8 @@ class QCsvModel(QAbstractTableModel):
 
     def __init__(self, document, headerrow=False, parent=None, *args):
         super(QCsvModel, self).__init__(parent, *args)
-        self.headerrow= headerrow
-        self.document= document
+        self.headerrow = headerrow
+        self.document = document
         self.setPointSize(Pointsizes.normal())
         self.columnCorner = 0
         self.rowCorner = 0
@@ -145,9 +145,6 @@ class QCsvModel(QAbstractTableModel):
 
     def rowDataCount(self, parent=QModelIndex()):
         """get row count real data"""
-    #    if self.headerrow:
-    #        return self.document.rowCount() - 1
-    #    else:
         return self.document.rowCount()
 
     def columnDataCount(self, parent=QModelIndex()):
@@ -178,7 +175,9 @@ class QCsvModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if self.headerrow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return QVariant(self.document.value(0, section))
+            value = self.document.value(0, section)
+            title = u'{}\n{}'.format(section, value)
+            return QVariant(QString(title))
         elif role == Qt.FontRole:
             font = QFont()
             font.setPointSize(self.__fontSize)
@@ -188,18 +187,24 @@ class QCsvModel(QAbstractTableModel):
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
+        # return cell format
         elif role == Qt.FontRole:
             #return QFont('Courier New', 6, QFont.Bold);
             #return QFont('Courier New', self.size, QFont.Bold);
             font = QFont()
             font.setPointSize(self.__fontSize)
             return font
+        # return cell value
         elif role == Qt.DisplayRole or role == Qt.EditRole:
             rowIndex = index.row()
             columnIndex = index.column()
-            if self.headerrow:
-                rowIndex = rowIndex + 1
             return self.document.value(rowIndex, columnIndex)
+        # return highlight cells that are part of the header row
+        elif role == Qt.BackgroundRole and self.headerrow:
+            rowIndex = index.row()
+            columnIndex = index.column()
+            if rowIndex == 0 and columnIndex < self.columnDataCount():
+                return QBrush(QColor(255, 255, 0, 16))
 #        elif role == Qt.BackgroundRole:
 #            return QBrush(QColor(8, 8, 8, 8))
 ##        elif role == Qt.BackgroundRole:
@@ -215,10 +220,9 @@ class QCsvModel(QAbstractTableModel):
             # calculate row and column index
             rowIndex = index.row()
             columnIndex = index.column()
-            if self.headerrow:
-                rowIndex = rowIndex + 1
             # set data
-            self.document.setValue(rowIndex, columnIndex, value.toString())
+            selection = QItemSelection(index, index)
+            self.document.setValue(rowIndex, columnIndex, value.toString(), selection, selection)
             # emit data changed
             bottomRight = self.createIndex(self.rowCount(), self.columnCount())
             self.dataChanged.emit(index, bottomRight)
@@ -245,13 +249,6 @@ class QCsvModel(QAbstractTableModel):
 
 ##    def insertColumn(self, column, parent = QModelIndex()):
 ##        return self.insertColumn(column, 1, parent)
-
-    def deleteCells(self, row, column, dimRows, dimColumns, parent = QModelIndex()):
-        self.document.deleteCells(row, column, dimRows, dimColumns)
-        topLeft = self.createIndex(row, column)
-        bottomRight = self.createIndex(row+dimRows, column+dimColumns)
-        self.dataChanged.emit(topLeft, bottomRight)
-        return True
 
 #
 # class QCsv
@@ -1357,6 +1354,11 @@ class QCsv(QTableView):
     def pointSizeValue(self):
         model = self.model()
         return model.pointSize()
+
+    def refresh(self):
+        model = self.model()
+        model.dataChangedEmit()
+        self.resizeRowsToContents()
 
     def setPointSize(self, value):
         model = self.model()

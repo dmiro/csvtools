@@ -543,8 +543,8 @@ class CommandSheet(QObject):
     # public undo command methods
     #
 
-    def setValue(self, row, column, cellValue):
-        command = CommandSetValue(self.sheet, row, column, cellValue, None, None)
+    def setValue(self, row, column, cellValue, undoSelection, redoSelection):
+        command = CommandSetValue(self.sheet, row, column, cellValue, undoSelection, redoSelection)
         self.stack.push(command)
 
     def removeColumns(self, startColumn, count, undoSelection, redoSelection):

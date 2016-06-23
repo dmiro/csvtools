@@ -278,6 +278,9 @@ class MainWindow(QMainWindow):
 
     def headerRowConfigAction(self):
         config.config_headerrow = not config.config_headerrow
+        csv = self.tab.currentWidget()
+        if csv:
+            csv.refresh()
 
     #
     # help menu action methods
@@ -296,14 +299,12 @@ class MainWindow(QMainWindow):
     def csvSelectionChangedEvent(self):
         csv = self.tab.currentWidget()
         if csv:
-
             tabIndex = self.tab.currentIndex()
             tabBar = self.tab.tabBar()
             if csv.hasChanges():
                 tabBar.setTabTextColor(tabIndex, Qt.red)
             else:
                 tabBar.setTabTextColor(tabIndex, Qt.black)
-
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
                                      csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
                                      csv.averageValue(), csv.sumValue(), csv.pointSizeValue())
