@@ -1287,30 +1287,44 @@ class QCsv(QTableView):
     selectionChanged_ = pyqtSignal()
     contextMenuRequested = pyqtSignal(list, QPoint)
 
+    def hasChanges(self):
+        """document has changes"""
+        return self.document.hasChanges()
+
+    def countChanges(self):
+        """number of changes make to document"""
+        return self.document.countChanges()
+
     def encodingValue(self):
+        """encoding of document"""
         return self.document.encoding
 
     def sizeValue(self):
+        """size file in bytes of document"""
         return helper.get_size(self.document.filename)
 
     def modifiedValue(self):
+        """last modified date and time of document"""
         modifiedDateTime = QDateTime(datetime.fromtimestamp(os.path.getmtime(self.document.filename)))
         strDateTime = modifiedDateTime.toString(Qt.SystemLocaleShortDate)
         return unicode(strDateTime)
 
     def linesValue(self):
+        """lines number of document"""
         model = self.model()
         if model:
             return model.rowDataCount()
         return 0
 
     def columnsValue(self):
+        """columns number of document"""
         model = self.model()
         if model:
             return model.columnDataCount();
         return 0
 
     def averageValue(self):
+        """average value of selected cells"""
         items = len(self.selectedIndexes())
         if items>0:
             sum_ = 0.0
@@ -1324,6 +1338,7 @@ class QCsv(QTableView):
         return None
 
     def sumValue(self):
+        """sum value of selected cells"""
         okSum= False
         sum_= 0.0
         for item in self.selectedIndexes():
@@ -1336,6 +1351,7 @@ class QCsv(QTableView):
         return None
 
     def itemsValue(self):
+        """number of cells selected"""
         return len(self.selectedIndexes())
 
     def pointSizeValue(self):

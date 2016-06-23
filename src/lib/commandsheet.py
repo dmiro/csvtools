@@ -467,10 +467,13 @@ class CommandSheet(QObject):
     def isEmpty(self):
         return self.sheet.isEmpty()
 
+    def countChanges(self):
+        """number of changes make to sheet"""
+        return self.stack.index()
+
     def hasChanges(self):
         """sheet has changes"""
-        index = self.stack.index()
-        return index > 0
+        return self.countChanges() > 0
 
     def value(self, row, column):
         return self.sheet.value(row, column)
