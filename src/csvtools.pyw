@@ -307,9 +307,9 @@ class MainWindow(QMainWindow):
                 tabBar.setTabTextColor(tabIndex, Qt.black)
             self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
                                      csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
-                                     csv.averageValue(), csv.sumValue(), csv.pointSizeValue())
+                                     csv.averageValue(), csv.countChanges(), csv.sumValue(), csv.pointSizeValue())
         else:
-            self.statusBar.setValues(None, None, None, None, None, None, None, None, None)
+            self.statusBar.setValues(None, None, None, None, None, None, None, None, None, None)
 
     def statusBarChangedFontSizeEvent(self, fontSize):
         csv = self.tab.currentWidget()
@@ -653,6 +653,7 @@ class MainWindow(QMainWindow):
         self.hbox.addWidget(self.splitter, 1)
         self.hbox.addWidget(self.statusBar, -1)
         self.hbox.setContentsMargins(0, 4, 0, 0)
+        self.hbox.setSpacing(0)
         centralWidget = QWidget()
         centralWidget.setLayout(self.hbox)
         self.setCentralWidget(centralWidget)

@@ -60,19 +60,29 @@ class QStatus(QStatusBar):
     changedFontSize = pyqtSignal(int)
 
     def setValues(self, linesValue, columnsValue, sizeValue, encodingValue,
-                  modifiedValue, itemsValue, averageValue, sum_Value, pointSize):
+                  modifiedValue, itemsValue, averageValue, changesValue, sum_Value, pointSize):
         self.sliderWidget.setEnabled(False)
+        # values
         self.__setLabelValue(self.lines, '  Lines={0:d}  ', linesValue)
         self.__setLabelValue(self.columns, '  Columns={0:d}  ', columnsValue)
         self.__setLabelValue(self.size, '  Size={0:s}  ', sizeValue)
         self.__setLabelValue(self.encoding, '  Encoding={0:s}  ', encodingValue)
         self.__setLabelValue(self.modified, '  Modified={0:s}  ', modifiedValue)
         self.__setLabelValue(self.average, '  Average={0:.2f}  ', averageValue)
-        self.__setLabelToolTip(self.average, 'Average={0:f}', averageValue)
+        self.__setLabelValue(self.changes, '  Changes={0:d}  ', changesValue)
         self.__setLabelValue(self.items, '  Items={0:d}  ', itemsValue)
         self.__setLabelValue(self.sum_, '  Sum={0:.2f}  ', sum_Value)
-        self.__setLabelToolTip(self.sum_, 'Sum={0:f}', sum_Value)
         self.__setPointSizeValue(pointSize)
+        # tooltips
+        self.__setLabelToolTip(self.lines, 'Lines={0:d}', linesValue)
+        self.__setLabelToolTip(self.columns, 'Columns={0:d}', columnsValue)
+        self.__setLabelToolTip(self.size, 'Size={0:s}', sizeValue)
+        self.__setLabelToolTip(self.encoding, 'Encoding={0:s}', encodingValue)
+        self.__setLabelToolTip(self.modified, 'Modified={0:s}', modifiedValue)
+        self.__setLabelToolTip(self.average, 'Average={0:f}', averageValue)
+        self.__setLabelToolTip(self.changes, 'Changes={0:d}', changesValue)
+        self.__setLabelToolTip(self.items, 'Items={0:d}', itemsValue)
+        self.__setLabelToolTip(self.sum_, 'Sum={0:f}', sum_Value)
 
     #
     # init
@@ -112,14 +122,17 @@ class QStatus(QStatusBar):
         self.sliderWidget.setFixedWidth(135)
 
         # labels
-        self.lines= QElidedLabel('', width=0)
-        self.columns= QElidedLabel('', width=0)
-        self.size= QElidedLabel('', width=0)
+        self.lines = QElidedLabel('', width=0)
+        self.columns = QElidedLabel('', width=0)
+        self.size = QElidedLabel('', width=0)
         self.encoding = QElidedLabel('', width=0)
-        self.modified= QElidedLabel('', width=0)
-        self.items= QElidedLabel('', width=0)
-        self.sum_= QElidedLabel('', width=0)
+        self.modified = QElidedLabel('', width=0)
+        self.changes = QElidedLabel('', width=0)
+        self.changes.setStyleSheet('QLabel { color : red; }')
+        self.items = QElidedLabel('', width=0)
+        self.sum_ = QElidedLabel('', width=0)
         self.average= QElidedLabel('', width=0)
+        self.addWidget(self.changes)
         self.addWidget(self.lines)
         self.addWidget(self.columns)
         self.addWidget(self.size)
@@ -142,4 +155,4 @@ class QStatus(QStatusBar):
         self.setContentsMargins(0, 0, 0, 0)
 
         # init
-        self.setValues(None, None, None, None, None, None, None, None, None)
+        self.setValues(None, None, None, None, None, None, None, None, None, None)
