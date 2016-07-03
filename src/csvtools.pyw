@@ -272,10 +272,6 @@ class MainWindow(QMainWindow):
         dialog = Options(self)
         dialog.exec_()
 
-    def restoreSessionConfigAction(self):
-        config.config_restore = not config.config_restore
-        self.restoreSession.setChecked(config.config_restore)
-
     def headerRowConfigAction(self):
         config.config_headerrow = not config.config_headerrow
         csv = self.tab.currentWidget()
@@ -526,13 +522,6 @@ class MainWindow(QMainWindow):
         #config menu
         menubar = self.menuBar()
         self.configMenu = menubar.addMenu(self.tr('Config'))
-
-        #restore session action
-        self.restoreSession = self.configMenu.addAction(self.tr('Restore Session'))
-        self.restoreSession.setCheckable(True)
-        self.restoreSession.setChecked(config.config_restore)
-        self.restoreSession.setStatusTip(self.tr('Restore Session'))
-        self.restoreSession.changed.connect(self.restoreSessionConfigAction)
 
         #header row action
         self.headerRow = self.configMenu.addAction(self.tr('Header Row'))

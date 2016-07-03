@@ -1,55 +1,84 @@
-from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 import lib.images_rc
 import sys
-import ConfigParser
+from lib.config import config
+from widgets.helpers.qfingertabwidget import QFingerTabWidget
 
-class Options(QtGui.QDialog):
+class Options(QDialog):
 
-    def acceptDialog(self):
-        config = ConfigParser.ConfigParser()
-        config.read('csvreader.ini')
-        if not config.has_section('config'):
-            config.add_section('config')
-        config.set('config', 'path', '/var/shared/')
-        config.set('config', 'default_message', 'Hey! help me!!')
-        with open('csvreader.ini', 'wb') as configfile:
-            config.write(configfile)
+    #
+    # private
+    #
+
+    def __loadConfig(self):
+         self.config_restore.setChecked(config.config_restore)
+
+    def __saveConfig(self):
+        config.config_restore = self.config_restore.checkState() == Qt.Checked
+
+    def __acceptDialog(self):
+        self.__saveConfig()
         self.accept()
 
-    def cancelDialog(self):
-        self.accept()
+    def __addButtonBox(self):
+        acceptButton = QPushButton(self.tr('Accept'), self)
+        acceptButton.setIcon(QIcon(':images/accept.png'))
+        cancelButton = QPushButton(self.tr('Cancel'), self)
+        cancelButton.setIcon(QIcon(':images/cancel.png'))
+        buttonBox = QDialogButtonBox()
+        buttonBox.addButton(acceptButton, QDialogButtonBox.AcceptRole)
+        buttonBox.addButton(cancelButton, QDialogButtonBox.RejectRole)
+        buttonBox.accepted.connect(self.__acceptDialog)
+        buttonBox.rejected.connect(lambda: self.reject())
+        return buttonBox
+
+    def __addTabOptions(self):
+        # tab widget
+        tabs = QTabWidget()
+        tabs.setTabBar(QFingerTabWidget(width=100, height=25))
+        tabs.setTabPosition(QTabWidget.West)
+
+        # general
+        general = QWidget()
+        tabs.addTab(general, self.tr('General'))
+        self.config_language = QComboBox()
+        self.config_autodetect = QCheckBox('')
+        grid = QFormLayout(parent=general)
+        grid.addRow(self.tr('Language'), self.config_language)
+        grid.addRow(self.tr('Detect format'), self.config_autodetect)
+
+        # backup
+        backup = QWidget()
+        tabs.addTab(backup, self.tr('Backup'))
+        self.config_restore = QCheckBox('')
+        grid = QFormLayout(parent=backup)
+        grid.addRow(self.tr('Restore Session'), self.config_restore)
+        return tabs
+
+    #
+    # init
+    #
 
     def __init__(self, *args):
-        QtGui.QWidget.__init__(self, *args)
+        QDialog.__init__(self, *args)
 
-        accept = QtGui.QPushButton(self.tr('Accept'), self)
-        accept.setIcon(QtGui.QIcon(':images/accept.png'))
-        accept.clicked.connect(self.acceptDialog)
+        # widgets
+        self.tabOptions = self.__addTabOptions()
+        self.buttonBox = self.__addButtonBox()
 
-        cancel = QtGui.QPushButton(self.tr('Cancel'), self)
-        cancel.setIcon(QtGui.QIcon(':images/cancel.png'))
-        cancel.clicked.connect(self.cancelDialog)
+        # layout
+        main = QVBoxLayout()
+        main.addWidget(self.tabOptions)
+        main.addWidget(self.buttonBox)
 
-        hbox = QtGui.QHBoxLayout()
-        hbox.addStretch(1)
-        hbox.addWidget(accept)
-        hbox.addWidget(cancel)
+        # load config
+        self.__loadConfig()
 
-        self.language = QtGui.QComboBox()
-        self.autodetect = QtGui.QCheckBox('')
-
-        grid = QtGui.QFormLayout()
-        grid.addRow(self.tr('Language'), self.language)
-        grid.addRow(self.tr('Detect format'), self.autodetect)
-
-        vbox = QtGui.QVBoxLayout()
-        vbox.addLayout(grid)
-        vbox.addStretch()
-        vbox.addLayout(hbox)
-
-        self.setLayout(vbox)
+        # main
+        self.setLayout(main)
         self.setWindowTitle(self.tr('Options'))
-        #self.setFixedSize(225, 175)
+        self.setFixedSize(400, 200)
 
 
 
