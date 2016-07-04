@@ -107,9 +107,9 @@ class QCsvModel(QAbstractTableModel):
     # init
     #
 
-    def __init__(self, document, headerrow=False, parent=None, *args):
+    def __init__(self, document, headerRow=False, parent=None, *args):
         super(QCsvModel, self).__init__(parent, *args)
-        self.headerrow = headerrow
+        self.__headerRow = headerRow
         self.document = document
         self.setPointSize(Pointsizes.normal())
         self.columnCorner = 0
@@ -118,6 +118,12 @@ class QCsvModel(QAbstractTableModel):
     #
     # public
     #
+
+    def setHeaderRow(self, value):
+        self.__headerRow = value
+
+    def headerRow(self):
+        return self.__headerRow
 
     def setRowCorner(self, value):
         """specify the row of the cell visible at top-left corner.
@@ -174,9 +180,9 @@ class QCsvModel(QAbstractTableModel):
         self.dataChanged.emit(topLeftIndex, bottomRightIndex)
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
-        if self.headerrow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
+        if self.__headerRow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
             value = self.document.value(0, section)
-            title = u'{}\n{}'.format(section, value)
+            title = u'{}\n{}'.format(section + 1, value)
             return QVariant(QString(title))
         elif role == Qt.FontRole:
             font = QFont()
@@ -200,7 +206,7 @@ class QCsvModel(QAbstractTableModel):
             columnIndex = index.column()
             return self.document.value(rowIndex, columnIndex)
         # return highlight cells that are part of the header row
-        elif role == Qt.BackgroundRole and self.headerrow:
+        elif role == Qt.BackgroundRole and self.__headerRow:
             rowIndex = index.row()
             columnIndex = index.column()
             if rowIndex == 0 and columnIndex < self.columnDataCount():
@@ -1064,6 +1070,27 @@ class QCsv(QTableView):
             self._setSelection(redoSelection)
             return
 
+    def _viewAction(self, action):
+
+        # header row action
+        if action == self.headerRowAction:
+            model = self.model()
+            model.setHeaderRow(self.headerRowAction.isChecked())
+
+        self.refresh()
+
+    def _addViewMenu(self):
+        """add VIEW menu"""
+
+        # view menu
+        self._viewMenu = QMenu(self.tr('View'))
+        self.headerRowAction = self._viewMenu.addAction(self.tr('Header Row'))
+        self.headerRowAction.setCheckable(True)
+        self.headerRowAction.setChecked(config.config_headerrow)
+
+        # connect menu action
+        self._viewMenu.triggered.connect(self._viewAction)
+
     def _addEditMenu(self):
         """add EDIT menu"""
 
@@ -1432,6 +1459,9 @@ class QCsv(QTableView):
         model = QCsvModel(self.document, config.config_headerrow)
         self.setModel(model)
 
+    def viewMenu(self):
+        return self._viewMenu
+
     def editMenu(self):
         return self._editMenu
 
@@ -1501,6 +1531,7 @@ class QCsv(QTableView):
 
         # edit menu
         self._addEditMenu()
+        self._addViewMenu()
         self.contextMenuRequested.connect(self._csvcontextMenuRequestedEvent)
         self.selectionChanged_.connect(self._csvSelectionChangedEvent)
 

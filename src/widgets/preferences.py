@@ -5,17 +5,19 @@ import sys
 from lib.config import config
 from widgets.helpers.qfingertabwidget import QFingerTabWidget
 
-class Options(QDialog):
+class Preferences(QDialog):
 
     #
     # private
     #
 
     def __loadConfig(self):
-         self.config_restore.setChecked(config.config_restore)
+        self.config_restore.setChecked(config.config_restore)
+        self.config_headerrow.setChecked(config.config_headerrow)
 
     def __saveConfig(self):
         config.config_restore = self.config_restore.checkState() == Qt.Checked
+        config.config_headerrow = self.config_headerrow.checkState() == Qt.Checked
 
     def __acceptDialog(self):
         self.__saveConfig()
@@ -36,7 +38,7 @@ class Options(QDialog):
     def __addTabOptions(self):
         # tab widget
         tabs = QTabWidget()
-        tabs.setTabBar(QFingerTabWidget(width=100, height=25))
+        tabs.setTabBar(QFingerTabWidget(width=75, height=25))
         tabs.setTabPosition(QTabWidget.West)
 
         # general
@@ -54,6 +56,14 @@ class Options(QDialog):
         self.config_restore = QCheckBox('')
         grid = QFormLayout(parent=backup)
         grid.addRow(self.tr('Restore Session'), self.config_restore)
+
+        # view
+        backup = QWidget()
+        tabs.addTab(backup, self.tr('View'))
+        self.config_headerrow = QCheckBox('')
+        grid = QFormLayout(parent=backup)
+        grid.addRow(self.tr('Header Row'), self.config_headerrow)
+
         return tabs
 
     #
@@ -77,7 +87,7 @@ class Options(QDialog):
 
         # main
         self.setLayout(main)
-        self.setWindowTitle(self.tr('Options'))
+        self.setWindowTitle(self.tr('Preferences'))
         self.setFixedSize(400, 200)
 
 

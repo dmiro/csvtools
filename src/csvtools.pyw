@@ -2,7 +2,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from widgets.about import QAbout
-from widgets.options import Options
+from widgets.preferences import Preferences
 from widgets.report import QReport
 from widgets.importwiz import QImportWiz
 from widgets.csvm import QCsv
@@ -59,6 +59,7 @@ class MainWindow(QMainWindow):
         @waiting
         def _reload():
             csv.document.load()
+            self.csvSelectionChangedEvent()
 
         if csv.document.hasChanges():
             reloadMsg = self.tr('Are you sure you want to reload the current file and lose your changes?')
@@ -267,16 +268,10 @@ class MainWindow(QMainWindow):
     # config menu action methods
     #
 
-    def optionsDialogAction(self):
-        """show options dialog"""
-        dialog = Options(self)
+    def preferencesDialogAction(self):
+        """show precerences dialog"""
+        dialog = Preferences(self)
         dialog.exec_()
-
-    def headerRowConfigAction(self):
-        config.config_headerrow = not config.config_headerrow
-        csv = self.tab.currentWidget()
-        if csv:
-            csv.refresh()
 
     #
     # help menu action methods
@@ -286,7 +281,6 @@ class MainWindow(QMainWindow):
         """show about dialog"""
         dialog = QAbout(self)
         dialog.exec_()
-
 
     #
     # event
@@ -326,12 +320,16 @@ class MainWindow(QMainWindow):
         if csv:
             menubar = self.menuBar()
             editMenuAction = self.editMenu.menuAction()
+            viewMenuAction = self.viewMenu.menuAction()
             toolsMenuAction = self.toolsMenu.menuAction()
             try:
                 menubar.removeAction(editMenuAction)
+                menubar.removeAction(viewMenuAction)
             except: pass
             self.editMenu = csv.editMenu()
             menubar.insertMenu(toolsMenuAction, self.editMenu)
+            self.viewMenu = csv.viewMenu()
+            menubar.insertMenu(toolsMenuAction, self.viewMenu)
             self.closeAllButThis.setDisabled(False)
             self.closeAllFiles.setDisabled(False)
             self.closeFile.setDisabled(False)
@@ -496,6 +494,14 @@ class MainWindow(QMainWindow):
         self.editMenu = menubar.addMenu(self.tr('Edit'))
         self.editMenu.menuAction().setEnabled(False)
 
+    def addViewMenu(self):
+        """add VIEW menu"""
+
+        #view menu
+        menubar = self.menuBar()
+        self.viewMenu = menubar.addMenu(self.tr('View'))
+        self.viewMenu.menuAction().setEnabled(False)
+
     def addToolsMenu(self):
         """add TOOLS menu"""
 
@@ -516,27 +522,17 @@ class MainWindow(QMainWindow):
         # connect tools action
         self.toolsMenu.triggered.connect(self._toolsAction)
 
-    def addConfigMenu(self):
-        """add CONFIG menu"""
+    def addSettingsMenu(self):
+        """add SETTINGS menu"""
 
         #config menu
         menubar = self.menuBar()
-        self.configMenu = menubar.addMenu(self.tr('Config'))
-
-        #header row action
-        self.headerRow = self.configMenu.addAction(self.tr('Header Row'))
-        self.headerRow.setCheckable(True)
-        self.headerRow.setChecked(config.config_headerrow)
-        self.headerRow.setStatusTip(self.tr('Header Row'))
-        self.headerRow.changed.connect(self.headerRowConfigAction)
-
-        #separator
-        self.configMenu.addSeparator()
+        self.settingsMenu = menubar.addMenu(self.tr('Settings'))
 
         #options action
-        self.settings = self.configMenu.addAction(QIcon(':images/options.png'), self.tr('Options...'))
-        self.settings.setStatusTip(self.tr('Options'))
-        self.settings.triggered.connect(self.optionsDialogAction)
+        self.preferences = self.settingsMenu.addAction(QIcon(':images/options.png'), self.tr('Preferences...'))
+        self.preferences.setStatusTip(self.tr('Options'))
+        self.preferences.triggered.connect(self.preferencesDialogAction)
 
     def addHelpMenu(self):
         """add HELP menu"""
@@ -563,8 +559,9 @@ class MainWindow(QMainWindow):
 
         self.addFileMenu()
         self.addEditMenu()
+        self.addViewMenu()
         self.addToolsMenu()
-        self.addConfigMenu()
+        self.addSettingsMenu()
         self.addHelpMenu()
 ##        copy to GIS dataset
 ##        la idea es añadir formatos como por ejemplo GeoJson, Kml, etc...
