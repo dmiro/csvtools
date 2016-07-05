@@ -178,6 +178,7 @@ class QCsvModel(QAbstractTableModel):
         bottomRightIndex = self.createIndex(self.rowCorner + self.rowCount(),
                                             self.columnCorner + self.columnCount())
         self.dataChanged.emit(topLeftIndex, bottomRightIndex)
+        self.headerDataChanged.emit(Qt.Horizontal, 0, self.columnDataCount() - 1)
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if self.__headerRow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
@@ -1385,7 +1386,7 @@ class QCsv(QTableView):
     def refresh(self):
         model = self.model()
         model.dataChangedEmit()
-        self.resizeRowsToContents()
+        #self.resizeRowsToContents()
 
     def setPointSize(self, value):
         model = self.model()
@@ -1448,8 +1449,7 @@ class QCsv(QTableView):
                      model.columnDataCount()-1)
 
     def loadRequested(self):
-        model = QCsvModel(self.document, config.config_headerrow)
-        self.setModel(model)
+        self.refresh()
 
     def setDocument(self, document):
         self.document = document
@@ -1534,34 +1534,3 @@ class QCsv(QTableView):
         self._addViewMenu()
         self.contextMenuRequested.connect(self._csvcontextMenuRequestedEvent)
         self.selectionChanged_.connect(self._csvSelectionChangedEvent)
-
-
-##       self.setSortingEnabled(True)
-##        # table model proxy
-##       proxy = StringSortModel()
-##        proxy.setSourceModel(self.tablemodel)
-##
-##        # tableview
-##       self.setModel(self.tablemodel)#(proxy)
-
-##        #prueba
-##        actt = QAction(self)
-##        actt.setShortcut('Ctrl+P')
-##        actt.triggered.connect(self.actt)
-##        self.addAction(actt)
-
-##    def slider_value_changed(self, value):
-##        print self.tablemodel.normalFontSize()
-##        print value
-##        self.tablemodel.setFontSize(value)
-##        percent = self.tablemodel.percentFontSize()
-##        self.percent.setText('{0:d}%'.format(percent))
-##        #self.tablemodel.layoutChanged.emit()  # estas dos cosas # <--activa?
-##        self.tableview.resizeRowsToContents()  # dan problemas.
-##
-##        # como seleccionar una celda de la tabla.
-##        index = self.tablemodel.index(2, 2)
-##        selectionModel= self.tableview.selectionModel()
-##        #self.tableview.clearSelection()
-##        selectionModel.clear()
-##        selectionModel.select(index, QItemSelectionModel.Select)

@@ -586,7 +586,6 @@ class MainWindow(QMainWindow):
 
     def addToolTab(self):
         self.toolTab = QTabWidget(self.splitter)
-        #self.toolTab.setTabPosition(QTabWidget.South)
         index = self.toolTab.addTab(self.explorer, QIcon(':images/explorer.png'), 'Explorer')
         self.toolTab.setTabToolTip(index, 'Explorer')
         index = self.toolTab.addTab(self.search, QIcon(':images/search.png'), 'Search')
@@ -643,6 +642,16 @@ class MainWindow(QMainWindow):
         centralWidget = QWidget()
         centralWidget.setLayout(self.hbox)
         self.setCentralWidget(centralWidget)
+
+       ## dock = QDockWidget("Classes", self)
+       ## dock.setWidget(QExplorer('.'))
+       ## self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+
+       ## dock2 = QDockWidget('', self)
+       ## dock2.setWidget(self.statusBar)
+       ## dock2.setFeatures(QDockWidget.NoDockWidgetFeatures)
+       ## self.addDockWidget(Qt.BottomDockWidgetArea, dock2)
+
 
 #
 # MAIN
