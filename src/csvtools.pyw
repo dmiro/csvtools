@@ -87,16 +87,19 @@ class MainWindow(QMainWindow):
                 report.exec_()
 
     def emptyRecentFiles(self):
-        """empty recent files and refresh menu"""
+        """empty recent files and refresh menu
+        """
         config.file_recent = []
         self.refreshRecentFileActions()
 
     def restoreLastSession(self):
-        """retrieve files the last session"""
+        """retrieve files the last session
+        """
         self.openCsv(config.file_files)
 
     def refreshRecentFileActions(self):
-        """update recent files menu"""
+        """update recent files menu
+        """
         self.recent.clear()
         for index, recent in enumerate(config.file_recent):
             action = QAction("%d. %s" % (index+1,recent), self)
@@ -111,7 +114,8 @@ class MainWindow(QMainWindow):
         self.recent.addAction(empty)
 
     def addRecentFile(self, file_):
-        """add in config file the last opened file"""
+        """add in config file the last opened file
+        """
         file_recent = config.file_recent
         if file_ in file_recent:
             file_recent.remove(file_)
@@ -119,7 +123,8 @@ class MainWindow(QMainWindow):
         config.file_recent = file_recent[0:20]
 
     def saveSessionFile(self):
-        """save in config file the session files"""
+        """save in config file the session files
+        """
         config.file_files = [str(self.tab.tabToolTip(index)) for index in range(self.tab.count())]
 
     def searchText(self, text, tabIndex, matchMode, matchCaseOption):
@@ -176,13 +181,15 @@ class MainWindow(QMainWindow):
             self.openCsv(filenames)
 
     def importDialogAction(self):
-        """import xls/xlsx dialog"""
+        """import xls/xlsx dialog
+        """
         filename = QFileDialog.getOpenFileName(self, self.tr('Import file'), '', "Excel Files (*.xlsx *.xls)")
         if filename:
             self.importExcelAction(filename)
 
     def openDialogAction(self):
-        """open csv dialog"""
+        """open csv dialog
+        """
         filename, useWizard = QOpenCsvFileDialog.getOpenFileName(self)
         if filename:
             # use csv wizard
@@ -195,25 +202,29 @@ class MainWindow(QMainWindow):
                 self.openCsv(filename)
 
     def exitDialogAction(self):
-        """exit dialog"""
+        """exit dialog
+        """
         quitMsg = self.tr('Are you sure you want to exit?')
         reply = QMessageBox.question(self, self.tr('Message'), quitMsg, QMessageBox.Yes, QMessageBox.No)
         if reply == QMessageBox.Yes:
             exit()
 
     def closeFileAction(self):
-        """close current file"""
+        """close current file
+        """
         index = self.tab.currentIndex()
         if index > -1:
             self.tabCloseRequestedEvent(index)
 
     def closeAllFilesAction(self):
-        """close all files"""
+        """close all files
+        """
         while self.tab.count() > 0:
             self.tabCloseRequestedEvent(0)
 
     def closeAllButThisFilesAction(self):
-        """close all files except current file"""
+        """close all files except current file
+        """
         thisCsv = self.tab.currentWidget()
         while self.tab.count() > 1:
             if self.tab.widget(0) != thisCsv:
@@ -222,20 +233,23 @@ class MainWindow(QMainWindow):
                 self.tabCloseRequestedEvent(1)
 
     def reloadFileAction(self):
-        """reload current file"""
+        """reload current file
+        """
         csv = self.tab.currentWidget()
         if csv:
             self.reload(csv)
 
     def filePathToClipboardAction(self):
-        """copy to clipboard current file path"""
+        """copy to clipboard current file path
+        """
         index = self.tab.currentIndex()
         file_ = self.tab.tabToolTip(index)
         clipboard = QApplication.clipboard()
         clipboard.setText(file_)
 
     def allFilePathsToClipboardAction(self):
-        """add all file path to clipboard"""
+        """add all file path to clipboard
+        """
         # retrieve path files
         files = []
         for index in range(self.tab.count()):
@@ -255,13 +269,13 @@ class MainWindow(QMainWindow):
     #
 
     def _toolsAction(self, action):
-
+        """show a tool widget
+        """
         if action == self.explorerTool:
             self.toolTab.setCurrentIndex(0)
-
         if action == self.searchTool:
             self.toolTab.setCurrentIndex(1)
-
+        self.dockToolTab.show()
         return
 
     #
@@ -269,7 +283,8 @@ class MainWindow(QMainWindow):
     #
 
     def preferencesDialogAction(self):
-        """show precerences dialog"""
+        """show precerences dialog
+        """
         dialog = Preferences(self)
         dialog.exec_()
 
@@ -278,7 +293,8 @@ class MainWindow(QMainWindow):
     #
 
     def aboutDialogAction(self):
-        """show about dialog"""
+        """show about dialog
+        """
         dialog = QAbout(self)
         dialog.exec_()
 
@@ -306,7 +322,8 @@ class MainWindow(QMainWindow):
         csv.setPointSize(fontSize)
 
     def tabCloseRequestedEvent(self, index):
-        """event when a tab is closed: remove tab & update config"""
+        """event when a tab is closed: remove tab & update config
+        """
         csv = self.tab.widget(index)
         if csv:
             csv.deleteLater()                       # Schedules this object for deletion.
@@ -315,7 +332,8 @@ class MainWindow(QMainWindow):
         self.saveSessionFile()
 
     def tabCurrentChangedEvent(self, index=0):
-        """event when a selected tab is changed"""
+        """event when a selected tab is changed
+        """
         csv = self.tab.currentWidget()
         if csv:
             menubar = self.menuBar()
@@ -407,65 +425,65 @@ class MainWindow(QMainWindow):
     #
 
     def addFileMenu(self):
-        """add FILE menu"""
-
-        #new file action
+        """add FILE menu
+        """
+        # new file action
         self.newFile = QAction(QIcon(':images/new.png'), self.tr('&New'), self)
         self.newFile.setShortcut(QKeySequence.New)
         self.newFile.setStatusTip(self.tr('New Csv File'))
-        #self.openFile.triggered.connect(self.openDialogAction)
+        #self.openFile.triggered.connect(self.newFileAction)
 
-        #open file action
+        # open file action
         self.openFile = QAction(QIcon(':images/open.png'), self.tr('&Open'), self)
         self.openFile.setShortcut(QKeySequence.Open)
         self.openFile.setStatusTip(self.tr('Open Csv File'))
         self.openFile.triggered.connect(self.openDialogAction)
 
-        #import file action
+        # import file action
         self.importFile = QAction(QIcon(':images/import.png'), self.tr('Import'), self)
         self.importFile.setShortcut('Ctrl+I')
         self.importFile.setStatusTip(self.tr('Import Excel File'))
         self.importFile.triggered.connect(self.importDialogAction)
 
-        #reload file action
+        # reload file action
         self.reloadFile = QAction(QIcon(':images/reload.png'), self.tr('Reload from Disk'), self)
         self.reloadFile.setShortcut('Ctrl+R')
         self.reloadFile.setStatusTip(self.tr('Reload File from Disk'))
         self.reloadFile.triggered.connect(self.reloadFileAction)
 
-        #close file action
+        # close file action
         self.closeFile = QAction(QIcon(':images/close.png'), self.tr('Close'), self)
         self.closeFile.setShortcut(QKeySequence.Close)
         self.closeFile.setStatusTip(self.tr('Close File'))
         self.closeFile.triggered.connect(self.closeFileAction)
 
-        #close all files action
+        # close all files action
         self.closeAllFiles = QAction(self.tr('Close All'), self)
         self.closeAllFiles.setStatusTip(self.tr('Close All Files'))
         self.closeAllFiles.triggered.connect(self.closeAllFilesAction)
 
-        #Close All BUT This action
+        # Close All BUT This action
         self.closeAllButThis = QAction(self.tr('Close All BUT This'), self)
         self.closeAllButThis.setStatusTip(self.tr('Close All BUT This'))
         self.closeAllButThis.triggered.connect(self.closeAllButThisFilesAction)
 
-        #File Path to Clipboard action
+        # File Path to Clipboard action
         self.filePathToClipboard = QAction(self.tr('File Path to Clipboard'), self)
         self.filePathToClipboard.setStatusTip(self.tr('File Path to Clipboard'))
         self.filePathToClipboard.triggered.connect(self.filePathToClipboardAction)
 
-        #File Path to Clipboard action
+        # File Path to Clipboard action
         self.allFilePathsToClipboard = QAction(self.tr('All File Paths to Clipboard'), self)
         self.allFilePathsToClipboard.setStatusTip(self.tr('All File Paths to Clipboard'))
         self.allFilePathsToClipboard.triggered.connect(self.allFilePathsToClipboardAction)
 
-        #exit action
+        # exit action
         self.exitApp = QAction(QIcon(':images/exit.png'), self.tr('E&xit'), self)
         self.exitApp.setShortcut(QKeySequence.Quit)
         self.exitApp.setStatusTip(self.tr('Exit'))
         self.exitApp.triggered.connect(self.exitDialogAction)
 
-        #file menu
+        # file menu
         menubar = self.menuBar()
         self.fileMenu = menubar.addMenu(self.tr('&File'))
         self.fileMenu.addAction(self.newFile)
@@ -482,39 +500,39 @@ class MainWindow(QMainWindow):
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.exitApp)
 
-        #clipboard submenu
+        # clipboard submenu
         self.copyToClipboardMenu.addAction(self.filePathToClipboard)
         self.copyToClipboardMenu.addAction(self.allFilePathsToClipboard)
 
     def addEditMenu(self):
-        """add EDIT menu"""
-
-        #edit menu
+        """add EDIT menu
+        """
+        # edit menu
         menubar = self.menuBar()
         self.editMenu = menubar.addMenu(self.tr('Edit'))
         self.editMenu.menuAction().setEnabled(False)
 
     def addViewMenu(self):
-        """add VIEW menu"""
-
+        """add VIEW menu
+        """
         #view menu
         menubar = self.menuBar()
         self.viewMenu = menubar.addMenu(self.tr('View'))
         self.viewMenu.menuAction().setEnabled(False)
 
     def addToolsMenu(self):
-        """add TOOLS menu"""
-
-        #tools menu
+        """add TOOLS menu
+        """
+        # tools menu
         menubar = self.menuBar()
         self.toolsMenu = menubar.addMenu(self.tr('Tools'))
 
-        #explorer action
+        # explorer action
         self.explorerTool = self.toolsMenu.addAction(QIcon(':images/explorer.png'), self.tr('Explorer'))
         self.explorerTool.setShortcut('Ctrl+E')
         self.explorerTool.setStatusTip(self.tr('Explorer'))
 
-        #search action
+        # search action
         self.searchTool = self.toolsMenu.addAction(QIcon(':images/search.png'), self.tr('Search'))
         self.searchTool.setShortcut('Ctrl+F')
         self.searchTool.setStatusTip(self.tr('Search'))
@@ -523,40 +541,40 @@ class MainWindow(QMainWindow):
         self.toolsMenu.triggered.connect(self._toolsAction)
 
     def addSettingsMenu(self):
-        """add SETTINGS menu"""
-
-        #config menu
+        """add SETTINGS menu
+        """
+        # config menu
         menubar = self.menuBar()
         self.settingsMenu = menubar.addMenu(self.tr('Settings'))
 
-        #options action
+        # options action
         self.preferences = self.settingsMenu.addAction(QIcon(':images/options.png'), self.tr('Preferences...'))
-        self.preferences.setStatusTip(self.tr('Options'))
+        self.preferences.setStatusTip(self.tr('General preferences'))
         self.preferences.triggered.connect(self.preferencesDialogAction)
 
     def addHelpMenu(self):
-        """add HELP menu"""
-
-        #update action
+        """add HELP menu
+        """
+        # update action
         self.update = QAction(QIcon(':images/update.png'), self.tr('Update CSV Tools'), self)
-        self.update.setStatusTip(self.tr('Update CSV Tools'))
-        #####self.about.triggered.connect(self.aboutDialogAction)
+        self.update.setStatusTip(self.tr('Check for new version'))
+        #####self.about.triggered.connect(self.updateCsvgAction)
 
-        #about action
+        # about action
         self.about = QAction(QIcon(':images/about.png'), self.tr('About'), self)
-        self.about.setStatusTip(self.tr('About'))
+        self.about.setStatusTip(self.tr('About this application'))
         self.about.triggered.connect(self.aboutDialogAction)
 
-        #help menu
+        # help menu
         menubar = self.menuBar()
         helpMenu = menubar.addMenu(self.tr('Help'))
         helpMenu.addAction(self.update)
         helpMenu.addSeparator()
         helpMenu.addAction(self.about)
 
-    def addMenus(self):
-        """add menus to application"""
-
+    def createMenus(self):
+        """add menus to application
+        """
         self.addFileMenu()
         self.addEditMenu()
         self.addViewMenu()
@@ -569,44 +587,40 @@ class MainWindow(QMainWindow):
 ##        coordenada X, Y, etc...
 ##        pensar hasta que punto esto NO ES COPY sino es UN EXPORT.
 
-    def addSplitter(self):
-        """add splitter widget"""
-        self.splitter = QSplitter(Qt.Horizontal)
-
-    def addExplorer(self):
-        """add explorer widget"""
+    def createToolTab(self):
+        """create search and explorer tools and adds in toolbar
+        """
+        # explorer widget
         self.explorer = QExplorer('.')
         self.explorer.clickedFile.connect(self.explorerClickedFileEvent)
-
-    def addSearch(self):
-        """add search widget"""
+        # search widget
         self.search = QSearch()
         self.search.searchClicked.connect(self.searchSearchClickedEvent)
         self.search.resultClicked.connect(self.searchResultClickedEvent)
-
-    def addToolTab(self):
-        self.toolTab = QTabWidget(self.splitter)
+        # toolbar
+        self.toolTab = QTabWidget()
         index = self.toolTab.addTab(self.explorer, QIcon(':images/explorer.png'), 'Explorer')
         self.toolTab.setTabToolTip(index, 'Explorer')
         index = self.toolTab.addTab(self.search, QIcon(':images/search.png'), 'Search')
         self.toolTab.setTabToolTip(index, 'Search')
 
-    def addTab(self):
-        """add tab widget"""
-        self.tab = QTabWidget(self.splitter)
+    def createCsvTab(self):
+        """add tab widget for csv widgets
+        """
+        self.tab = QTabWidget()
         self.tab.setMovable(True)
         self.tab.setTabsClosable(True)
         self.tab.tabCloseRequested.connect(self.tabCloseRequestedEvent)
         self.tab.currentChanged.connect(self.tabCurrentChangedEvent)
-        self.splitter.setStretchFactor(1, 1)
         # set context tabbar menu event
         self.tab.tabBar().setContextMenuPolicy(Qt.CustomContextMenu)
         self.tab.tabBar().customContextMenuRequested.connect(self.tabBarcustomContextMenuRequestedEvent)
         # set tab moved event
         self.tab.tabBar().tabMoved.connect(self.tabBartabMovedEvent)
 
-    def addStatusBar(self):
-        """add status bar widget"""
+    def createStatusBar(self):
+        """add status bar widget
+        """
         self.statusBar = QStatus()
         self.statusBar.changedFontSize.connect(self.statusBarChangedFontSizeEvent)
 
@@ -615,6 +629,8 @@ class MainWindow(QMainWindow):
     #
 
     def __init__(self, *args):
+
+        # init
         QMainWindow.__init__(self, *args)
         self.setWindowIcon(QIcon(':images/app.png'))
         self.setWindowTitle(self.tr("CSV Tools"))
@@ -622,41 +638,29 @@ class MainWindow(QMainWindow):
         self.resize(800, 400)
 
         # add widgets
-        self.addMenus()
-        self.addSplitter()
-        self.addExplorer()
-        self.addSearch()
-        self.addToolTab()
-        self.addTab()
-        self.addStatusBar()
+        self.createMenus()
+        self.createToolTab()
+        self.createCsvTab()
+        self.createStatusBar()
 
         # enable/disable diferent menu options
         self.tabCurrentChangedEvent()
 
         # central widget
-        self.hbox = QVBoxLayout()
-        self.hbox.addWidget(self.splitter, 1)
-        self.hbox.addWidget(self.statusBar, -1)
-        self.hbox.setContentsMargins(0, 4, 0, 0)
-        self.hbox.setSpacing(0)
-        centralWidget = QWidget()
-        centralWidget.setLayout(self.hbox)
-        self.setCentralWidget(centralWidget)
+        self.setCentralWidget(self.tab)
 
-       ## dock = QDockWidget("Classes", self)
-       ## dock.setWidget(QExplorer('.'))
-       ## self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+        # statusbar
+        self.setStatusBar(self.statusBar)
 
-       ## dock2 = QDockWidget('', self)
-       ## dock2.setWidget(self.statusBar)
-       ## dock2.setFeatures(QDockWidget.NoDockWidgetFeatures)
-       ## self.addDockWidget(Qt.BottomDockWidgetArea, dock2)
+        # dock widget
+        self.dockToolTab = QDockWidget("Tools", self)
+        self.dockToolTab.setWidget(self.toolTab)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockToolTab)
 
 
 #
 # MAIN
 #
-
 
 def main():
     app = QApplication(sys.argv)
