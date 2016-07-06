@@ -14,7 +14,7 @@ def singleton(class_):
   return getinstance
 
 
-class SimpleNamespace:
+class SimpleNamespace(object):
     """backport of SimpleNamespace Python 3.3 to simulate an anonymous class
     https://docs.python.org/3/library/types.html#types.SimpleNamespace
     """
@@ -25,7 +25,10 @@ class SimpleNamespace:
         items = ("{}={!r}".format(k, self.__dict__[k]) for k in keys)
         return "{}({})".format(type(self).__name__, ", ".join(items))
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        if isinstance(other, dict):
+            return self.__dict__ == other.__dict__
+        else:
+            return object.__eq__(other)
 
 def waiting(function):
     """decorator function. Show hour glass while waiting end method"""

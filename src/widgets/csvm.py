@@ -680,31 +680,6 @@ class QCsv(QTableView):
             self._setSelection(redoSelection)
 
     @helper.waiting
-    def _selectedIndexesToRectangularArea(self, includeHeaderRows=False):
-        """copy and convert selected indexes to string matrix"""
-        selection = self.__getDataSelection()
-        if selection.hasData:
-            # get a two dimension matrix with default value ''
-            result = []
-            for _ in range(selection.minMaxDimRows):
-                row = [QString('') for _ in range(selection.minMaxDimColumns)]
-                result.append(row)
-            # set values in two dimension matrix
-            for selectedIndex in selection.selectedIndexes:
-                row = selectedIndex.row()
-                column = selectedIndex.column()
-                result[row-selection.minRow][column-selection.minColumn] = self.document.value(row, column)
-            # add header rows
-            if includeHeaderRows:
-                headerRows = self._getHeaderRows()
-                if headerRows:
-                    header = headerRows[selection.minColumn:selection.maxColumn+1]
-                    result.insert(0, header)
-            return result
-        else:
-            return None
-
-    @helper.waiting
     def _rectangularAreaToSelectedIndex(self, array):
         selection = self.__getDataSelection()
         if selection.isSingleSelection:
@@ -718,6 +693,62 @@ class QCsv(QTableView):
                 redoSelection = self._getCurrentSelection()
                 self.document.setArrayRepeater(startRow, startColumn, dimRows, dimColumns, array, undoSelection, redoSelection)
                 self._setSelection(redoSelection)
+
+    @helper.waiting
+    def _deleteCellsAndRectangularAreaToSelectedIndex(self, deleteSelection, array):
+        selection = self.__getDataSelection()
+        if selection.isSingleSelection:
+            dimRows = selection.dimRows
+            dimColumns = selection.dimColumns
+            # ok
+            if dimRows > 0 and dimColumns > 0:
+                if deleteSelection.hasData:
+                    undoSelection = self._getCurrentSelection()
+                    redoSelection = self._getCurrentSelection()
+                    mergeId = id(redoSelection)
+                    with self.document.macro('cut&paste {} cells'.format(len(deleteSelection.selectedIndexes))) as macro:
+                        # delete
+                        for selectedRange in deleteSelection.selectedRanges:
+                            topLeftIndex = selectedRange.topLeft()
+                            bottomRightIndex = selectedRange.bottomRight()
+                            startRow = topLeftIndex.row()
+                            startColumn = topLeftIndex.column()
+                            dimRows = bottomRightIndex.row() - topLeftIndex.row() + 1
+                            dimColumns = bottomRightIndex.column() - topLeftIndex.column() + 1
+                            macro.deleteCells(startRow, startColumn, dimRows, dimColumns, undoSelection, redoSelection)
+                        # copy
+                        startRow = selection.topLeftIndex.row()
+                        startColumn = selection.topLeftIndex.column()
+                        undoSelection = self._getCurrentSelection()
+                        redoSelection = self._getCurrentSelection()
+                        macro.setArrayRepeater(startRow, startColumn, dimRows, dimColumns, array, undoSelection, redoSelection)
+                    self._setSelection(redoSelection)
+
+    @helper.waiting
+    def _selectedIndexesToRectangularArea(self, includeHeaderRows=False):
+        """copy and convert selected indexes to string matrix
+        """
+        selection = self.__getDataSelection()
+        if selection.hasData:
+            # get a two dimension matrix with default value ''
+            result = []
+            for _ in range(selection.minMaxDimRows):
+                row = [QString('') for _ in range(selection.minMaxDimColumns)]
+                result.append(row)
+            # set values in two dimension matrix
+            for selectedIndex in selection.selectedIndexes:
+                row = selectedIndex.row()
+                column = selectedIndex.column()
+                result[row - selection.minRow][column - selection.minColumn] = self.document.value(row, column)
+            # add header rows
+            if includeHeaderRows:
+                headerRows = self._getHeaderRows()
+                if headerRows:
+                    header = headerRows[selection.minColumn:selection.maxColumn+1]
+                    result.insert(0, header)
+            return result
+        else:
+            return None
 
     def _globalCut(self):
         QCsv._cuteDataSelection = self.__getDataSelection()
@@ -738,7 +769,7 @@ class QCsv(QTableView):
     def _editAction(self, action):
         textClip = None
 
-        # copy to clipboard action
+        # copy or cut to clipboard action
         if action == self.copyToClipboard or action == self.cuteToClipboard:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=False)
             if matrix:
@@ -871,8 +902,16 @@ class QCsv(QTableView):
             clipboard = QApplication.clipboard()
             textClip = clipboard.text()
             matrix = lib.imports.ClipboardFormat.toMatrix(textClip)
-            self._rectangularAreaToSelectedIndex(matrix)
-            self._globalPaste()
+            # cute and paste in same instance
+            if QCsv._cuteInstance == self:
+                self._deleteCellsAndRectangularAreaToSelectedIndex(QCsv._cuteDataSelection, matrix)
+                QCsv._cuteInstance.cancelClipboardAction.trigger()
+                QCsv._cuteDataSelection = None
+                QCsv._cuteInstance = None
+            # cute and paste in diff instances
+            else:
+                self._globalPaste()
+                self._rectangularAreaToSelectedIndex(matrix)
             return
 
         # insert column to the left

@@ -494,9 +494,10 @@ class CommandSheet(QObject):
             index = index-1
             command = self.stack.command(index)
             if command:
-                # if command is a macro then retrieve the first command child and return undoSelection
-                if command.childCount() > 0:
-                    childCommand = command.child(0)
+                # if command is a macro then retrieve the last command child and return undoSelection
+                childCount = command.childCount()
+                if childCount > 0:
+                    childCommand = command.child(childCount - 1)
                     data = childCommand.undoSelection
                 else:
                     data = command.undoSelection
@@ -509,9 +510,10 @@ class CommandSheet(QObject):
         if index < self.stack.count():
             command = self.stack.command(index)
             if command:
-                # if command is a macro then retrieve the first command child and return redoSelection
-                if command.childCount() > 0:
-                    childCommand = command.child(0)
+                # if command is a macro then retrieve the last command child and return redoSelection
+                childCount = command.childCount()
+                if childCount > 0:
+                    childCommand = command.child(childCount - 1)
                     data = childCommand.redoSelection
                 else:
                     data = command.redoSelection
