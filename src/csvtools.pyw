@@ -451,6 +451,29 @@ class MainWindow(QMainWindow):
         self.reloadFile.setStatusTip(self.tr('Reload File from Disk'))
         self.reloadFile.triggered.connect(self.reloadFileAction)
 
+        # Save
+        self.saveFile = QAction(QIcon(':images/save.png'), self.tr('Save'), self)
+        self.saveFile.setShortcut('Ctrl+S')
+        self.saveFile.setStatusTip(self.tr('Save File'))
+#        self.saveFile.triggered.connect(self.saveFileAction)
+
+        # Save As..
+        self.saveAsFile = QAction(QIcon(':images/reload.png'), self.tr('Save As..'), self)
+        self.saveAsFile.setShortcut('Ctrl+Alt+S')
+        self.saveAsFile.setStatusTip(self.tr('Save File As..'))
+ #       self.saveAsFile.triggered.connect(self.saveAsFileAction)
+
+        # Save a Copy As..
+        self.saveCopyFile = QAction(QIcon(':images/reload.png'), self.tr('Save a Copy As..'), self)
+        self.saveCopyFile.setStatusTip(self.tr('Save a Copy File As..'))
+ #       self.saveCopyFile.triggered.connect(self.saveAsCopyFileAction)
+
+        # Save All
+        self.saveAllFiles = QAction(QIcon(':images/reload.png'), self.tr('Save All'), self)
+        self.saveAllFiles.setShortcut('Ctrl+Shift+S')
+        self.saveAllFiles.setStatusTip(self.tr('Save Zll Files..'))
+  #      self.saveAllFiles.triggered.connect(self.saveAllFileAction)
+
         # close file action
         self.closeFile = QAction(QIcon(':images/close.png'), self.tr('Close'), self)
         self.closeFile.setShortcut(QKeySequence.Close)
@@ -490,6 +513,10 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction(self.openFile)
         self.fileMenu.addAction(self.importFile)
         self.fileMenu.addAction(self.reloadFile)
+        self.fileMenu.addAction(self.saveFile)
+        self.fileMenu.addAction(self.saveAsFile)
+        self.fileMenu.addAction(self.saveCopyFile)
+        self.fileMenu.addAction(self.saveAllFiles)
         self.fileMenu.addAction(self.closeFile)
         self.fileMenu.addAction(self.closeAllFiles)
         self.fileMenu.addAction(self.closeAllButThis)
