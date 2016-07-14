@@ -35,7 +35,7 @@
 	<file alias="cut.png">icons/glyphicons-599-scissors-alt.png</file>
 	<file alias="all.png">flaticon/interface.png</file>
 	<file alias="eraser.png">flaticon/eraser.png</file>
-	<file alias="save.png">icons/glyphicons-445-floppy-saved.png</file>
+	<file alias="save.png">icons/glyphicons-444-floppy-disk.png</file>
 	<file alias="duplicate.png">icons/glyphicons-511-duplicate.png</file>
 
 

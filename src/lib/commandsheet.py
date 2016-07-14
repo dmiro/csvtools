@@ -170,7 +170,7 @@ class CommandMergeColumns(QUndoSelectionCommand):
 class CommandMergeArrayInRows(QUndoSelectionCommand):
 
     def __init__(self, sheet, startRow, startColumn, dimRows, dimColumns, separator, undoSelection, redoSelection):
-        description = 'merge array {}x{} in rows at [{},{}]'.format(dimRows, dimColumn, startRow, startColumn)
+        description = 'merge array {}x{} in rows at [{},{}]'.format(dimRows, dimColumns, startRow, startColumn)
         super(CommandMergeArrayInRows, self).__init__(description, undoSelection, redoSelection)
         self.sheet = sheet
         self.startRow = startRow

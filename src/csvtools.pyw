@@ -264,6 +264,18 @@ class MainWindow(QMainWindow):
         clipboard = QApplication.clipboard()
         clipboard.setText('\n'.join(files))
 
+    def saveFileAction(self):
+        print 'saveFileAction'
+
+    def saveAsFileAction(self):
+        print 'saveAsFileAction'
+
+    def saveAsCopyFileAction(self):
+        print 'saveAsCopyFileAction'
+
+    def saveAllFileAction(self):
+        print 'saveAllFileAction'
+
     #
     # tool menu action methods
     #
@@ -375,6 +387,8 @@ class MainWindow(QMainWindow):
             self.tab.setCurrentIndex(tabIndex)
         # make and show menu
         menu = QMenu("Tab Menu")
+        menu.addAction(self.saveFile)
+        menu.addAction(self.saveAsFile)
         menu.addAction(self.reloadFile)
         menu.addAction(self.closeFile)
         menu.addAction(self.closeAllFiles)
@@ -454,25 +468,25 @@ class MainWindow(QMainWindow):
         # Save
         self.saveFile = QAction(QIcon(':images/save.png'), self.tr('Save'), self)
         self.saveFile.setShortcut('Ctrl+S')
-        self.saveFile.setStatusTip(self.tr('Save File'))
-#        self.saveFile.triggered.connect(self.saveFileAction)
+        self.saveFile.setStatusTip(self.tr('Save file'))
+        self.saveFile.triggered.connect(self.saveFileAction)
 
         # Save As..
-        self.saveAsFile = QAction(QIcon(':images/reload.png'), self.tr('Save As..'), self)
+        self.saveAsFile = QAction(self.tr('Save As..'), self)
         self.saveAsFile.setShortcut('Ctrl+Alt+S')
-        self.saveAsFile.setStatusTip(self.tr('Save File As..'))
- #       self.saveAsFile.triggered.connect(self.saveAsFileAction)
+        self.saveAsFile.setStatusTip(self.tr('Save file as..'))
+        self.saveAsFile.triggered.connect(self.saveAsFileAction)
 
         # Save a Copy As..
-        self.saveCopyFile = QAction(QIcon(':images/reload.png'), self.tr('Save a Copy As..'), self)
-        self.saveCopyFile.setStatusTip(self.tr('Save a Copy File As..'))
- #       self.saveCopyFile.triggered.connect(self.saveAsCopyFileAction)
+        self.saveCopyFile = QAction(self.tr('Save a Copy As..'), self)
+        self.saveCopyFile.setStatusTip(self.tr('Save a copy file as..'))
+        self.saveCopyFile.triggered.connect(self.saveAsCopyFileAction)
 
         # Save All
-        self.saveAllFiles = QAction(QIcon(':images/reload.png'), self.tr('Save All'), self)
+        self.saveAllFiles = QAction(self.tr('Save All'), self)
         self.saveAllFiles.setShortcut('Ctrl+Shift+S')
-        self.saveAllFiles.setStatusTip(self.tr('Save Zll Files..'))
-  #      self.saveAllFiles.triggered.connect(self.saveAllFileAction)
+        self.saveAllFiles.setStatusTip(self.tr('Save all files'))
+        self.saveAllFiles.triggered.connect(self.saveAllFileAction)
 
         # close file action
         self.closeFile = QAction(QIcon(':images/close.png'), self.tr('Close'), self)
