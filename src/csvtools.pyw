@@ -266,6 +266,8 @@ class MainWindow(QMainWindow):
 
     def saveFileAction(self):
         print 'saveFileAction'
+        csv = self.tab.currentWidget()
+        csv.document.save()
 
     def saveAsFileAction(self):
         print 'saveAsFileAction'

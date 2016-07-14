@@ -146,7 +146,18 @@ class Csv(Document):
         super(Csv, self).load()
 
     def save(self):
-        pass
+        with io.open(self.filename, 'w', encoding=self.encoding_) as csvFile:
+            writer = csv.writer(csvFile,
+                                delimiter=self.delimiter,
+                                doublequote=self.doublequote,
+                                escapechar = self.escapechar,
+                                lineterminator= self.lineterminator,
+                                quotechar=self.quotechar,
+                                quoting=self.quoting,
+                                skipinitialspace=self.skipinitialspace)
+            for row in self.data_:
+                writer.writerows(row)
+        super(Csv, self).save()
 
 
 class Xsl(Document):
