@@ -8,6 +8,7 @@ import io
 import cchardet
 from lib.commandsheet import CommandSheet
 
+
 class QABCMeta(pyqtWrapperType, ABCMeta):   # problem in your case is that the classes you try to inherit from
     pass                                    # have different metaclasses:
                                             # http://www.gulon.co.uk/2012/12/28/pyqt4-qobjects-and-metaclasses/
@@ -125,8 +126,12 @@ class Csv(Document):
         self.encoding_ = detect['encoding']
         # retrieve data
         self.data_ = []
-        with io.open(self.filename, encoding=self.encoding_) as csvFile:       # Since Python 2.6, a good practice is to use io.open(),
-                                                                               # which also takes an encoding argument.
+        with io.open(self.filename, newline='', encoding=self.encoding_) as csvFile:    # Since Python 2.6, a good practice is to use io.open(),
+                                                                                        # which also takes an encoding argument.
+                                                                                        # if newline='' is not specified, newlines embedded inside quoted fields
+                                                                                        # will not be interpreted correctly, and on platforms that use \r\n linendings
+                                                                                        # on write an extra \r will be added. It should always be safe to specify
+                                                                                        # newline='', since the csv module does its own (universal) newline handling.
             reader = csv.reader(csvFile,
                                 delimiter=self.delimiter,
                                 doublequote=self.doublequote,
@@ -146,7 +151,7 @@ class Csv(Document):
         super(Csv, self).load()
 
     def save(self):
-        with io.open(self.filename, 'w', encoding=self.encoding_) as csvFile:
+        with io.open(self.filename, 'w', newline='', encoding=self.encoding_) as csvFile:
             writer = csv.writer(csvFile,
                                 delimiter=self.delimiter,
                                 doublequote=self.doublequote,
@@ -155,8 +160,9 @@ class Csv(Document):
                                 quotechar=self.quotechar,
                                 quoting=self.quoting,
                                 skipinitialspace=self.skipinitialspace)
-            for row in self.data_:
-                writer.writerows(row)
+            data = self.arrayData()
+            for row in data:
+                writer.writerow(row)
         super(Csv, self).save()
 
 

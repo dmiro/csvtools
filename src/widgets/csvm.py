@@ -903,15 +903,16 @@ class QCsv(QTableView):
             textClip = clipboard.text()
             matrix = lib.imports.ClipboardFormat.toMatrix(textClip)
             # cute and paste in same instance
-            if QCsv._cuteInstance == self:
-                self._deleteCellsAndRectangularAreaToSelectedIndex(QCsv._cuteDataSelection, matrix)
-                QCsv._cuteInstance.cancelClipboardAction.trigger()
-                QCsv._cuteDataSelection = None
-                QCsv._cuteInstance = None
+            if hasattr(QCsv, '_cuteDataSelection') and hasattr(QCsv, '_cuteInstance'):
+                if QCsv._cuteInstance == self:
+                    self._deleteCellsAndRectangularAreaToSelectedIndex(QCsv._cuteDataSelection, matrix)
+                    QCsv._cuteInstance.cancelClipboardAction.trigger()
+                    QCsv._cuteDataSelection = None
+                    QCsv._cuteInstance = None
+                    return
             # cute and paste in diff instances
-            else:
-                self._globalPaste()
-                self._rectangularAreaToSelectedIndex(matrix)
+            self._globalPaste()
+            self._rectangularAreaToSelectedIndex(matrix)
             return
 
         # insert column to the left
