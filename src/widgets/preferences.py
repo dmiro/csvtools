@@ -14,10 +14,14 @@ class Preferences(QDialog):
     def __loadConfig(self):
         self.config_restore.setChecked(config.config_restore)
         self.config_headerrow.setChecked(config.config_headerrow)
+        self.recentfiles_check.setChecked(config.recentfiles_check)
+        self.recentfiles_maxEntries.setValue(config.recentfiles_maxEntries)
 
     def __saveConfig(self):
         config.config_restore = self.config_restore.checkState() == Qt.Checked
         config.config_headerrow = self.config_headerrow.checkState() == Qt.Checked
+        config.recentfiles_check = self.recentfiles_check.checkState() == Qt.Checked
+        config.recentfiles_maxEntries = self.recentfiles_maxEntries.value()
 
     def __acceptDialog(self):
         self.__saveConfig()
@@ -49,6 +53,16 @@ class Preferences(QDialog):
         grid = QFormLayout(parent=general)
         grid.addRow(self.tr('Language'), self.config_language)
         grid.addRow(self.tr('Detect format'), self.config_autodetect)
+
+        # Recent Files
+        recentFiles = QWidget()
+        tabs.addTab(recentFiles, self.tr('Recent Files'))
+        self.recentfiles_check= QCheckBox('')
+        self.recentfiles_maxEntries = QSpinBox()
+        self.recentfiles_maxEntries.setRange(0, 100)
+        grid = QFormLayout(parent=recentFiles)
+        grid.addRow(self.tr('Check at launch time'), self.recentfiles_check)
+        grid.addRow(self.tr('Max. number of entries'), self.recentfiles_maxEntries)
 
         # backup
         backup = QWidget()

@@ -1491,9 +1491,13 @@ class QCsv(QTableView):
     def loadRequested(self):
         self.refresh()
 
+    def saveRequested(self):
+        self.refresh()
+
     def setDocument(self, document):
         self.document = document
         self.document.loadRequested.connect(self.loadRequested)
+        self.document.saveRequested.connect(self.saveRequested)
         self.document.redoTextChanged.connect(self._redoTextChanged)
         self.document.undoTextChanged.connect(self._undoTextChanged)
         model = QCsvModel(self.document, config.config_headerrow)

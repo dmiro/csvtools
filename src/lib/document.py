@@ -26,27 +26,25 @@ class Document(CommandSheet):
 
         super(Document, self).__init__(valueClass=QString)
         self.filename = filename
-        self.data_ = []
         self.encoding_ = ''
         self.canLoad = True
         self.canSave = False
 
     @abstractmethod
-    def load(self, linesToLoad=-1):
-        self.setArrayData(self.data)
+    def new(self):
         self.loadRequested.emit()
 
     @abstractmethod
-    def save(self):
+    def load(self, linesToLoad=-1):
+        self.loadRequested.emit()
+
+    @abstractmethod
+    def save(self, newFilename=None):
         self.saveRequested.emit()
 
-    @property
-    def data(self):
-        return self.data_
-
-    @data.setter
-    def data(self, value):
-        self.data_ = value
+    @abstractmethod
+    def saveACopy(self, filename):
+        self.saveRequested.emit()
 
     @property
     def encoding(self):
@@ -61,7 +59,7 @@ class Document(CommandSheet):
                 if isinstance(obj, Document):
                     d = {'__class__': obj.__class__.__name__,
                          '__module__': obj.__module__}
-                    obj.__dict__.pop('data_')  # data_ is not serializable
+                    ## obj.__dict__.pop('data_')  # data_ is not serializable
                     d.update(obj.__dict__)
                     return d
                 if not isfunction(obj):
@@ -115,6 +113,9 @@ class Csv(Document):
         self.quoting= quoting
         self.skipinitialspace= skipinitialspace
 
+    def new(self):
+        pass
+
     # http://stackoverflow.com/questions/17245415/read-and-write-csv-files-including-unicode-with-python-2-7
     # https://github.com/jdunck/python-unicodecsv
     # https://nelsonslog.wordpress.com/2015/02/26/python-csv-benchmarks/
@@ -125,7 +126,7 @@ class Csv(Document):
         detect = cchardet.detect(data)
         self.encoding_ = detect['encoding']
         # retrieve data
-        self.data_ = []
+        data = []
         with io.open(self.filename, newline='', encoding=self.encoding_) as csvFile:    # Since Python 2.6, a good practice is to use io.open(),
                                                                                         # which also takes an encoding argument.
                                                                                         # if newline='' is not specified, newlines embedded inside quoted fields
@@ -144,14 +145,24 @@ class Csv(Document):
                 for line, row in enumerate(reader):
                     if line > linesToLoad:
                         break
-                    self.data_.append([QString(value) for value in row])
+                    data.append([QString(value) for value in row])
             else:
                 for row in reader:
-                    self.data_.append([QString(value) for value in row])
+                    data.append([QString(value) for value in row])
+        self.setArrayData(data)
         super(Csv, self).load()
 
-    def save(self):
-        with io.open(self.filename, 'w', newline='', encoding=self.encoding_) as csvFile:
+    def save(self, newFilename=None):
+        if newFilename:
+            self.saveACopy(newFilename)
+            self.filename = newFilename
+        else:
+            self.saveACopy(self.filename)
+        self.commandClear()
+        super(Csv, self).save(newFilename)
+
+    def saveACopy(self, filename):
+        with io.open(filename, 'w', newline='', encoding=self.encoding_) as csvFile:
             writer = csv.writer(csvFile,
                                 delimiter=self.delimiter,
                                 doublequote=self.doublequote,
@@ -163,7 +174,7 @@ class Csv(Document):
             data = self.arrayData()
             for row in data:
                 writer.writerow(row)
-        super(Csv, self).save()
+        super(Csv, self).saveACopy(filename)
 
 
 class Xsl(Document):
@@ -176,7 +187,7 @@ class Xsl(Document):
         self.sheetname = sheetname
 
     def load(self, linesToLoad=-1):
-        self.data_ = []
+        data = []
         wb = xlrd.open_workbook(self.filename)
         sh = wb.sheet_by_name(self.sheetname)
         for rownum in xrange(sh.nrows):
@@ -195,13 +206,14 @@ class Xsl(Document):
                     get_col = unicode(cell_value)
                 print cell_value
                 print get_col
-                self.data_.append(QString(unicode(get_col)))
+                data.append(QString(unicode(get_col)))
 ## hay que 'pulir' la conversion de cualquier tipo a cadena
 ## self.data_.append([QString(value) for value in sh.row_values(rownum)])
 ## http://stackoverflow.com/questions/2739989/reading-numeric-excel-data-as-text-using-xlrd-in-python/2740525
 ## http://stackoverflow.com/questions/17827471/python-xlrd-discerning-dates-from-floats
 ###            self.data_.append([QString(unicode(value)) for value in sh.row_values(rownum)])
+        self.setArrayData(data)
         super(Xsl, self).load()
 
-    def save(self):
+    def save(self, newFilename=None):
         pass

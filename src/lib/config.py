@@ -3,12 +3,16 @@ from lib.helpers.iniconfig import IniConfig
 
 class Config(IniConfig):
 
-    # file section
+    # File section
     file_useCsvWizard = IniConfig.iniproperty('file', 'useCsvWizard', True)
     file_recent = IniConfig.iniproperty('file', 'recent', [])
     file_files = IniConfig.iniproperty('file', 'files', [])
 
-    # tools section
+    # Recent Files section
+    recentfiles_check = IniConfig.iniproperty('recentfiles', 'checkRecentFiles', False)
+    recentfiles_maxEntries = IniConfig.iniproperty('recentfiles', 'maxEntries', 20)
+
+    # Tools section
     tools_searches = IniConfig.iniproperty('tools', 'searches', [])
     tools_filterFiles = IniConfig.iniproperty('tools', 'filterFiles', [])
     tools_favFolders = IniConfig.iniproperty('tools', 'favFolders', [])
@@ -19,7 +23,7 @@ class Config(IniConfig):
     tools_showColumnSize = IniConfig.iniproperty('tools', 'showColumnSize', True)
     tools_showColumnDateModified = IniConfig.iniproperty('tools', 'showColumnDateModified', True)
 
-    # config section
+    # Config section
     config_restore = IniConfig.iniproperty('config', 'restore', True)
     config_headerrow = IniConfig.iniproperty('config', 'headerrow', True)
 

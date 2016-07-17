@@ -454,8 +454,11 @@ class CommandSheet(QObject):
     def arrayData(self):
         return self.sheet.arrayData()
 
-    def setArrayData(self, arrayData):
+    def commandClear(self):
         self.stack.clear()
+
+    def setArrayData(self, arrayData):
+        self.commandClear()
         self.sheet.setArrayData(arrayData)
 
     def rowCount(self):
