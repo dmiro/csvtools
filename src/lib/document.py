@@ -7,6 +7,17 @@ from PyQt4.QtCore import *
 import io
 import cchardet
 from lib.commandsheet import CommandSheet
+from datetime import datetime
+import lib.helper as helper
+
+
+class NewFilenameFactory(object):
+    newIdFilename = 1
+    @classmethod
+    def getNewFilename(cls):
+        newFilename = 'new {}'.format(cls.newIdFilename)
+        cls.newIdFilename = cls.newIdFilename + 1
+        return newFilename
 
 
 class QABCMeta(pyqtWrapperType, ABCMeta):   # problem in your case is that the classes you try to inherit from
@@ -19,6 +30,7 @@ class Document(CommandSheet):
 
     loadRequested = pyqtSignal()
     saveRequested = pyqtSignal()
+    newIdFilename = 1
 
     def __init__(self,
                  filename,
@@ -29,26 +41,43 @@ class Document(CommandSheet):
         self.encoding_ = ''
         self.canLoad = True
         self.canSave = False
+        self.isNew = False
 
     @abstractmethod
     def new(self):
-        self.loadRequested.emit()
+        self.encoding_ = 'UTF-8'
+        self.isNew = True
 
     @abstractmethod
     def load(self, linesToLoad=-1):
+        self.isNew = False
         self.loadRequested.emit()
 
     @abstractmethod
     def save(self, newFilename=None):
+        self.isNew = False
         self.saveRequested.emit()
 
     @abstractmethod
     def saveACopy(self, filename):
         self.saveRequested.emit()
 
-    @property
     def encoding(self):
         return self.encoding_
+
+    def size(self):
+        if self.isNew:
+            return 0
+        else:
+            return helper.get_size(self.filename)
+
+    def modified(self):
+        if self.isNew:
+            return 0
+        else:
+            modifiedDateTime = QDateTime(datetime.fromtimestamp(os.path.getmtime(self.filename)))
+            strDateTime = modifiedDateTime.toString(Qt.SystemLocaleShortDate)
+            return unicode(strDateTime)
 
     def toJson(self):
         """Convert Document object to json string.
@@ -114,7 +143,7 @@ class Csv(Document):
         self.skipinitialspace= skipinitialspace
 
     def new(self):
-        pass
+        super(Csv, self).new()
 
     # http://stackoverflow.com/questions/17245415/read-and-write-csv-files-including-unicode-with-python-2-7
     # https://github.com/jdunck/python-unicodecsv
@@ -185,6 +214,9 @@ class Xsl(Document):
                  **kvparams):
         super(Xsl, self).__init__(filename)
         self.sheetname = sheetname
+
+    def new(self):
+        pass
 
     def load(self, linesToLoad=-1):
         data = []

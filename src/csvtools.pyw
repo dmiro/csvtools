@@ -11,7 +11,8 @@ from widgets.status import QStatus
 from widgets.search import QSearch
 from widgets.opencsvfiledialog import QOpenCsvFileDialog
 from widgets.csvwiz import QCsvWiz
-from lib.document import Xsl, Csv
+from widgets.helpers.qtabbardoubleclick import QTabBarDoubleClick
+from lib.document import Xsl, Csv, NewFilenameFactory
 from lib.config import config
 from lib.helper import waiting, get_excel_sheets, QStringToUnicode
 import lib.images_rc
@@ -26,12 +27,20 @@ class MainWindow(QMainWindow):
     #
 
     @waiting
-    def addCsv(self, file_, insertIndex=-1):
-        file_ = str(file_)
-        for index in range(self.tab.count()):
-            if file_ in self.tab.tabToolTip(index):
-                self.tab.setCurrentIndex(index)
-                return
+    def addCsv(self, file_=None, insertIndex=-1):
+
+        # file exist
+        if file_:
+            file_ = str(file_)
+            for index in range(self.tab.count()):
+                if file_ in self.tab.tabToolTip(index):
+                    self.tab.setCurrentIndex(index)
+                    return
+        # is new file
+        else:
+            file_ = ''
+
+        # import xsl
         hook = file_.rfind('#')
         if hook > -1:
             sheetname = file_[hook+1:]
@@ -39,10 +48,19 @@ class MainWindow(QMainWindow):
             xslDoc = Xsl(excelfile, sheetname)
             xslDoc.load()
             csv = QCsv(xslDoc)
-        else:
+        # open csv
+        elif file_:
             csvDoc = Csv(file_)
             csvDoc.load()
             csv = QCsv(csvDoc)
+        # new csv
+        else:
+            file_ = NewFilenameFactory.getNewFilename()
+            csvDoc = Csv(file_)
+            csvDoc.new()
+            csv = QCsv(csvDoc)
+
+        # add file to tab
         csv.selectionChanged_.connect(self.csvSelectionChangedEvent)
         filename = os.path.basename(file_)
         if insertIndex > -1:
@@ -51,9 +69,12 @@ class MainWindow(QMainWindow):
             index = self.tab.addTab(csv, filename)
         self.tab.setTabToolTip(index, file_)
         self.tab.setCurrentIndex(index)
-        self.addRecentFile(file_)
-        self.refreshRecentFileActions()
-        self.saveSessionFile()
+
+        # add file to recent files
+        if not csv.document.isNew:
+            self.addRecentFile(file_)
+            self.refreshRecentFileActions()
+            self.saveSessionFile()
 
     def reload(self, csv):
         @waiting
@@ -85,6 +106,16 @@ class MainWindow(QMainWindow):
             if warnings:
                 report = QReport(warnings)
                 report.exec_()
+
+    def newCsv(self):
+        warnings = []
+        try:
+            self.addCsv()
+        except Exception, e:
+            warnings.append('Error : {0}'.format(e))
+        if warnings:
+            report = QReport(warnings)
+            report.exec_()
 
     def emptyRecentFiles(self):
         """empty recent files and refresh menu
@@ -196,6 +227,11 @@ class MainWindow(QMainWindow):
         if filename:
             self.importExcelAction(filename)
 
+    def newFileAction(self):
+        """new csv
+        """
+        self.newCsv()
+
     def openDialogAction(self):
         """open csv dialog
         """
@@ -275,7 +311,10 @@ class MainWindow(QMainWindow):
 
     def saveFileAction(self):
         csv = self.tab.currentWidget()
-        csv.document.save()
+        if csv.document.isNew:
+            self.saveAsFileAction()
+        else:
+            csv.document.save()
         self.csvSelectionChangedEvent()
 
     def saveAsFileAction(self):
@@ -329,6 +368,10 @@ class MainWindow(QMainWindow):
         """
         dialog = Preferences(self)
         dialog.exec_()
+        # some preferences need updating widgets parameters
+        self.tab.setMovable(not config.tabbar_lock)
+        self.tab.setTabsClosable(config.tabbar_showclosebutton)
+        self.tab.resize(1,1)
 
     #
     # help menu action methods
@@ -485,7 +528,7 @@ class MainWindow(QMainWindow):
         self.newFile = QAction(QIcon(':images/new.png'), self.tr('&New'), self)
         self.newFile.setShortcut(QKeySequence.New)
         self.newFile.setStatusTip(self.tr('New Csv File'))
-        #self.openFile.triggered.connect(self.newFileAction)
+        self.newFile.triggered.connect(self.newFileAction)
 
         # open file action
         self.openFile = QAction(QIcon(':images/open.png'), self.tr('&Open'), self)
@@ -575,8 +618,6 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction(self.closeAllFiles)
         self.fileMenu.addAction(self.closeAllButThis)
         self.recent = self.fileMenu.addMenu(self.tr('Recent Files'))
-        if config.recentfiles_check:
-            self.checkRecentFiles()
         self.refreshRecentFileActions()
         self.fileMenu.addSeparator()
         self.copyToClipboardMenu = self.fileMenu.addMenu(self.tr('Copy to Clipboard'))
@@ -687,17 +728,23 @@ class MainWindow(QMainWindow):
         index = self.toolTab.addTab(self.search, QIcon(':images/search.png'), 'Search')
         self.toolTab.setTabToolTip(index, 'Search')
 
+    def tabBarDoubleClickEvent(self, index):
+        if config.tabbar_doubleclicktoclose and index > -1:
+            self.tabCloseRequestedEvent(index)
+
     def createCsvTab(self):
         """add tab widget for csv widgets
         """
         self.tab = QTabWidget()
-        self.tab.setMovable(True)
-        self.tab.setTabsClosable(True)
+        self.tab.setTabBar(QTabBarDoubleClick())
+        self.tab.setMovable(not config.tabbar_lock)
+        self.tab.setTabsClosable(config.tabbar_showclosebutton)
         self.tab.tabCloseRequested.connect(self.tabCloseRequestedEvent)
         self.tab.currentChanged.connect(self.tabCurrentChangedEvent)
         # set context tabbar menu event
         self.tab.tabBar().setContextMenuPolicy(Qt.CustomContextMenu)
         self.tab.tabBar().customContextMenuRequested.connect(self.tabBarcustomContextMenuRequestedEvent)
+        self.tab.tabBar().doubleClick.connect(self.tabBarDoubleClickEvent)
         # set tab moved event
         self.tab.tabBar().tabMoved.connect(self.tabBartabMovedEvent)
 
@@ -719,6 +766,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self.tr("CSV Tools"))
         self.setAcceptDrops(True)
         self.resize(800, 400)
+
+        # check recent files
+        if config.recentfiles_check:
+            self.checkRecentFiles()
 
         # add widgets
         self.createMenus()

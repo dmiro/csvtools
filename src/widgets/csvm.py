@@ -9,7 +9,6 @@ import lib.imports
 import lib.images_rc
 from widgets.qradiobuttondialog import QRadioButtonDialog
 from lib.pointsizes import Pointsizes
-from datetime import datetime
 import os
 
 ##class NumberSortModel(QSortFilterProxyModel):
@@ -1362,17 +1361,15 @@ class QCsv(QTableView):
 
     def encodingValue(self):
         """encoding of document"""
-        return self.document.encoding
+        return self.document.encoding()
 
     def sizeValue(self):
         """size file in bytes of document"""
-        return helper.get_size(self.document.filename)
+        return self.document.size()
 
     def modifiedValue(self):
         """last modified date and time of document"""
-        modifiedDateTime = QDateTime(datetime.fromtimestamp(os.path.getmtime(self.document.filename)))
-        strDateTime = modifiedDateTime.toString(Qt.SystemLocaleShortDate)
-        return unicode(strDateTime)
+        return self.document.modified()
 
     def linesValue(self):
         """lines number of document"""

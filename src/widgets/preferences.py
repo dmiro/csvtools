@@ -16,12 +16,18 @@ class Preferences(QDialog):
         self.config_headerrow.setChecked(config.config_headerrow)
         self.recentfiles_check.setChecked(config.recentfiles_check)
         self.recentfiles_maxEntries.setValue(config.recentfiles_maxEntries)
+        self.tabbar_showclosebutton.setChecked(config.tabbar_showclosebutton)
+        self.tabbar_doubleclicktoclose.setChecked(config.tabbar_doubleclicktoclose)
+        self.tabbar_lock.setChecked(config.tabbar_lock)
 
     def __saveConfig(self):
         config.config_restore = self.config_restore.checkState() == Qt.Checked
         config.config_headerrow = self.config_headerrow.checkState() == Qt.Checked
         config.recentfiles_check = self.recentfiles_check.checkState() == Qt.Checked
         config.recentfiles_maxEntries = self.recentfiles_maxEntries.value()
+        config.tabbar_showclosebutton = self.tabbar_showclosebutton.checkState() == Qt.Checked
+        config.tabbar_doubleclicktoclose = self.tabbar_doubleclicktoclose.checkState() == Qt.Checked
+        config.tabbar_lock = self.tabbar_lock.checkState() == Qt.Checked
 
     def __acceptDialog(self):
         self.__saveConfig()
@@ -45,7 +51,7 @@ class Preferences(QDialog):
         tabs.setTabBar(QFingerTabWidget(width=75, height=25))
         tabs.setTabPosition(QTabWidget.West)
 
-        # general
+        # General
         general = QWidget()
         tabs.addTab(general, self.tr('General'))
         self.config_language = QComboBox()
@@ -53,6 +59,17 @@ class Preferences(QDialog):
         grid = QFormLayout(parent=general)
         grid.addRow(self.tr('Language'), self.config_language)
         grid.addRow(self.tr('Detect format'), self.config_autodetect)
+
+        # Tab bar
+        tabBar = QWidget()
+        tabs.addTab(tabBar, self.tr('Tab Bar'))
+        self.tabbar_showclosebutton = QCheckBox('')
+        self.tabbar_doubleclicktoclose = QCheckBox('')
+        self.tabbar_lock = QCheckBox('')
+        grid = QFormLayout(parent=tabBar)
+        grid.addRow(self.tr('Show close button on each tab'), self.tabbar_showclosebutton)
+        grid.addRow(self.tr('Double click to close document'), self.tabbar_doubleclicktoclose)
+        grid.addRow(self.tr('Lock'), self.tabbar_lock)
 
         # Recent Files
         recentFiles = QWidget()
@@ -64,14 +81,14 @@ class Preferences(QDialog):
         grid.addRow(self.tr('Check at launch time'), self.recentfiles_check)
         grid.addRow(self.tr('Max. number of entries'), self.recentfiles_maxEntries)
 
-        # backup
+        # Backup
         backup = QWidget()
         tabs.addTab(backup, self.tr('Backup'))
         self.config_restore = QCheckBox('')
         grid = QFormLayout(parent=backup)
         grid.addRow(self.tr('Restore Session'), self.config_restore)
 
-        # view
+        # View
         backup = QWidget()
         tabs.addTab(backup, self.tr('View'))
         self.config_headerrow = QCheckBox('')

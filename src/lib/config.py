@@ -12,6 +12,11 @@ class Config(IniConfig):
     recentfiles_check = IniConfig.iniproperty('recentfiles', 'checkRecentFiles', False)
     recentfiles_maxEntries = IniConfig.iniproperty('recentfiles', 'maxEntries', 20)
 
+    # Tab Bar section
+    tabbar_showclosebutton = IniConfig.iniproperty('tabbar', 'showclosebutton', True)
+    tabbar_doubleclicktoclose  = IniConfig.iniproperty('tabbar', 'doubleclicktoclose', False)
+    tabbar_lock  = IniConfig.iniproperty('tabbar', 'lock', False)
+
     # Tools section
     tools_searches = IniConfig.iniproperty('tools', 'searches', [])
     tools_filterFiles = IniConfig.iniproperty('tools', 'filterFiles', [])
