@@ -30,7 +30,6 @@ class Document(CommandSheet):
 
     loadRequested = pyqtSignal()
     saveRequested = pyqtSignal()
-    newIdFilename = 1
 
     def __init__(self,
                  filename,

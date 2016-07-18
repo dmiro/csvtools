@@ -436,13 +436,13 @@ class MainWindow(QMainWindow):
             self.closeAllButThis.setDisabled(False)
             self.closeAllFiles.setDisabled(False)
             self.closeFile.setDisabled(False)
-            self.filePathToClipboard.setDisabled(False)
+            self.filePathToClipboard.setDisabled(csv.document.isNew)
             self.allFilePathsToClipboard.setDisabled(False)
             self.saveFile.setDisabled(False)
             self.saveAllFiles.setDisabled(False)
             self.saveCopyFile.setDisabled(False)
             self.saveAsFile.setDisabled(False)
-            self.reloadFile.setDisabled(False)
+            self.reloadFile.setDisabled(csv.document.isNew)
         else:
             try:
                 self.editMenu.clear()

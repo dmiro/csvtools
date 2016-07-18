@@ -1290,6 +1290,18 @@ class QCsv(QTableView):
         if len(self.selectedIndexes()) > 0:
             self.contextMenuRequested.emit(self.selectedIndexes(), self.mapToGlobal(point))
 
+    def _customContextMenuRequestedHorizontalHeaderEvent(self, point):
+        globalPoint = self.mapToGlobal(point)
+        action = self.editColumnsMenu.exec_(globalPoint)
+        if action:
+            self._editAction(action)
+
+    def _customContextMenuRequestedVerticalHeaderEvent(self, point):
+        globalPoint = self.mapToGlobal(point)
+        action = self.editRowsMenu.exec_(globalPoint)
+        if action:
+            self._editAction(action)
+
     def _redoTextChanged(self, msg, enable):
         self.redoEdit.setEnabled(enable)
         self.redoEdit.setText('Redo {}'.format(msg))
@@ -1556,6 +1568,16 @@ class QCsv(QTableView):
         # tableview
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._customContextMenuRequestedEvent)
+
+        # tableview horizontal header
+        header = self.horizontalHeader()
+        header.setContextMenuPolicy(Qt.CustomContextMenu)
+        header.customContextMenuRequested.connect(self._customContextMenuRequestedHorizontalHeaderEvent)
+
+        # tableview horizontal header
+        header = self.verticalHeader()
+        header.setContextMenuPolicy(Qt.CustomContextMenu)
+        header.customContextMenuRequested.connect(self._customContextMenuRequestedVerticalHeaderEvent)
 
         # clipboard
         clipboard = QApplication.clipboard()
