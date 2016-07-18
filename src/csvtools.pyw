@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
         @waiting
         def _reload():
             csv.document.load()
-            self.csvSelectionChangedEvent()
+            self.refreshStatusTab()
 
         if csv.document.hasChanges():
             reloadMsg = self.tr('Are you sure you want to reload the current file and lose your changes?')
@@ -174,6 +174,22 @@ class MainWindow(QMainWindow):
         result = csv.search(text, matchMode, matchCaseOption)
         if len(result) > 0:
             return {'tabText':tabText, 'tabToolTip': tabToolTip, 'result':result}
+
+    def refreshStatusTab(self, tabIndex=None):
+        if tabIndex == None:
+            tabIndex = self.tab.currentIndex()
+        tabBar = self.tab.tabBar()
+        csv = self.tab.widget(tabIndex)
+        if csv:
+            if csv.hasChanges():
+                tabBar.setTabTextColor(tabIndex, Qt.red)
+            else:
+                tabBar.setTabTextColor(tabIndex, Qt.black)
+            self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
+                                     csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
+                                     csv.averageValue(), csv.countChanges(), csv.sumValue(), csv.pointSizeValue())
+        else:
+            self.statusBar.setValues(None, None, None, None, None, None, None, None, None, None)
 
     #
     # drag and drop events
@@ -315,7 +331,7 @@ class MainWindow(QMainWindow):
             self.saveAsFileAction()
         else:
             csv.document.save()
-        self.csvSelectionChangedEvent()
+        self.refreshStatusTab()
 
     def saveAsFileAction(self):
         csv = self.tab.currentWidget()
@@ -328,7 +344,7 @@ class MainWindow(QMainWindow):
             index = self.tab.currentIndex()
             self.tab.setTabText(index, os.path.basename(filename))
             self.tab.setTabToolTip(index, filename)
-            self.csvSelectionChangedEvent()
+            self.refreshStatusTab(index)
             self.addRecentFile(filename)
             self.refreshRecentFileActions()
             self.saveSessionFile()
@@ -343,7 +359,24 @@ class MainWindow(QMainWindow):
             csv.document.saveACopy(filename)
 
     def saveAllFileAction(self):
-        print 'saveAllFileAction'
+        for index in range(self.tab.count()):
+            csv = self.tab.widget(index)
+            if csv.document.hasChanges():
+                if csv.document.isNew:
+                    filename = QFileDialog.getSaveFileName(self, self.tr('Save as file'),
+                                                           csv.document.filename,
+                                                           "Csv Files (*.csv)")
+                    if filename:
+                        filename = str(filename)
+                        csv.document.save(filename)
+                        self.tab.setTabText(index, os.path.basename(filename))
+                        self.tab.setTabToolTip(index, filename)
+                        self.addRecentFile(filename)
+                        self.refreshRecentFileActions()
+                        self.saveSessionFile()
+                else:
+                    csv.document.save()
+                self.refreshStatusTab(index)
 
     #
     # tool menu action methods
@@ -388,19 +421,7 @@ class MainWindow(QMainWindow):
     #
 
     def csvSelectionChangedEvent(self):
-        csv = self.tab.currentWidget()
-        if csv:
-            tabIndex = self.tab.currentIndex()
-            tabBar = self.tab.tabBar()
-            if csv.hasChanges():
-                tabBar.setTabTextColor(tabIndex, Qt.red)
-            else:
-                tabBar.setTabTextColor(tabIndex, Qt.black)
-            self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
-                                     csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
-                                     csv.averageValue(), csv.countChanges(), csv.sumValue(), csv.pointSizeValue())
-        else:
-            self.statusBar.setValues(None, None, None, None, None, None, None, None, None, None)
+        self.refreshStatusTab()
 
     def statusBarChangedFontSizeEvent(self, fontSize):
         csv = self.tab.currentWidget()
@@ -460,7 +481,7 @@ class MainWindow(QMainWindow):
             self.reloadFile.setDisabled(True)
 
         # and finally refresh status bar
-        self.csvSelectionChangedEvent()
+        self.refreshStatusTab()
 
     def tabBarcustomContextMenuRequestedEvent(self, point):
         tab = self.tab.tabBar()
