@@ -4,6 +4,7 @@ import lib.images_rc
 import sys
 from lib.config import config
 from widgets.helpers.qfingertabwidget import QFingerTabWidget
+from widgets.helpers.qcolorbutton import QColorButton
 
 class Preferences(QDialog):
 
@@ -92,8 +93,10 @@ class Preferences(QDialog):
         backup = QWidget()
         tabs.addTab(backup, self.tr('View'))
         self.config_headerrow = QCheckBox('')
+        self.config_colorborderdata = QColorButton()
         grid = QFormLayout(parent=backup)
         grid.addRow(self.tr('Header Row'), self.config_headerrow)
+        grid.addRow(self.tr('Color border data'), self.config_colorborderdata)
 
         return tabs
 
