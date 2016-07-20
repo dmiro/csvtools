@@ -22,6 +22,8 @@ class Preferences(QDialog):
         self.view_headerrow.setChecked(config.view_headerrow)
         self.view_showborderdata.setChecked(config.view_showborderdata)
         self.view_colorborderdata.setColor(config.view_colorborderdata)
+        self.view_widthborderdata.setValue(config.view_widthborderdata)
+        self.__checkDependenciesPreferences()
 
     def __saveConfig(self):
         config.config_restore = self.config_restore.checkState() == Qt.Checked
@@ -33,10 +35,17 @@ class Preferences(QDialog):
         config.view_headerrow = self.view_headerrow.checkState() == Qt.Checked
         config.view_showborderdata = self.view_showborderdata.checkState() == Qt.Checked
         config.view_colorborderdata = self.view_colorborderdata.color().rgb()
+        config.view_widthborderdata = self.view_widthborderdata.value()
 
     def __acceptDialog(self):
         self.__saveConfig()
         self.accept()
+
+    def __checkDependenciesPreferences(self):
+        # 'show border data' dependencies
+        checked = self.view_showborderdata.checkState() == Qt.Checked
+        self.view_colorborderdata.setEnabled(checked)
+        self.view_widthborderdata.setEnabled(checked)
 
     def __addButtonBox(self):
         acceptButton = QPushButton(self.tr('Accept'), self)
@@ -98,13 +107,15 @@ class Preferences(QDialog):
         tabs.addTab(backup, self.tr('View'))
         self.view_headerrow = QCheckBox('')
         self.view_showborderdata = QCheckBox('')
-        ##self.view_showborderdata.clicked
+        self.view_showborderdata.clicked.connect(self.__checkDependenciesPreferences)
         self.view_colorborderdata = QColorBox(defaultColor=Qt.red)
-        ##self.view_colorborderdata.setEnabled(False)
+        self.view_widthborderdata = QSpinBox()
+        self.view_widthborderdata.setRange(1, 5)
         grid = QFormLayout(parent=backup)
-        grid.addRow(self.tr('Header Row'), self.view_headerrow)
+        grid.addRow(self.tr('Show header Row'), self.view_headerrow)
         grid.addRow(self.tr('Show border data'), self.view_showborderdata)
         grid.addRow(self.tr('Color border data'), self.view_colorborderdata)
+        grid.addRow(self.tr('Width border data'), self.view_widthborderdata)
 
         return tabs
 

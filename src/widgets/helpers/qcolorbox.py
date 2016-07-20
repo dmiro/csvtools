@@ -8,7 +8,7 @@ class QColorBox(QFrame):
     Left-clicking the button shows the color-chooser, while
     right-clicking resets the color to default color.
     """
- 
+
     colorChanged = pyqtSignal()
 
     def __init__(self, parent=None, defaultColor=Qt.white):
@@ -20,7 +20,7 @@ class QColorBox(QFrame):
         self.setColor(self.__defaultColor)
         self.setFixedHeight(20)
         self.setFrameStyle(1)
- 
+
     def setColor(self, color):
         if color != self.__color:
             self.__color = QColor(color)

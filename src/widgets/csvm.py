@@ -70,17 +70,19 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
             model = index.model()
             if model:
                 # set border data area
-                rowIndex = index.row()
-                columnIndex = index.column()
-                columnDataCount = model.columnDataCount()-1
-                rowDataCount = model.rowDataCount()-1
-                borderColor = QColor(config.view_colorborderdata)
-                if (rowDataCount == rowIndex) and (columnIndex <= columnDataCount):
-                    painter.setPen(QPen(borderColor, 1, style=Qt.DotLine))
-                    painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
-                if (columnDataCount == columnIndex) and (rowIndex <= rowDataCount):
-                    painter.setPen(QPen(borderColor, 1, style=Qt.DotLine))
-                    painter.drawLine(option.rect.topRight(), option.rect.bottomRight())
+                if config.view_showborderdata:
+                    rowIndex = index.row()
+                    columnIndex = index.column()
+                    columnDataCount = model.columnDataCount()-1
+                    rowDataCount = model.rowDataCount()-1
+                    borderColor = QColor(config.view_colorborderdata)
+                    borderWith = config.view_widthborderdata
+                    if (rowDataCount == rowIndex) and (columnIndex <= columnDataCount):
+                        painter.setPen(QPen(borderColor, borderWith, style=Qt.DotLine))
+                        painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
+                    if (columnDataCount == columnIndex) and (rowIndex <= rowDataCount):
+                        painter.setPen(QPen(borderColor, borderWith, style=Qt.DotLine))
+                        painter.drawLine(option.rect.topRight(), option.rect.bottomRight())
                 # set border 'copy to clipboard'
                 drawLeft, drawRight, drawTop, drawBottom = self._drawLinesBorderSelectionRanges(index)
                 tableView = self.parent()

@@ -2,6 +2,7 @@ from lib.helpers.iniconfig import IniConfig
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
+
 class Config(IniConfig):
 
     # File section
@@ -36,6 +37,7 @@ class Config(IniConfig):
     view_headerrow = IniConfig.iniproperty('view', 'headerrow', True)
     view_showborderdata = IniConfig.iniproperty('view', 'showborderdata', True)
     view_colorborderdata = IniConfig.iniproperty('view', 'colorborderdata', QColor(Qt.red).rgb())
+    view_widthborderdata = IniConfig.iniproperty('view', 'widthborderdata', 1)
 
 #
 # global
