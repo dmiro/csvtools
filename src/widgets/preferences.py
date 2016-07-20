@@ -4,7 +4,7 @@ import lib.images_rc
 import sys
 from lib.config import config
 from widgets.helpers.qfingertabwidget import QFingerTabWidget
-from widgets.helpers.qcolorbutton import QColorButton
+from widgets.helpers.qcolorbox import QColorBox
 
 class Preferences(QDialog):
 
@@ -14,21 +14,25 @@ class Preferences(QDialog):
 
     def __loadConfig(self):
         self.config_restore.setChecked(config.config_restore)
-        self.config_headerrow.setChecked(config.config_headerrow)
         self.recentfiles_check.setChecked(config.recentfiles_check)
         self.recentfiles_maxEntries.setValue(config.recentfiles_maxEntries)
         self.tabbar_showclosebutton.setChecked(config.tabbar_showclosebutton)
         self.tabbar_doubleclicktoclose.setChecked(config.tabbar_doubleclicktoclose)
         self.tabbar_lock.setChecked(config.tabbar_lock)
+        self.view_headerrow.setChecked(config.view_headerrow)
+        self.view_showborderdata.setChecked(config.view_showborderdata)
+        self.view_colorborderdata.setColor(config.view_colorborderdata)
 
     def __saveConfig(self):
         config.config_restore = self.config_restore.checkState() == Qt.Checked
-        config.config_headerrow = self.config_headerrow.checkState() == Qt.Checked
         config.recentfiles_check = self.recentfiles_check.checkState() == Qt.Checked
         config.recentfiles_maxEntries = self.recentfiles_maxEntries.value()
         config.tabbar_showclosebutton = self.tabbar_showclosebutton.checkState() == Qt.Checked
         config.tabbar_doubleclicktoclose = self.tabbar_doubleclicktoclose.checkState() == Qt.Checked
         config.tabbar_lock = self.tabbar_lock.checkState() == Qt.Checked
+        config.view_headerrow = self.view_headerrow.checkState() == Qt.Checked
+        config.view_showborderdata = self.view_showborderdata.checkState() == Qt.Checked
+        config.view_colorborderdata = self.view_colorborderdata.color().rgb()
 
     def __acceptDialog(self):
         self.__saveConfig()
@@ -92,11 +96,15 @@ class Preferences(QDialog):
         # View
         backup = QWidget()
         tabs.addTab(backup, self.tr('View'))
-        self.config_headerrow = QCheckBox('')
-        self.config_colorborderdata = QColorButton()
+        self.view_headerrow = QCheckBox('')
+        self.view_showborderdata = QCheckBox('')
+        ##self.view_showborderdata.clicked
+        self.view_colorborderdata = QColorBox(defaultColor=Qt.red)
+        ##self.view_colorborderdata.setEnabled(False)
         grid = QFormLayout(parent=backup)
-        grid.addRow(self.tr('Header Row'), self.config_headerrow)
-        grid.addRow(self.tr('Color border data'), self.config_colorborderdata)
+        grid.addRow(self.tr('Header Row'), self.view_headerrow)
+        grid.addRow(self.tr('Show border data'), self.view_showborderdata)
+        grid.addRow(self.tr('Color border data'), self.view_colorborderdata)
 
         return tabs
 

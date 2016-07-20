@@ -1,5 +1,6 @@
 from lib.helpers.iniconfig import IniConfig
-
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 class Config(IniConfig):
 
@@ -30,7 +31,11 @@ class Config(IniConfig):
 
     # Config section
     config_restore = IniConfig.iniproperty('config', 'restore', True)
-    config_headerrow = IniConfig.iniproperty('config', 'headerrow', True)
+
+    # View section
+    view_headerrow = IniConfig.iniproperty('view', 'headerrow', True)
+    view_showborderdata = IniConfig.iniproperty('view', 'showborderdata', True)
+    view_colorborderdata = IniConfig.iniproperty('view', 'colorborderdata', QColor(Qt.red).rgb())
 
 #
 # global

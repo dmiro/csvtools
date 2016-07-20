@@ -74,11 +74,12 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
                 columnIndex = index.column()
                 columnDataCount = model.columnDataCount()-1
                 rowDataCount = model.rowDataCount()-1
+                borderColor = QColor(config.view_colorborderdata)
                 if (rowDataCount == rowIndex) and (columnIndex <= columnDataCount):
-                    painter.setPen(QPen(Qt.red, 1, style=Qt.DotLine))
+                    painter.setPen(QPen(borderColor, 1, style=Qt.DotLine))
                     painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
                 if (columnDataCount == columnIndex) and (rowIndex <= rowDataCount):
-                    painter.setPen(QPen(Qt.red, 1, style=Qt.DotLine))
+                    painter.setPen(QPen(borderColor, 1, style=Qt.DotLine))
                     painter.drawLine(option.rect.topRight(), option.rect.bottomRight())
                 # set border 'copy to clipboard'
                 drawLeft, drawRight, drawTop, drawBottom = self._drawLinesBorderSelectionRanges(index)
@@ -1126,7 +1127,7 @@ class QCsv(QTableView):
         self._viewMenu = QMenu(self.tr('View'))
         self.headerRowAction = self._viewMenu.addAction(self.tr('Header Row'))
         self.headerRowAction.setCheckable(True)
-        self.headerRowAction.setChecked(config.config_headerrow)
+        self.headerRowAction.setChecked(config.view_headerrow)
 
         # connect menu action
         self._viewMenu.triggered.connect(self._viewAction)
@@ -1509,7 +1510,7 @@ class QCsv(QTableView):
         self.document.saveRequested.connect(self.saveRequested)
         self.document.redoTextChanged.connect(self._redoTextChanged)
         self.document.undoTextChanged.connect(self._undoTextChanged)
-        model = QCsvModel(self.document, config.config_headerrow)
+        model = QCsvModel(self.document, config.view_headerrow)
         self.setModel(model)
 
     def viewMenu(self):
