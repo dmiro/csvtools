@@ -420,8 +420,9 @@ class MainWindow(QMainWindow):
     # event
     #
 
-    def csvSelectionChangedEvent(self):
-        self.refreshStatusTab()
+    def csvSelectionChangedEvent(self, csv):
+        index = self.tab.indexOf(csv)
+        self.refreshStatusTab(index)
 
     def statusBarChangedFontSizeEvent(self, fontSize):
         csv = self.tab.currentWidget()
@@ -468,6 +469,8 @@ class MainWindow(QMainWindow):
             try:
                 self.editMenu.clear()
                 self.editMenu.menuAction().setEnabled(False)
+                self.viewMenu.clear()
+                self.viewMenu.menuAction().setEnabled(False)
             except: pass
             self.closeAllButThis.setDisabled(True)
             self.closeAllFiles.setDisabled(True)
@@ -548,25 +551,25 @@ class MainWindow(QMainWindow):
         # new file action
         self.newFile = QAction(QIcon(':images/new.png'), self.tr('&New'), self)
         self.newFile.setShortcut(QKeySequence.New)
-        self.newFile.setStatusTip(self.tr('New Csv File'))
+        self.newFile.setStatusTip(self.tr('New Csv file'))
         self.newFile.triggered.connect(self.newFileAction)
 
         # open file action
         self.openFile = QAction(QIcon(':images/open.png'), self.tr('&Open'), self)
         self.openFile.setShortcut(QKeySequence.Open)
-        self.openFile.setStatusTip(self.tr('Open Csv File'))
+        self.openFile.setStatusTip(self.tr('Open Csv file'))
         self.openFile.triggered.connect(self.openDialogAction)
 
         # import file action
         self.importFile = QAction(QIcon(':images/import.png'), self.tr('Import'), self)
         self.importFile.setShortcut('Ctrl+I')
-        self.importFile.setStatusTip(self.tr('Import Excel File'))
+        self.importFile.setStatusTip(self.tr('Import Excel file'))
         self.importFile.triggered.connect(self.importDialogAction)
 
         # reload file action
         self.reloadFile = QAction(QIcon(':images/reload.png'), self.tr('Reload from Disk'), self)
         self.reloadFile.setShortcut('Ctrl+R')
-        self.reloadFile.setStatusTip(self.tr('Reload File from Disk'))
+        self.reloadFile.setStatusTip(self.tr('Reload file from disk'))
         self.reloadFile.triggered.connect(self.reloadFileAction)
 
         # Save
@@ -595,33 +598,33 @@ class MainWindow(QMainWindow):
         # close file action
         self.closeFile = QAction(QIcon(':images/close.png'), self.tr('Close'), self)
         self.closeFile.setShortcut(QKeySequence.Close)
-        self.closeFile.setStatusTip(self.tr('Close File'))
+        self.closeFile.setStatusTip(self.tr('Close file'))
         self.closeFile.triggered.connect(self.closeFileAction)
 
         # close all files action
         self.closeAllFiles = QAction(self.tr('Close All'), self)
-        self.closeAllFiles.setStatusTip(self.tr('Close All Files'))
+        self.closeAllFiles.setStatusTip(self.tr('Close all files'))
         self.closeAllFiles.triggered.connect(self.closeAllFilesAction)
 
         # Close All BUT This action
         self.closeAllButThis = QAction(self.tr('Close All BUT This'), self)
-        self.closeAllButThis.setStatusTip(self.tr('Close All BUT This'))
+        self.closeAllButThis.setStatusTip(self.tr('Close all except the file currently being edited'))
         self.closeAllButThis.triggered.connect(self.closeAllButThisFilesAction)
 
         # File Path to Clipboard action
         self.filePathToClipboard = QAction(self.tr('File Path to Clipboard'), self)
-        self.filePathToClipboard.setStatusTip(self.tr('File Path to Clipboard'))
+        self.filePathToClipboard.setStatusTip(self.tr('Copy file path to clipboard'))
         self.filePathToClipboard.triggered.connect(self.filePathToClipboardAction)
 
         # File Path to Clipboard action
         self.allFilePathsToClipboard = QAction(self.tr('All File Paths to Clipboard'), self)
-        self.allFilePathsToClipboard.setStatusTip(self.tr('All File Paths to Clipboard'))
+        self.allFilePathsToClipboard.setStatusTip(self.tr('Copy all file paths to clipboard'))
         self.allFilePathsToClipboard.triggered.connect(self.allFilePathsToClipboardAction)
 
         # exit action
         self.exitApp = QAction(QIcon(':images/exit.png'), self.tr('E&xit'), self)
         self.exitApp.setShortcut(QKeySequence.Quit)
-        self.exitApp.setStatusTip(self.tr('Exit'))
+        self.exitApp.setStatusTip(self.tr('Exit to Csvtools'))
         self.exitApp.triggered.connect(self.exitDialogAction)
 
         # file menu

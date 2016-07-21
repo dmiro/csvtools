@@ -1320,7 +1320,7 @@ class QCsv(QTableView):
     def selectionChanged (self, selected, deselected):
         """override method 'selectionChanged' to emit my own event
         """
-        self.selectionChanged_.emit()
+        self.selectionChanged_.emit(self)
         return super(QCsv, self).selectionChanged (selected, deselected)
 
     def timerEvent(self, timerEvent):
@@ -1344,7 +1344,7 @@ class QCsv(QTableView):
         value = self.pointSizeValue()
         value = Pointsizes.zoom(value, rate)
         self.setPointSize(value)
-        self.selectionChanged_.emit()
+        self.selectionChanged_.emit(self)
 
     def wheelEvent (self, wheelEvent):
         """ctrl + wheel mouse = zoom in/out
@@ -1363,7 +1363,7 @@ class QCsv(QTableView):
     # public
     #
 
-    selectionChanged_ = pyqtSignal()
+    selectionChanged_ = pyqtSignal(object)
     contextMenuRequested = pyqtSignal(list, QPoint)
 
     def hasChanges(self):

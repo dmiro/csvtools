@@ -5,6 +5,7 @@ import sys
 from lib.config import config
 from widgets.helpers.qfingertabwidget import QFingerTabWidget
 from widgets.helpers.qcolorbox import QColorBox
+from widgets.helpers.hline import HLine
 
 class Preferences(QDialog):
 
@@ -112,10 +113,12 @@ class Preferences(QDialog):
         self.view_widthborderdata = QSpinBox()
         self.view_widthborderdata.setRange(1, 5)
         grid = QFormLayout(parent=backup)
-        grid.addRow(self.tr('Show header Row'), self.view_headerrow)
+        grid.addRow(self.tr('Show header row to open file'), self.view_headerrow)
+        grid.addRow(HLine())
         grid.addRow(self.tr('Show border data'), self.view_showborderdata)
         grid.addRow(self.tr('Color border data'), self.view_colorborderdata)
         grid.addRow(self.tr('Width border data'), self.view_widthborderdata)
+        grid.addRow(HLine())
 
         return tabs
 
