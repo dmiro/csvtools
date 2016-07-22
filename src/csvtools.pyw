@@ -117,6 +117,49 @@ class MainWindow(QMainWindow):
             report = QReport(warnings)
             report.exec_()
 
+    def saveFile(self, csv):
+        if csv.document.isNew:
+            return self.saveAsFile(csv)
+        else:
+            csv.document.save()
+            self.refreshStatusTab()
+            return True
+
+    def saveAsFile(self, csv):
+        filename = QFileDialog.getSaveFileName(self, self.tr('Save as file'),
+                                               csv.document.filename,
+                                               "Csv Files (*.csv)")
+        if filename:
+            filename = str(filename)
+            csv.document.save(filename)
+            index = self.tab.indexOf(csv)
+            self.tab.setTabText(index, os.path.basename(filename))
+            self.tab.setTabToolTip(index, filename)
+            self.refreshStatusTab(index)
+            self.addRecentFile(filename)
+            self.refreshRecentFileActions()
+            self.saveSessionFile()
+            return True
+        else:
+            return False
+
+    def saveACopyAsFile(self, csv):
+        filename = QFileDialog.getSaveFileName(self, self.tr('Save a copy as file'),
+                                               csv.document.filename,
+                                               "Csv Files (*.csv)")
+        if filename:
+            filename = str(filename)
+            csv.document.saveACopy(filename)
+            return True
+        else:
+            return False
+
+    def saveAllFiles(self):
+        for index in range(self.tab.count()):
+            csv = self.tab.widget(index)
+            if csv.document.hasChanges():
+                self.saveFile(csv)
+
     def emptyRecentFiles(self):
         """empty recent files and refresh menu
         """
@@ -327,56 +370,19 @@ class MainWindow(QMainWindow):
 
     def saveFileAction(self):
         csv = self.tab.currentWidget()
-        if csv.document.isNew:
-            self.saveAsFileAction()
-        else:
-            csv.document.save()
-        self.refreshStatusTab()
+        return self.saveFile(csv)
 
     def saveAsFileAction(self):
         csv = self.tab.currentWidget()
-        filename = QFileDialog.getSaveFileName(self, self.tr('Save as file'),
-                                               csv.document.filename,
-                                               "Csv Files (*.csv)")
-        if filename:
-            filename = str(filename)
-            csv.document.save(filename)
-            index = self.tab.currentIndex()
-            self.tab.setTabText(index, os.path.basename(filename))
-            self.tab.setTabToolTip(index, filename)
-            self.refreshStatusTab(index)
-            self.addRecentFile(filename)
-            self.refreshRecentFileActions()
-            self.saveSessionFile()
+        return self.saveAsFile(csv)
 
     def saveACopyAsFileAction(self):
         csv = self.tab.currentWidget()
-        filename = QFileDialog.getSaveFileName(self, self.tr('Save a copy as file'),
-                                               csv.document.filename,
-                                               "Csv Files (*.csv)")
-        if filename:
-            filename = str(filename)
-            csv.document.saveACopy(filename)
+        return self.saveACopyAsFile(csv)
 
-    def saveAllFileAction(self):
-        for index in range(self.tab.count()):
-            csv = self.tab.widget(index)
-            if csv.document.hasChanges():
-                if csv.document.isNew:
-                    filename = QFileDialog.getSaveFileName(self, self.tr('Save as file'),
-                                                           csv.document.filename,
-                                                           "Csv Files (*.csv)")
-                    if filename:
-                        filename = str(filename)
-                        csv.document.save(filename)
-                        self.tab.setTabText(index, os.path.basename(filename))
-                        self.tab.setTabToolTip(index, filename)
-                        self.addRecentFile(filename)
-                        self.refreshRecentFileActions()
-                        self.saveSessionFile()
-                else:
-                    csv.document.save()
-                self.refreshStatusTab(index)
+    def saveAllFilesAction(self):
+        self.saveAllFiles()
+
 
     #
     # tool menu action methods
@@ -433,10 +439,24 @@ class MainWindow(QMainWindow):
         """
         csv = self.tab.widget(index)
         if csv:
-            csv.deleteLater()                       # Schedules this object for deletion.
-                                                    # It's very important to release your resources.
-        self.tab.removeTab(index)
-        self.saveSessionFile()
+            # before closing tab we need to check if save file
+            if csv.document.hasChanges():
+                saveFileMsg = self.tr('Save file {0}?'.format(csv.document.filename))
+                reply = QMessageBox.question(self, self.tr('Save'), saveFileMsg, QMessageBox.Yes, QMessageBox.No, QMessageBox.Cancel)
+                if reply == QMessageBox.Yes:
+                    closeTab = self.saveFile(csv)
+                elif reply == QMessageBox.No:
+                    closeTab = True
+                if reply == QMessageBox.Cancel:
+                    closeTab = False
+            else:
+                closeTab = True
+            # close tab
+            if closeTab:
+                csv.deleteLater()           # Schedules this object for deletion.
+                                            # It's very important to release your resources.
+                self.tab.removeTab(index)
+                self.saveSessionFile()
 
     def tabCurrentChangedEvent(self, index=0):
         """event when a selected tab is changed
@@ -455,16 +475,16 @@ class MainWindow(QMainWindow):
             menubar.insertMenu(toolsMenuAction, self.editMenu)
             self.viewMenu = csv.viewMenu()
             menubar.insertMenu(toolsMenuAction, self.viewMenu)
-            self.closeAllButThis.setDisabled(False)
-            self.closeAllFiles.setDisabled(False)
-            self.closeFile.setDisabled(False)
-            self.filePathToClipboard.setDisabled(csv.document.isNew)
-            self.allFilePathsToClipboard.setDisabled(False)
-            self.saveFile.setDisabled(False)
-            self.saveAllFiles.setDisabled(False)
-            self.saveCopyFile.setDisabled(False)
-            self.saveAsFile.setDisabled(False)
-            self.reloadFile.setDisabled(csv.document.isNew)
+            self.closeAllButThisOption.setDisabled(False)
+            self.closeAllFilesOption.setDisabled(False)
+            self.closeFileOption.setDisabled(False)
+            self.filePathToClipboardOption.setDisabled(csv.document.isNew)
+            self.allFilePathsToClipboardOption.setDisabled(False)
+            self.saveFileOption.setDisabled(False)
+            self.saveAllFilesOption.setDisabled(False)
+            self.saveCopyFileOption.setDisabled(False)
+            self.saveAsFileOption.setDisabled(False)
+            self.reloadFileOption.setDisabled(csv.document.isNew)
         else:
             try:
                 self.editMenu.clear()
@@ -472,16 +492,16 @@ class MainWindow(QMainWindow):
                 self.viewMenu.clear()
                 self.viewMenu.menuAction().setEnabled(False)
             except: pass
-            self.closeAllButThis.setDisabled(True)
-            self.closeAllFiles.setDisabled(True)
-            self.closeFile.setDisabled(True)
-            self.filePathToClipboard.setDisabled(True)
-            self.allFilePathsToClipboard.setDisabled(True)
-            self.saveFile.setDisabled(True)
-            self.saveAllFiles.setDisabled(True)
-            self.saveCopyFile.setDisabled(True)
-            self.saveAsFile.setDisabled(True)
-            self.reloadFile.setDisabled(True)
+            self.closeAllButThisOption.setDisabled(True)
+            self.closeAllFilesOption.setDisabled(True)
+            self.closeFileOption.setDisabled(True)
+            self.filePathToClipboardOption.setDisabled(True)
+            self.allFilePathsToClipboardOption.setDisabled(True)
+            self.saveFileOption.setDisabled(True)
+            self.saveAllFilesOption.setDisabled(True)
+            self.saveCopyFileOption.setDisabled(True)
+            self.saveAsFileOption.setDisabled(True)
+            self.reloadFileOption.setDisabled(True)
 
         # and finally refresh status bar
         self.refreshStatusTab()
@@ -494,14 +514,14 @@ class MainWindow(QMainWindow):
             self.tab.setCurrentIndex(tabIndex)
         # make and show menu
         menu = QMenu("Tab Menu")
-        menu.addAction(self.saveFile)
-        menu.addAction(self.saveAsFile)
-        menu.addAction(self.reloadFile)
-        menu.addAction(self.closeFile)
-        menu.addAction(self.closeAllFiles)
-        menu.addAction(self.closeAllButThis)
+        menu.addAction(self.saveFileOption)
+        menu.addAction(self.saveAsFileOption)
+        menu.addAction(self.reloadFileOption)
+        menu.addAction(self.closeFileOption)
+        menu.addAction(self.closeAllFilesOption)
+        menu.addAction(self.closeAllButThisOption)
         menu.addSeparator()
-        menu.addAction(self.filePathToClipboard)
+        menu.addAction(self.filePathToClipboardOption)
         menu.exec_(tab.mapToGlobal(point))
 
     def tabBartabMovedEvent(self, from_, to):
@@ -549,77 +569,77 @@ class MainWindow(QMainWindow):
         """add FILE menu
         """
         # new file action
-        self.newFile = QAction(QIcon(':images/new.png'), self.tr('&New'), self)
-        self.newFile.setShortcut(QKeySequence.New)
-        self.newFile.setStatusTip(self.tr('New Csv file'))
-        self.newFile.triggered.connect(self.newFileAction)
+        self.newFileOption = QAction(QIcon(':images/new.png'), self.tr('&New'), self)
+        self.newFileOption.setShortcut(QKeySequence.New)
+        self.newFileOption.setStatusTip(self.tr('New Csv file'))
+        self.newFileOption.triggered.connect(self.newFileAction)
 
         # open file action
-        self.openFile = QAction(QIcon(':images/open.png'), self.tr('&Open'), self)
-        self.openFile.setShortcut(QKeySequence.Open)
-        self.openFile.setStatusTip(self.tr('Open Csv file'))
-        self.openFile.triggered.connect(self.openDialogAction)
+        self.openFileOption = QAction(QIcon(':images/open.png'), self.tr('&Open'), self)
+        self.openFileOption.setShortcut(QKeySequence.Open)
+        self.openFileOption.setStatusTip(self.tr('Open Csv file'))
+        self.openFileOption.triggered.connect(self.openDialogAction)
 
         # import file action
-        self.importFile = QAction(QIcon(':images/import.png'), self.tr('Import'), self)
-        self.importFile.setShortcut('Ctrl+I')
-        self.importFile.setStatusTip(self.tr('Import Excel file'))
-        self.importFile.triggered.connect(self.importDialogAction)
+        self.importFileOption = QAction(QIcon(':images/import.png'), self.tr('Import'), self)
+        self.importFileOption.setShortcut('Ctrl+I')
+        self.importFileOption.setStatusTip(self.tr('Import Excel file'))
+        self.importFileOption.triggered.connect(self.importDialogAction)
 
         # reload file action
-        self.reloadFile = QAction(QIcon(':images/reload.png'), self.tr('Reload from Disk'), self)
-        self.reloadFile.setShortcut('Ctrl+R')
-        self.reloadFile.setStatusTip(self.tr('Reload file from disk'))
-        self.reloadFile.triggered.connect(self.reloadFileAction)
+        self.reloadFileOption = QAction(QIcon(':images/reload.png'), self.tr('Reload from Disk'), self)
+        self.reloadFileOption.setShortcut('Ctrl+R')
+        self.reloadFileOption.setStatusTip(self.tr('Reload file from disk'))
+        self.reloadFileOption.triggered.connect(self.reloadFileAction)
 
         # Save
-        self.saveFile = QAction(QIcon(':images/save.png'), self.tr('Save'), self)
-        self.saveFile.setShortcut('Ctrl+S')
-        self.saveFile.setStatusTip(self.tr('Save file'))
-        self.saveFile.triggered.connect(self.saveFileAction)
+        self.saveFileOption = QAction(QIcon(':images/save.png'), self.tr('Save'), self)
+        self.saveFileOption.setShortcut('Ctrl+S')
+        self.saveFileOption.setStatusTip(self.tr('Save file'))
+        self.saveFileOption.triggered.connect(self.saveFileAction)
 
         # Save As..
-        self.saveAsFile = QAction(self.tr('Save As..'), self)
-        self.saveAsFile.setShortcut('Ctrl+Alt+S')
-        self.saveAsFile.setStatusTip(self.tr('Save file as..'))
-        self.saveAsFile.triggered.connect(self.saveAsFileAction)
+        self.saveAsFileOption = QAction(self.tr('Save As..'), self)
+        self.saveAsFileOption.setShortcut('Ctrl+Alt+S')
+        self.saveAsFileOption.setStatusTip(self.tr('Save file as..'))
+        self.saveAsFileOption.triggered.connect(self.saveAsFileAction)
 
         # Save a Copy As..
-        self.saveCopyFile = QAction(self.tr('Save a Copy As..'), self)
-        self.saveCopyFile.setStatusTip(self.tr('Save a copy file as..'))
-        self.saveCopyFile.triggered.connect(self.saveACopyAsFileAction)
+        self.saveCopyFileOption = QAction(self.tr('Save a Copy As..'), self)
+        self.saveCopyFileOption.setStatusTip(self.tr('Save a copy file as..'))
+        self.saveCopyFileOption.triggered.connect(self.saveACopyAsFileAction)
 
         # Save All
-        self.saveAllFiles = QAction(self.tr('Save All'), self)
-        self.saveAllFiles.setShortcut('Ctrl+Shift+S')
-        self.saveAllFiles.setStatusTip(self.tr('Save all files'))
-        self.saveAllFiles.triggered.connect(self.saveAllFileAction)
+        self.saveAllFilesOption = QAction(self.tr('Save All'), self)
+        self.saveAllFilesOption.setShortcut('Ctrl+Shift+S')
+        self.saveAllFilesOption.setStatusTip(self.tr('Save all files'))
+        self.saveAllFilesOption.triggered.connect(self.saveAllFilesAction)
 
         # close file action
-        self.closeFile = QAction(QIcon(':images/close.png'), self.tr('Close'), self)
-        self.closeFile.setShortcut(QKeySequence.Close)
-        self.closeFile.setStatusTip(self.tr('Close file'))
-        self.closeFile.triggered.connect(self.closeFileAction)
+        self.closeFileOption = QAction(QIcon(':images/close.png'), self.tr('Close'), self)
+        self.closeFileOption.setShortcut(QKeySequence.Close)
+        self.closeFileOption.setStatusTip(self.tr('Close file'))
+        self.closeFileOption.triggered.connect(self.closeFileAction)
 
         # close all files action
-        self.closeAllFiles = QAction(self.tr('Close All'), self)
-        self.closeAllFiles.setStatusTip(self.tr('Close all files'))
-        self.closeAllFiles.triggered.connect(self.closeAllFilesAction)
+        self.closeAllFilesOption = QAction(self.tr('Close All'), self)
+        self.closeAllFilesOption.setStatusTip(self.tr('Close all files'))
+        self.closeAllFilesOption.triggered.connect(self.closeAllFilesAction)
 
         # Close All BUT This action
-        self.closeAllButThis = QAction(self.tr('Close All BUT This'), self)
-        self.closeAllButThis.setStatusTip(self.tr('Close all except the file currently being edited'))
-        self.closeAllButThis.triggered.connect(self.closeAllButThisFilesAction)
+        self.closeAllButThisOption = QAction(self.tr('Close All BUT This'), self)
+        self.closeAllButThisOption.setStatusTip(self.tr('Close all except the file currently being edited'))
+        self.closeAllButThisOption.triggered.connect(self.closeAllButThisFilesAction)
 
         # File Path to Clipboard action
-        self.filePathToClipboard = QAction(self.tr('File Path to Clipboard'), self)
-        self.filePathToClipboard.setStatusTip(self.tr('Copy file path to clipboard'))
-        self.filePathToClipboard.triggered.connect(self.filePathToClipboardAction)
+        self.filePathToClipboardOption = QAction(self.tr('File Path to Clipboard'), self)
+        self.filePathToClipboardOption.setStatusTip(self.tr('Copy file path to clipboard'))
+        self.filePathToClipboardOption.triggered.connect(self.filePathToClipboardAction)
 
         # File Path to Clipboard action
-        self.allFilePathsToClipboard = QAction(self.tr('All File Paths to Clipboard'), self)
-        self.allFilePathsToClipboard.setStatusTip(self.tr('Copy all file paths to clipboard'))
-        self.allFilePathsToClipboard.triggered.connect(self.allFilePathsToClipboardAction)
+        self.allFilePathsToClipboardOption = QAction(self.tr('All File Paths to Clipboard'), self)
+        self.allFilePathsToClipboardOption.setStatusTip(self.tr('Copy all file paths to clipboard'))
+        self.allFilePathsToClipboardOption.triggered.connect(self.allFilePathsToClipboardAction)
 
         # exit action
         self.exitApp = QAction(QIcon(':images/exit.png'), self.tr('E&xit'), self)
@@ -630,17 +650,17 @@ class MainWindow(QMainWindow):
         # file menu
         menubar = self.menuBar()
         self.fileMenu = menubar.addMenu(self.tr('&File'))
-        self.fileMenu.addAction(self.newFile)
-        self.fileMenu.addAction(self.openFile)
-        self.fileMenu.addAction(self.importFile)
-        self.fileMenu.addAction(self.reloadFile)
-        self.fileMenu.addAction(self.saveFile)
-        self.fileMenu.addAction(self.saveAsFile)
-        self.fileMenu.addAction(self.saveCopyFile)
-        self.fileMenu.addAction(self.saveAllFiles)
-        self.fileMenu.addAction(self.closeFile)
-        self.fileMenu.addAction(self.closeAllFiles)
-        self.fileMenu.addAction(self.closeAllButThis)
+        self.fileMenu.addAction(self.newFileOption)
+        self.fileMenu.addAction(self.openFileOption)
+        self.fileMenu.addAction(self.importFileOption)
+        self.fileMenu.addAction(self.reloadFileOption)
+        self.fileMenu.addAction(self.saveFileOption)
+        self.fileMenu.addAction(self.saveAsFileOption)
+        self.fileMenu.addAction(self.saveCopyFileOption)
+        self.fileMenu.addAction(self.saveAllFilesOption)
+        self.fileMenu.addAction(self.closeFileOption)
+        self.fileMenu.addAction(self.closeAllFilesOption)
+        self.fileMenu.addAction(self.closeAllButThisOption)
         self.recent = self.fileMenu.addMenu(self.tr('Recent Files'))
         self.refreshRecentFileActions()
         self.fileMenu.addSeparator()
@@ -649,8 +669,8 @@ class MainWindow(QMainWindow):
         self.fileMenu.addAction(self.exitApp)
 
         # clipboard submenu
-        self.copyToClipboardMenu.addAction(self.filePathToClipboard)
-        self.copyToClipboardMenu.addAction(self.allFilePathsToClipboard)
+        self.copyToClipboardMenu.addAction(self.filePathToClipboardOption)
+        self.copyToClipboardMenu.addAction(self.allFilePathsToClipboardOption)
 
     def addEditMenu(self):
         """add EDIT menu
@@ -813,7 +833,16 @@ class MainWindow(QMainWindow):
         # dock widget
         self.dockToolTab = QDockWidget("Tools", self)
         self.dockToolTab.setWidget(self.toolTab)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.dockToolTab)
+        if config.view_positiontools == 1:
+            self.addDockWidget(Qt.RightDockWidgetArea, self.dockToolTab)
+        elif config.view_positiontools == 2:
+            self.addDockWidget(Qt.TopDockWidgetArea, self.dockToolTab)
+        elif config.view_positiontools == 3:
+            self.addDockWidget(Qt.BottomDockWidgetArea, self.dockToolTab)
+        else:
+            self.addDockWidget(Qt.LeftDockWidgetArea, self.dockToolTab)
+        if not config.view_showtools:
+            self.dockToolTab.hide()
 
 
 #

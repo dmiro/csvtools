@@ -35,6 +35,8 @@ class Config(IniConfig):
 
     # View section
     view_headerrow = IniConfig.iniproperty('view', 'headerrow', True)
+    view_showtools = IniConfig.iniproperty('view', 'showtools', True)
+    view_positiontools = IniConfig.iniproperty('view', 'positiontools', 0)
     view_showborderdata = IniConfig.iniproperty('view', 'showborderdata', True)
     view_colorborderdata = IniConfig.iniproperty('view', 'colorborderdata', QColor(Qt.red).rgb())
     view_widthborderdata = IniConfig.iniproperty('view', 'widthborderdata', 1)

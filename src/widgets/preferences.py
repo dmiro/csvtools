@@ -21,9 +21,11 @@ class Preferences(QDialog):
         self.tabbar_doubleclicktoclose.setChecked(config.tabbar_doubleclicktoclose)
         self.tabbar_lock.setChecked(config.tabbar_lock)
         self.view_headerrow.setChecked(config.view_headerrow)
+        self.view_showtools.setChecked(config.view_showtools)
+        self.view_positiontools.setCurrentIndex(config.view_positiontools)
         self.view_showborderdata.setChecked(config.view_showborderdata)
         self.view_colorborderdata.setColor(config.view_colorborderdata)
-        self.view_widthborderdata.setValue(config.view_widthborderdata)
+        self.view_widthborderdata.setCurrentIndex(config.view_widthborderdata - 1)
         self.__checkDependenciesPreferences()
 
     def __saveConfig(self):
@@ -34,9 +36,11 @@ class Preferences(QDialog):
         config.tabbar_doubleclicktoclose = self.tabbar_doubleclicktoclose.checkState() == Qt.Checked
         config.tabbar_lock = self.tabbar_lock.checkState() == Qt.Checked
         config.view_headerrow = self.view_headerrow.checkState() == Qt.Checked
+        config.view_showtools = self.view_showtools.checkState() == Qt.Checked
+        config.view_positiontools = self.view_positiontools.currentIndex()
         config.view_showborderdata = self.view_showborderdata.checkState() == Qt.Checked
         config.view_colorborderdata = self.view_colorborderdata.color().rgb()
-        config.view_widthborderdata = self.view_widthborderdata.value()
+        config.view_widthborderdata = self.view_widthborderdata.currentIndex() + 1
 
     def __acceptDialog(self):
         self.__saveConfig()
@@ -107,18 +111,25 @@ class Preferences(QDialog):
         backup = QWidget()
         tabs.addTab(backup, self.tr('View'))
         self.view_headerrow = QCheckBox('')
+        self.view_showtools = QCheckBox('')
+        self.view_positiontools = QComboBox()
+        self.view_positiontools.addItems(['Left', 'Right', 'Top', 'Bottom'])
         self.view_showborderdata = QCheckBox('')
         self.view_showborderdata.clicked.connect(self.__checkDependenciesPreferences)
         self.view_colorborderdata = QColorBox(defaultColor=Qt.red)
-        self.view_widthborderdata = QSpinBox()
-        self.view_widthborderdata.setRange(1, 5)
+        self.view_widthborderdata = QComboBox()
+        self.view_widthborderdata.addItems(['1', '2', '3', '4', '5'])
         grid = QFormLayout(parent=backup)
         grid.addRow(self.tr('Show header row to open file'), self.view_headerrow)
+        grid.addRow(HLine())
+        grid.addRow(self.tr('Show tools to start'), self.view_showtools)
+        grid.addRow(self.tr('Initial position tools'), self.view_positiontools)
         grid.addRow(HLine())
         grid.addRow(self.tr('Show border data'), self.view_showborderdata)
         grid.addRow(self.tr('Color border data'), self.view_colorborderdata)
         grid.addRow(self.tr('Width border data'), self.view_widthborderdata)
         grid.addRow(HLine())
+
 
         return tabs
 
@@ -144,7 +155,7 @@ class Preferences(QDialog):
         # main
         self.setLayout(main)
         self.setWindowTitle(self.tr('Preferences'))
-        self.setFixedSize(400, 200)
+        self.setFixedSize(400, 300)
 
 
 
