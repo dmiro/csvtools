@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
         @waiting
         def _reload():
             csv.document.load()
-            self.refreshStatusTab()
+            self.refreshStatusTab(csv)
 
         if csv.document.hasChanges():
             reloadMsg = self.tr('Are you sure you want to reload the current file and lose your changes?')
@@ -122,7 +122,7 @@ class MainWindow(QMainWindow):
             return self.saveAsFile(csv)
         else:
             csv.document.save()
-            self.refreshStatusTab()
+            self.refreshStatusTab(csv)
             return True
 
     def saveAsFile(self, csv):
@@ -135,7 +135,7 @@ class MainWindow(QMainWindow):
             index = self.tab.indexOf(csv)
             self.tab.setTabText(index, os.path.basename(filename))
             self.tab.setTabToolTip(index, filename)
-            self.refreshStatusTab(index)
+            self.refreshStatusTab(csv)
             self.addRecentFile(filename)
             self.refreshRecentFileActions()
             self.saveSessionFile()
@@ -159,6 +159,27 @@ class MainWindow(QMainWindow):
             csv = self.tab.widget(index)
             if csv.document.hasChanges():
                 self.saveFile(csv)
+
+    def saveToExit(self):
+        """
+        """
+        for index in range(self.tab.count()):
+            csv = self.tab.widget(index)
+            if csv:
+                # before closing tab we need to check if save file
+                if csv.document.hasChanges():
+                    saveFileMsg = self.tr('Save file {0}?'.format(csv.document.filename))
+                    reply = QMessageBox.question(self, self.tr('Save'), saveFileMsg, QMessageBox.Yes,
+                                                 QMessageBox.No, QMessageBox.Cancel)
+                    if reply == QMessageBox.Yes:
+                        next = self.saveFile(csv)
+                    elif reply == QMessageBox.Cancel:
+                        next = False
+                    else:
+                        next = True
+                    if not next:
+                        return False
+        return True
 
     def emptyRecentFiles(self):
         """empty recent files and refresh menu
@@ -208,7 +229,9 @@ class MainWindow(QMainWindow):
     def saveSessionFile(self):
         """save in config file the session files
         """
-        config.file_files = [str(self.tab.tabToolTip(index)) for index in range(self.tab.count())]
+        config.file_files = [str(self.tab.tabToolTip(index))
+                             for index in range(self.tab.count())
+                             if (self.tab.widget(index).document.isNew == False)]
 
     def searchText(self, text, tabIndex, matchMode, matchCaseOption):
         csv = self.tab.widget(tabIndex)
@@ -218,19 +241,19 @@ class MainWindow(QMainWindow):
         if len(result) > 0:
             return {'tabText':tabText, 'tabToolTip': tabToolTip, 'result':result}
 
-    def refreshStatusTab(self, tabIndex=None):
-        if tabIndex == None:
-            tabIndex = self.tab.currentIndex()
-        tabBar = self.tab.tabBar()
-        csv = self.tab.widget(tabIndex)
+    def refreshStatusTab(self, csv):
         if csv:
+            index = self.tab.indexOf(csv)
+            tabBar = self.tab.tabBar()
             if csv.hasChanges():
-                tabBar.setTabTextColor(tabIndex, Qt.red)
+                tabBar.setTabTextColor(index, Qt.red)
             else:
-                tabBar.setTabTextColor(tabIndex, Qt.black)
-            self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
-                                     csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
-                                     csv.averageValue(), csv.countChanges(), csv.sumValue(), csv.pointSizeValue())
+                tabBar.setTabTextColor(index, Qt.black)
+            currentCsv = self.tab.currentWidget()
+            if csv == currentCsv:
+                self.statusBar.setValues(csv.linesValue(), csv.columnsValue(), csv.sizeValue(),
+                                         csv.encodingValue(), csv.modifiedValue(), csv.itemsValue(),
+                                         csv.averageValue(), csv.countChanges(), csv.sumValue(), csv.pointSizeValue())
         else:
             self.statusBar.setValues(None, None, None, None, None, None, None, None, None, None)
 
@@ -305,13 +328,10 @@ class MainWindow(QMainWindow):
                 filename = str(filename)
                 self.openCsv(filename)
 
-    def exitDialogAction(self):
-        """exit dialog
+    def exitAction(self):
+        """exit action
         """
-        quitMsg = self.tr('Are you sure you want to exit?')
-        reply = QMessageBox.question(self, self.tr('Message'), quitMsg, QMessageBox.Yes, QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            exit()
+        self.close()
 
     def closeFileAction(self):
         """close current file
@@ -427,8 +447,7 @@ class MainWindow(QMainWindow):
     #
 
     def csvSelectionChangedEvent(self, csv):
-        index = self.tab.indexOf(csv)
-        self.refreshStatusTab(index)
+        self.refreshStatusTab(csv)
 
     def statusBarChangedFontSizeEvent(self, fontSize):
         csv = self.tab.currentWidget()
@@ -442,7 +461,8 @@ class MainWindow(QMainWindow):
             # before closing tab we need to check if save file
             if csv.document.hasChanges():
                 saveFileMsg = self.tr('Save file {0}?'.format(csv.document.filename))
-                reply = QMessageBox.question(self, self.tr('Save'), saveFileMsg, QMessageBox.Yes, QMessageBox.No, QMessageBox.Cancel)
+                reply = QMessageBox.question(self, self.tr('Save'), saveFileMsg, QMessageBox.Yes,
+                                             QMessageBox.No, QMessageBox.Cancel)
                 if reply == QMessageBox.Yes:
                     closeTab = self.saveFile(csv)
                 elif reply == QMessageBox.No:
@@ -485,6 +505,8 @@ class MainWindow(QMainWindow):
             self.saveCopyFileOption.setDisabled(False)
             self.saveAsFileOption.setDisabled(False)
             self.reloadFileOption.setDisabled(csv.document.isNew)
+            # refresh status bar
+            self.refreshStatusTab(csv)
         else:
             try:
                 self.editMenu.clear()
@@ -502,9 +524,8 @@ class MainWindow(QMainWindow):
             self.saveCopyFileOption.setDisabled(True)
             self.saveAsFileOption.setDisabled(True)
             self.reloadFileOption.setDisabled(True)
-
-        # and finally refresh status bar
-        self.refreshStatusTab()
+            # refresh status bar
+            self.refreshStatusTab(None)
 
     def tabBarcustomContextMenuRequestedEvent(self, point):
         tab = self.tab.tabBar()
@@ -560,6 +581,13 @@ class MainWindow(QMainWindow):
             self.importExcelAction(filename)
         else:
             self.openCsv(filename)
+
+    def closeEvent (self, event):
+        exit = self.saveToExit()
+        if exit:
+            event.accept()
+        else:
+            event.ignore()
 
     #
     # widgets
@@ -645,7 +673,7 @@ class MainWindow(QMainWindow):
         self.exitApp = QAction(QIcon(':images/exit.png'), self.tr('E&xit'), self)
         self.exitApp.setShortcut(QKeySequence.Quit)
         self.exitApp.setStatusTip(self.tr('Exit to Csvtools'))
-        self.exitApp.triggered.connect(self.exitDialogAction)
+        self.exitApp.triggered.connect(self.exitAction)
 
         # file menu
         menubar = self.menuBar()
