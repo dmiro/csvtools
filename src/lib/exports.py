@@ -10,11 +10,13 @@ class ClipboardFormat(object):
         """from rectangular area (two dimension matrix) to clipboard format"""
         if rectangularArea:
             textClip = ''
-            for row in rectangularArea:
-                if textClip:
-                    textClip = textClip + '\n'
+            for index, row in enumerate(rectangularArea):
                 unicodeRow = lib.helper.QStringListToUnicode(row)
-                textClip = textClip + '\t'.join(unicodeRow)
+                tabularRow = '\t'.join(unicodeRow)
+                if tabularRow:
+                    textClip = textClip + tabularRow + '\n'
+                else:
+                    textClip = textClip + '\n'
             return textClip
         return None
 
@@ -33,10 +35,12 @@ class ClipboardFormat(object):
         if rectangularArea:
             textClip = ''
             for row in rectangularArea:
-                if textClip:
-                    textClip = textClip + '\n'
                 unicodeRow = lib.helper.QStringListToUnicode(row)
-                textClip = textClip + ','.join(unicodeRow)
+                commaRow = ','.join(unicodeRow)
+                if commaRow:
+                    textClip = textClip + commaRow + '\n'
+                else:
+                    textClip = textClip + '\n'
             return textClip
         return None
 
