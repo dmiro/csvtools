@@ -431,6 +431,9 @@ class MainWindow(QMainWindow):
         self.tab.setMovable(not config.tabbar_lock)
         self.tab.setTabsClosable(config.tabbar_showclosebutton)
         self.tab.resize(1,1)
+        csv = self.tab.currentWidget()
+        if csv:
+            csv.refresh()
 
     #
     # help menu action methods

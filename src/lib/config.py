@@ -35,6 +35,7 @@ class Config(IniConfig):
 
     # View section
     view_headerrow = IniConfig.iniproperty('view', 'headerrow', True)
+    view_showColumnNumberHeaderRow = IniConfig.iniproperty('view', 'showColumnNumberHeaderRow', True)
     view_showtools = IniConfig.iniproperty('view', 'showtools', True)
     view_positiontools = IniConfig.iniproperty('view', 'positiontools', 0)
     view_showborderdata = IniConfig.iniproperty('view', 'showborderdata', True)

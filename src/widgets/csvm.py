@@ -185,8 +185,11 @@ class QCsvModel(QAbstractTableModel):
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if self.__headerRow and role == Qt.DisplayRole and orientation == Qt.Horizontal:
             value = self.document.value(0, section)
-            title = u'{}\n{}'.format(section + 1, value)
-            return QVariant(QString(title))
+            if config.view_showColumnNumberHeaderRow:
+                title = u'{0}\n{1}'.format(section + 1, value)
+                return QVariant(QString(title))
+            elif value:
+                return QVariant(QString(value))
         elif role == Qt.FontRole:
             font = QFont()
             font.setPointSize(self.__fontSize)
@@ -280,15 +283,6 @@ class QCsv(QTableView):
         #self._setMenuDisabled(self._editMenu, disabled)
         #self._setMenuDisabled(self.copySpecialMenu, disabled)
         #self._setMenuDisabled(self.copyToPythonMenu, disabled)
-
-    def _getHeaderRows(self):
-        result = []
-        model = self.model()
-        columnCount = model.columnCount(None)
-        for column in xrange(columnCount):
-            data = model.headerData(column, orientation = Qt.Horizontal)
-            result.append(data.toString())
-        return result
 
     def _getCurrentSelection(self):
         selectionModel = self.selectionModel()
@@ -735,7 +729,7 @@ class QCsv(QTableView):
             # get a two dimension matrix with default value ''
             result = []
             for _ in range(selection.minMaxDimRows):
-                row = [QString('') for _ in range(selection.minMaxDimColumns)]
+                row = [QString('')] * selection.minMaxDimColumns
                 result.append(row)
             # set values in two dimension matrix
             for selectedIndex in selection.selectedIndexes:
@@ -744,10 +738,14 @@ class QCsv(QTableView):
                 result[row - selection.minRow][column - selection.minColumn] = self.document.value(row, column)
             # add header rows
             if includeHeaderRows:
-                headerRows = self._getHeaderRows()
-                if headerRows:
-                    header = headerRows[selection.minColumn:selection.maxColumn+1]
-                    result.insert(0, header)
+                row = [QString('')] * selection.minMaxDimColumns
+                result.insert(0, row)
+                for selectedIndex in selection.selectedIndexes:
+                    column = selectedIndex.column()
+                    data = self.document.value(0, column)
+                    if not data:
+                        data = QString(str(column + 1))
+                    result[0][column - selection.minColumn] = data
             return result
         else:
             return None
