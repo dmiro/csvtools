@@ -833,7 +833,7 @@ class MainWindow(QMainWindow):
     def __init__(self, *args):
 
         # init
-        QMainWindow.__init__(self, *args)
+        super(MainWindow, self).__init__(*args)
         self.setWindowIcon(QIcon(':images/app.png'))
         self.setWindowTitle(self.tr("CSV Tools"))
         self.setAcceptDrops(True)
@@ -878,6 +878,12 @@ class MainWindow(QMainWindow):
 #
 
 def main():
+
+    # taskbar icon in Windows 7 (http://stackoverflow.com/a/1552105/2270217)
+    import ctypes
+    myappid = '3engine.csvtools.1000'
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
     app = QApplication(sys.argv)
 
     translator = QTranslator()

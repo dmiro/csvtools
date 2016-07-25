@@ -918,7 +918,8 @@ class QCsv(QTableView):
             return
 
         # insert column to the left
-        if action == self.insertColumnLeftAction:
+        if action == self.insertColumnLeftAction or \
+           action == self.insertColumnAction:
             self._insertColumns(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
@@ -928,7 +929,8 @@ class QCsv(QTableView):
             return
 
         # insert row to the top
-        if action == self.insertRowTopAction:
+        if action == self.insertRowTopAction or \
+           action == self.insertRowAction:
             self._insertRows(insert=enums.InsertBlockDirectionEnum.BeforeInsert)
             return
 
@@ -1137,7 +1139,10 @@ class QCsv(QTableView):
     def _addEditMenu(self):
         """add EDIT menu"""
 
-        # edit menu
+        #
+        # general edit menu
+        #
+
         self._editMenu = QMenu(self.tr('Edit'))
         self.undoEdit = self._editMenu.addAction(QIcon(':images/undo.png'), self.tr('Undo'))
         self.undoEdit.setShortcut(QKeySequence.Undo)
@@ -1251,6 +1256,41 @@ class QCsv(QTableView):
         #### #ideas
         #### algo del estilo llamadas RESTFUL con datos del CSV...
 
+        #
+        # horizontal edit menu
+        #
+
+        self._horizontalEditMenu = QMenu('')
+        self._horizontalEditMenu.addAction(self.cuteToClipboard)
+        self._horizontalEditMenu.addAction(self.copyToClipboard)
+        self._horizontalEditMenu.addAction(self.pasteFromClipboard)
+        self._horizontalEditMenu.addAction(self.deleteEdit)
+        self._horizontalEditMenu.addSeparator()
+        self.insertRowAction = self._horizontalEditMenu.addAction(QIcon(':tools/addrow.png'), self.tr('Insert'))
+        self.insertRowAction.triggered[()].connect(lambda action=self.insertRowAction: self._editAction(action))
+        self._horizontalEditMenu.addAction(self.removeRowsAction)
+        self._horizontalEditMenu.addAction(self.mergeRowsAction)
+        self._horizontalEditMenu.addAction(self.moveRowTopAction)
+        self._horizontalEditMenu.addAction(self.moveRowBottomAction)
+
+        #
+        # vertical edit menu
+        #
+
+        self._verticalEditMenu = QMenu('')
+        self._verticalEditMenu.addAction(self.cuteToClipboard)
+        self._verticalEditMenu.addAction(self.copyToClipboard)
+        self._verticalEditMenu.addAction(self.pasteFromClipboard)
+        self._verticalEditMenu.addAction(self.deleteEdit)
+        self._verticalEditMenu.addSeparator()
+        self.insertColumnAction = self._verticalEditMenu.addAction(QIcon(':tools/addcolumn.png'), self.tr('Insert'))
+        self.insertColumnAction.triggered[()].connect(lambda action=self.insertColumnAction: self._editAction(action))
+        self._verticalEditMenu.addAction(self.removeColumnsAction)
+        self._verticalEditMenu.addAction(self.mergeColumnsAction)
+        self._verticalEditMenu.addAction(self.moveColumnLeftAction)
+        self._verticalEditMenu.addAction(self.moveColumnRightAction)
+
+
     #
     # event
     #
@@ -1295,15 +1335,11 @@ class QCsv(QTableView):
 
     def _customContextMenuRequestedHorizontalHeaderEvent(self, point):
         globalPoint = self.mapToGlobal(point)
-        action = self.editColumnsMenu.exec_(globalPoint)
-        if action:
-            self._editAction(action)
+        self._verticalEditMenu.exec_(globalPoint)
 
     def _customContextMenuRequestedVerticalHeaderEvent(self, point):
         globalPoint = self.mapToGlobal(point)
-        action = self.editRowsMenu.exec_(globalPoint)
-        if action:
-            self._editAction(action)
+        self._horizontalEditMenu.exec_(globalPoint)
 
     def _redoTextChanged(self, msg, enable):
         self.redoEdit.setEnabled(enable)

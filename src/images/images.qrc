@@ -11,7 +11,7 @@
     <file alias="cancel.png">icons/glyphicons-208-remove-2.png</file>
     <file alias="min.png">icons/glyphicons-434-minus.png</file>
     <file alias="max.png">icons/glyphicons-433-plus.png</file>
-    <file alias="app.png">app.png</file>
+    <file alias="app.png">icons/glyphicons-120-table.png</file>
     <file alias="refresh.png">icons/glyphicons-82-refresh.png</file>
     <file alias="close.png">flaticon/close10.png</file>
     <file alias="reload.png">icons/glyphicons-86-repeat.png</file>
@@ -43,8 +43,10 @@
 <qresource prefix="/tools">
     <file alias="removecolumn.png">tools/removecolumn.png</file>
 	<file alias="removerow.png">tools/removerow.png</file>
+	<file alias="addcolumn.png">tools/addcolumn.png</file>
 	<file alias="addcolumnleft.png">tools/addcolumnleft.png</file>
 	<file alias="addcolumnright.png">tools/addcolumnright.png</file>
+	<file alias="addrow.png">tools/addrow.png</file>
 	<file alias="addrowbottom.png">tools/addrowbottom.png</file>
 	<file alias="addrowtop.png">tools/addrowtop.png</file>
 	<file alias="mergerows.png">tools/mergerows.png</file>
