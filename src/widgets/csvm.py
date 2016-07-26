@@ -1347,6 +1347,15 @@ class QCsv(QTableView):
         self.undoEdit.setEnabled(enable)
         self.undoEdit.setText('Undo {}'.format(msg))
 
+    def _loadRequested(self):
+        self.refresh()
+
+    def _saveRequested(self):
+        self.refresh()
+
+    def _fileChanged(self):
+        self.fileChanged.emit(self)
+
     #
     # override
     #
@@ -1399,6 +1408,7 @@ class QCsv(QTableView):
 
     selectionChanged_ = pyqtSignal(object)
     contextMenuRequested = pyqtSignal(list, QPoint)
+    fileChanged = pyqtSignal(object)
 
     def hasChanges(self):
         """document has changes"""
@@ -1534,16 +1544,11 @@ class QCsv(QTableView):
                      model.rowDataCount()-1,
                      model.columnDataCount()-1)
 
-    def loadRequested(self):
-        self.refresh()
-
-    def saveRequested(self):
-        self.refresh()
-
     def setDocument(self, document):
         self.document = document
-        self.document.loadRequested.connect(self.loadRequested)
-        self.document.saveRequested.connect(self.saveRequested)
+        self.document.loadRequested.connect(self._loadRequested)
+        self.document.saveRequested.connect(self._saveRequested)
+        self.document.fileChanged.connect(self._fileChanged)
         self.document.redoTextChanged.connect(self._redoTextChanged)
         self.document.undoTextChanged.connect(self._undoTextChanged)
         model = QCsvModel(self.document, config.view_headerrow)
@@ -1578,6 +1583,12 @@ class QCsv(QTableView):
             clipboard.dataChanged.disconnect(self._clipboardDataChangedEvent)
             QCsv.cuteSelectionRanges = None
             QCsv.cuteInstance = None
+            if self.document:
+                self.document.loadRequested.disconnect(self._loadRequested)
+                self.document.saveRequested.disconnect(self._saveRequested)
+                self.document.fileChanged.disconnect(self._fileChanged)
+                self.document.redoTextChanged.disconnect(self._redoTextChanged)
+                self.document.undoTextChanged.disconnect(self._undoTextChanged)
         except:
             pass
 

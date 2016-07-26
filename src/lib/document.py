@@ -12,6 +12,8 @@ import lib.helper as helper
 
 
 class NewFilenameFactory(object):
+    """class to obtain temporary name for a new file
+    """
     newIdFilename = 1
     @classmethod
     def getNewFilename(cls):
@@ -20,9 +22,8 @@ class NewFilenameFactory(object):
         return newFilename
 
 
-class QABCMeta(pyqtWrapperType, ABCMeta):   # problem in your case is that the classes you try to inherit from
-    pass                                    # have different metaclasses:
-                                            # http://www.gulon.co.uk/2012/12/28/pyqt4-qobjects-and-metaclasses/
+class QABCMeta(pyqtWrapperType, ABCMeta):   # inherit from different metaclasses:
+    pass                                    # http://www.gulon.co.uk/2012/12/28/pyqt4-qobjects-and-metaclasses/
 
 
 class Document(CommandSheet):
@@ -30,6 +31,11 @@ class Document(CommandSheet):
 
     loadRequested = pyqtSignal()
     saveRequested = pyqtSignal()
+    fileChanged = pyqtSignal()
+
+    #
+    # init
+    #
 
     def __init__(self,
                  filename,
@@ -42,6 +48,32 @@ class Document(CommandSheet):
         self.canSave = False
         self.isNew = False
 
+    #
+    # private
+    #
+
+    def __fileChanged(self, filename):
+        self.fileChanged.emit()
+
+    #
+    # protected
+    #
+
+    def _watchFile(self):
+        self.__watcher = QFileSystemWatcher()
+        self.__watcher.fileChanged.connect(self.__fileChanged)
+        self.__watcher.addPath(self.filename)
+
+    def _unwatchFile(self):
+        try:
+            self.__watcher.fileChanged.disconnect(self.__fileChanged)
+            del(self.__watcher)
+        except: pass
+
+    #
+    # public
+    #
+
     @abstractmethod
     def new(self):
         self.encoding_ = 'UTF-8'
@@ -50,15 +82,18 @@ class Document(CommandSheet):
     @abstractmethod
     def load(self, linesToLoad=-1):
         self.isNew = False
+        self._watchFile()
         self.loadRequested.emit()
 
     @abstractmethod
     def save(self, newFilename=None):
         self.isNew = False
+        self._watchFile()
         self.saveRequested.emit()
 
     @abstractmethod
     def saveACopy(self, filename):
+        self._watchFile()
         self.saveRequested.emit()
 
     def encoding(self):
@@ -118,6 +153,9 @@ class Document(CommandSheet):
                     return obj
                 return dict_
         return _Decoder().decode(json_)
+
+
+
 
 
 class Csv(Document):
@@ -190,6 +228,7 @@ class Csv(Document):
         super(Csv, self).save(newFilename)
 
     def saveACopy(self, filename):
+        self._unwatchFile()
         with io.open(filename, 'w', newline='', encoding=self.encoding_) as csvFile:
             writer = csv.writer(csvFile,
                                 delimiter=self.delimiter,

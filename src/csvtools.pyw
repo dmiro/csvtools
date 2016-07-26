@@ -62,6 +62,7 @@ class MainWindow(QMainWindow):
 
         # add file to tab
         csv.selectionChanged_.connect(self.csvSelectionChangedEvent)
+        csv.fileChanged.connect(self.csvFileChangedEvent)
         filename = os.path.basename(file_)
         if insertIndex > -1:
             index = self.tab.insertTab(insertIndex, csv, filename)
@@ -450,7 +451,39 @@ class MainWindow(QMainWindow):
     #
 
     def csvSelectionChangedEvent(self, csv):
+        """ It occurs when selected or changed anything from csv file
+        """
         self.refreshStatusTab(csv)
+
+    def csvFileChangedEvent(self, csv):
+        """ It occurs when csv file is modified outside the application
+        """
+        @waiting
+        def _reload():
+            self.tab.setCurrentWidget(csv)
+            csv.document.load()
+            self.refreshStatusTab(csv)
+
+        hasChanges = csv.document.hasChanges()
+        fileExist = os.path.isfile(csv.document.filename)
+
+        if fileExist:
+            if hasChanges:
+                dialogMsg = '{0} This file has been modified by another program. Do you want to reload it and lose the changes made in csvtools?'.format(csv.document.filename)
+            else:
+                dialogMsg = '{0} This files has been modified by another program, Do you want to reload it?'.format(csv.document.filename)
+            reply = QMessageBox.question(self, self.tr('Reload'), dialogMsg, QMessageBox.Yes, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                _reload()
+        else:
+            dialogMsg = '{0} doesn''t exist anymore. Keep this file in editor?'.format(csv.document.filename)
+            reply = QMessageBox.question(self, self.tr('Close'), dialogMsg, QMessageBox.Yes, QMessageBox.No)
+            if reply == QMessageBox.No:
+                csv.deleteLater()           # Schedules this object for deletion.
+                                            # It's very important to release your resources.
+                index = self.tab.indexOf(csv)
+                self.tab.removeTab(index)
+                self.saveSessionFile()
 
     def statusBarChangedFontSizeEvent(self, fontSize):
         csv = self.tab.currentWidget()
