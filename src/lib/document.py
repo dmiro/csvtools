@@ -5,6 +5,7 @@ from backports import csv
 import xlrd
 from PyQt4.QtCore import *
 import io
+import sys
 import cchardet
 from lib.commandsheet import CommandSheet
 from datetime import datetime
@@ -44,7 +45,6 @@ class Document(CommandSheet):
         super(Document, self).__init__(valueClass=QString)
         self.filename = filename
         self.encoding_ = ''
-        self.canLoad = True
         self.canSave = False
         self.isNew = False
 
@@ -122,8 +122,13 @@ class Document(CommandSheet):
                 if isinstance(obj, Document):
                     d = {'__class__': obj.__class__.__name__,
                          '__module__': obj.__module__}
-                    ## obj.__dict__.pop('data_')  # data_ is not serializable
-                    d.update(obj.__dict__)
+                    # these attributes are not serializables
+                    notSerializable = ('_Document__watcher',
+                                       'stack',
+                                       'sheet')
+                    # get atributes dict to serialize
+                    dictSerializable = {k:obj.__dict__[k] for k in obj.__dict__ if k not in notSerializable}
+                    d.update(dictSerializable)
                     return d
                 if not isfunction(obj):
                     return super(_Encoder, self).default(obj)
@@ -145,17 +150,19 @@ class Document(CommandSheet):
                 if '__class__' in dict_:
                     class_name = dict_.pop('__class__')
                     module_name = dict_.pop('__module__')
-                    module = __import__(module_name)
-                    class_ = getattr(module, class_name)
+                    try:
+                        module = __import__(module_name)
+                        class_ = getattr(module, class_name)
+                    # if exception occurred then module scope is current module
+                    except:
+                        module = sys.modules[module_name]
+                        class_ = getattr(module, class_name)
                     obj = class_(**dict_)
                     for k, v in dict_.iteritems():
                         setattr(obj, k, v)
                     return obj
                 return dict_
         return _Decoder().decode(json_)
-
-
-
 
 
 class Csv(Document):
@@ -178,6 +185,7 @@ class Csv(Document):
         self.quotechar= quotechar
         self.quoting= quoting
         self.skipinitialspace= skipinitialspace
+        self.canSave = True
 
     def new(self):
         super(Csv, self).new()
@@ -252,6 +260,7 @@ class Xsl(Document):
                  **kvparams):
         super(Xsl, self).__init__(filename)
         self.sheetname = sheetname
+        self.canSave = False
 
     def new(self):
         pass
