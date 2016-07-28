@@ -3,7 +3,7 @@ from PyQt4.QtGui import *
 from helpers.qradiobuttongroup import QRadioButtonGroup
 from helpers.qcheckboxgroup import QCheckGroupBox
 from widgets.csvm import QCsv
-import lib.document
+from lib.document import Csv
 import sys
 
 
@@ -16,13 +16,13 @@ class DelimiterGroupBox(QRadioButtonGroup):
     def value(self):
         index = self.selectedItem()
         if index == 0:
-            return ','
+            return u','
         elif index == 1:
-            return ';'
+            return u';'
         elif index == 2:
-            return '\t'
+            return u'\t'
         elif index == 3:
-            return ' '
+            return u' '
         else:
             return str(self.buddie(4).text())
 
@@ -58,11 +58,11 @@ class QuoteGroupBox(QRadioButtonGroup):
     def value(self):
         index = self.selectedItem()
         if index == 0:
-            return ''
+            return u''
         elif index == 1:
-            return '"'
+            return u'"'
         elif index == 2:
-            return '\''
+            return u'\''
         else:
             return str(self.buddie(3).text())
 
@@ -97,10 +97,10 @@ class LineTerminatorGroupBox(QRadioButtonGroup):
     def value(self):
         index = self.selectedItem()
         if index == 0:
-            return '\\r\\n'
+            return u'\\r\\n'
         else:
             return str(self.buddie(1).text())
-        
+
     #
     # private
     #
@@ -172,7 +172,7 @@ class QCsvWiz(QDialog):
         groupBox = QGroupBox(self.tr('Preview'), parent=self)
         formLayout = QFormLayout(parent=groupBox)
         # Preview TableView
-        csvDocument = lib.document.Csv(self.filename)
+        csvDocument = Csv(self.filename)
         csvDocument.load(20)
         self.preview = QCsv(csvDocument)
 ##        self.preview.setEnabled(False)
@@ -190,15 +190,20 @@ class QCsvWiz(QDialog):
         # print self.adjustsGroupBox.isSkipEmptyLines()
         # print self.adjustsGroupBox.isHeaderRow()
         # print self.adjustsGroupBox.isSkipEmptyColumns()
-        print 'lt', self.lineTerminatorGroupBox.value()
-        #csvDocument = lib.document.Csv(self.filename,
+        print 'delimiterGroupBox', self.delimiterGroupBox.value()
+        print 'lineTerminatorGroupBox', self.lineTerminatorGroupBox.value()
+        print 'quoteGroupBox', self.quoteGroupBox.value()
+        #csvDocument = Csv(self.filename,
         #                       delimiter =self.delimiterGroupBox.value())
         #csvDocument.load()
         #self.preview.setDocument(csvDocument)
+##        print 'skipinitialspace', self.preview.document.skipinitialspace
+
         self.preview.document.delimiter = self.delimiterGroupBox.value()
-        self.preview.document.lineterminator = '\t'#self.lineTerminatorGroupBox.value()
-     #   self.preview.document.quotechar = self.quoteGroupBox.value()
+        self.preview.document.lineterminator = self.lineTerminatorGroupBox.value()
+        self.preview.document.quotechar = self.quoteGroupBox.value()
      #   self.preview.document.quoting = True
+
         self.preview.document.load(20)
 
         ##self.preview.data = data
