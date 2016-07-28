@@ -12,9 +12,10 @@ from widgets.search import QSearch
 from widgets.opencsvfiledialog import QOpenCsvFileDialog
 from widgets.csvwiz import QCsvWiz
 from widgets.helpers.qtabbardoubleclick import QTabBarDoubleClick
-from lib.document import Xsl, Csv, NewFilenameFactory
+from lib.document import Document, Xsl, Csv, NewFilenameFactory
 from lib.config import config
 from lib.helper import waiting, get_excel_sheets, QStringToUnicode
+
 import lib.images_rc
 import sys
 import os
@@ -29,16 +30,37 @@ class MainWindow(QMainWindow):
     @waiting
     def addCsv(self, file_=None, insertIndex=-1):
 
+        #
+        # step 1
+        #
+
+        # csv exist yet
+        if isinstance(file_, Document):
+            csv_ = file_
+            file_ = csv_.filename
+        # never open
+        else:
+            csv_ = None
+
+        #
+        # step 2
+        #
+
         # file exist
         if file_:
             file_ = str(file_)
             for index in range(self.tab.count()):
-                if file_ in self.tab.tabToolTip(index):
+                csv = self.tab.widget(index)
+                if file_ in csv.document.filename:
                     self.tab.setCurrentIndex(index)
                     return
         # is new file
         else:
             file_ = ''
+
+        #
+        # step 3
+        #
 
         # import xsl
         hook = file_.rfind('#')
@@ -50,15 +72,25 @@ class MainWindow(QMainWindow):
             csv = QCsv(xslDoc)
         # open csv
         elif file_:
-            csvDoc = Csv(file_)
-            csvDoc.load()
-            csv = QCsv(csvDoc)
+            # csv exist yet
+            if csv_:
+                csv_.load()
+                csv = QCsv(csv_)
+            # never open
+            else:
+                csvDoc = Csv(file_)
+                csvDoc.load()
+                csv = QCsv(csvDoc)
         # new csv
         else:
             file_ = NewFilenameFactory.getNewFilename()
             csvDoc = Csv(file_)
             csvDoc.new()
             csv = QCsv(csvDoc)
+
+        #
+        # step 4
+        #
 
         # add file to tab
         csv.selectionChanged_.connect(self.csvSelectionChangedEvent)
@@ -68,12 +100,11 @@ class MainWindow(QMainWindow):
             index = self.tab.insertTab(insertIndex, csv, filename)
         else:
             index = self.tab.addTab(csv, filename)
-        self.tab.setTabToolTip(index, file_)
         self.tab.setCurrentIndex(index)
 
         # add file to recent files
         if not csv.document.isNew:
-            self.addRecentFile(file_)
+            self.addRecentFile(csv)
             self.refreshRecentFileActions()
             self.saveSessionFile()
 
@@ -91,18 +122,28 @@ class MainWindow(QMainWindow):
         _reload()
 
     def openCsv(self, filenames):
+        """open a csv file.
+        This function accepts as single parameter: *path to a file*, *file path list*, *Document* or a *list of Document*
+        The last two types usually come from a recent o session file.
+        """
         if filenames:
             if isinstance(filenames, QString):
                 filenames = str(filenames)
             if isinstance(filenames, basestring):
+                filenames = [filenames]
+            if isinstance(filenames, Document):
                 filenames = [filenames]
             warnings = []
             for filename in filenames:
                 try:
                     self.addCsv(filename)
                 except IOError:
+                    if isinstance(filename, Document):
+                        filename = filename.filename
                     warnings.append('No such file {0}'.format(filename))
                 except Exception, e:
+                    if isinstance(filename, Document):
+                        filename = filename.filename
                     warnings.append('Error opening file {0}: {1}'.format(filename, e))
             if warnings:
                 report = QReport(warnings)
@@ -133,11 +174,8 @@ class MainWindow(QMainWindow):
         if filename:
             filename = str(filename)
             csv.document.save(filename)
-            index = self.tab.indexOf(csv)
-            self.tab.setTabText(index, os.path.basename(filename))
-            self.tab.setTabToolTip(index, filename)
             self.refreshStatusTab(csv)
-            self.addRecentFile(filename)
+            self.addRecentFile(csv)
             self.refreshRecentFileActions()
             self.saveSessionFile()
             return True
@@ -191,26 +229,29 @@ class MainWindow(QMainWindow):
     def restoreLastSession(self):
         """retrieve files the last session
         """
-        self.openCsv(config.file_files)
+        fileSession = [Csv.fromJson(data) for data in config.file_session]
+        self.openCsv(fileSession)
 
     def checkRecentFiles(self):
-        # check recent files
+        """check recent files
+        """
         fileRecentChecked = []
-        for recent in config.file_recent:
-            recent = str(recent)
-            if os.path.isfile(recent):
-               fileRecentChecked.append(recent)
-        config.file_recent = fileRecentChecked
+        fileRecent = [Csv.fromJson(data) for data in config.file_recent]
+        for csv in fileRecent:
+            if os.path.isfile(str(csv.filename)):
+               fileRecentChecked.append(csv)
+        config.file_recent = [mcsv.toJson() for mcsv in fileRecentChecked]
 
     def refreshRecentFileActions(self):
         """update recent files menu
         """
         self.recent.clear()
-        for index, recent in enumerate(config.file_recent):
-                action = QAction("%d. %s" % (index+1, recent), self)
-                action.setStatusTip("%s %s" % (self.tr('Open'), recent))
-                action.triggered[()].connect(lambda recent=recent: self.openCsv(recent))
-                self.recent.addAction(action)
+        fileRecent = [Csv.fromJson(data) for data in config.file_recent]
+        for index, csv in enumerate(fileRecent):
+            action = QAction("%d. %s" % (index + 1, csv.filename), self)
+            action.setStatusTip("%s %s" % (self.tr('Open'), csv.filename))
+            action.triggered[()].connect(lambda csv=csv: self.openCsv(csv))
+            self.recent.addAction(action)
         self.recent.addSeparator()
         empty = QAction(self.tr('Empty'), self)
         empty.setStatusTip(self.tr('Empty recent list'))
@@ -218,21 +259,24 @@ class MainWindow(QMainWindow):
         empty.setDisabled(len(config.file_recent) == 0)
         self.recent.addAction(empty)
 
-    def addRecentFile(self, file_):
+    def addRecentFile(self, csv):
         """add in config file the last opened file
         """
-        file_recent = config.file_recent
-        if file_ in file_recent:
-            file_recent.remove(file_)
-        file_recent.insert(0, file_)
-        config.file_recent = file_recent[0:config.recentfiles_maxEntries]
+        # convert from json to Csv
+        file_recent = [Csv.fromJson(data) for data in config.file_recent]
+        # add Csv to recent list
+        if csv.document in file_recent:
+            file_recent.remove(csv.document)
+        file_recent.insert(0, csv.document)
+        # convert from Csv to json
+        config.file_recent = [mcsv.toJson() for mcsv in file_recent]
 
     def saveSessionFile(self):
         """save in config file the session files
         """
-        config.file_files = [str(self.tab.tabToolTip(index))
-                             for index in range(self.tab.count())
-                             if (self.tab.widget(index).document.isNew == False)]
+        config.file_session = [self.tab.widget(index).document.toJson()
+                                for index in range(self.tab.count())
+                                if (self.tab.widget(index).document.isNew == False)]
 
     def searchText(self, text, tabIndex, matchMode, matchCaseOption):
         csv = self.tab.widget(tabIndex)
@@ -245,6 +289,8 @@ class MainWindow(QMainWindow):
     def refreshStatusTab(self, csv):
         if csv:
             index = self.tab.indexOf(csv)
+            self.tab.setTabText(index, os.path.basename(csv.document.filename))
+            self.tab.setTabToolTip(index, csv.document.filename)
             tabBar = self.tab.tabBar()
             if csv.hasChanges():
                 tabBar.setTabTextColor(index, Qt.red)
@@ -367,10 +413,10 @@ class MainWindow(QMainWindow):
     def filePathToClipboardAction(self):
         """copy to clipboard current file path
         """
-        index = self.tab.currentIndex()
-        file_ = self.tab.tabToolTip(index)
-        clipboard = QApplication.clipboard()
-        clipboard.setText(file_)
+        csv = self.tab.currentWidget()
+        if csv:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(csv.document.filename)
 
     def allFilePathsToClipboardAction(self):
         """add all file path to clipboard
@@ -378,11 +424,13 @@ class MainWindow(QMainWindow):
         # retrieve path files
         files = []
         for index in range(self.tab.count()):
-            file_ = str(self.tab.tabToolTip(index))
-            hook = file_.rfind('#')
-            if hook > -1:
-                file_ = file_[:hook]
-            files.append(file_)
+            csv = self.tab.widget(index)
+            if not csv.document.isNew:
+                file_ = csv.document.filename
+                hook = file_.rfind('#')
+                if hook > -1:
+                    file_ = file_[:hook]
+                files.append(file_)
         # remove duplicates
         files = set(files)
         # copy path files to clipboard
@@ -605,10 +653,10 @@ class MainWindow(QMainWindow):
     def searchResultClickedEvent(self, file_, row, column, value):
         file_ = str(file_)
         for index in range(self.tab.count()):
-            if file_ in self.tab.tabToolTip(index):
+            csv = self.tab.widget(index)
+            if file_ in csv.document.filename:
                 self.tab.setCurrentIndex(index)
-        csv = self.tab.currentWidget()
-        csv.setSelectCell(row, column)
+                csv.setSelectCell(row, column)
 
     def explorerClickedFileEvent(self, filename):
         filename = str(filename)

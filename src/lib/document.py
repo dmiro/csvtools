@@ -71,6 +71,28 @@ class Document(CommandSheet):
         except: pass
 
     #
+    # Magic Methods
+    #
+
+    def __eq__(self, other):
+        if isinstance(other, Document):
+            if self.isNew or other.isNew:
+                return False
+            else:
+                return self.filename == other.filename
+        else:
+            return self == other
+
+    def __ne__(self, other):
+        if isinstance(other, Document):
+            if self.isNew or other.isNew:
+                return True
+            else:
+                return self.filename != other.filename
+        else:
+            return self != other
+
+    #
     # public
     #
 

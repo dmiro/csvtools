@@ -1491,21 +1491,27 @@ class QCsv(QTableView):
         self.resizeRowsToContents()
 
     def setSelectCell(self, row, column):
-        model = self.model()
-        index = model.index(row, column)
-        if index.isValid():
-            #1st scroll to the item
-            self.scrollTo(index)
-            #2st select the row & column
-            self.selectRow(row)
-            self.selectColumn(column)
-            #3st select cell
-            selectionModel = self.selectionModel()
-            selectionModel.clear()
-            selectionModel.select(index, QItemSelectionModel.Select)
-            self.setCurrentIndex(index)
-            #focused cell
-            self.setFocus()
+        self.blockSignals(True)
+        try:
+            model = self.model()
+            index = model.index(row, column)
+            if index.isValid():
+                #1st scroll to the item
+                self.scrollTo(index)
+                #2st select the row & column
+                self.selectRow(row)
+                self.selectColumn(column)
+                #3st select cell
+                selectionModel = self.selectionModel()
+                selectionModel.clear()
+                #unblock signal then select will throw a selectionChanged event
+                self.blockSignals(False)
+                selectionModel.select(index, QItemSelectionModel.Select)
+                self.setCurrentIndex(index)
+                #focused cell
+                self.setFocus()
+        finally:
+            self.blockSignals(False)
 
     def search(self, text, matchMode, matchCaseOption):
         if self.document:

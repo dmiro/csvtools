@@ -8,15 +8,15 @@ class Config(IniConfig):
     # File section
     file_useCsvWizard = IniConfig.iniproperty('file', 'useCsvWizard', True)
     file_recent = IniConfig.iniproperty('file', 'recent', [])
-    file_files = IniConfig.iniproperty('file', 'files', [])
+    file_session = IniConfig.iniproperty('file', 'session', [])
 
     # Recent Files section
     recentfiles_check = IniConfig.iniproperty('recentfiles', 'checkRecentFiles', False)
     recentfiles_maxEntries = IniConfig.iniproperty('recentfiles', 'maxEntries', 20)
 
     # Tab Bar section
-    tabbar_showclosebutton = IniConfig.iniproperty('tabbar', 'showclosebutton', True)
-    tabbar_doubleclicktoclose  = IniConfig.iniproperty('tabbar', 'doubleclicktoclose', False)
+    tabbar_showclosebutton = IniConfig.iniproperty('tabbar', 'showCloseButton', True)
+    tabbar_doubleclicktoclose  = IniConfig.iniproperty('tabbar', 'doubleClickToClose', False)
     tabbar_lock  = IniConfig.iniproperty('tabbar', 'lock', False)
 
     # Tools section
@@ -34,13 +34,13 @@ class Config(IniConfig):
     config_restore = IniConfig.iniproperty('config', 'restore', True)
 
     # View section
-    view_headerrow = IniConfig.iniproperty('view', 'headerrow', True)
+    view_headerrow = IniConfig.iniproperty('view', 'headerRow', True)
     view_showColumnNumberHeaderRow = IniConfig.iniproperty('view', 'showColumnNumberHeaderRow', True)
-    view_showtools = IniConfig.iniproperty('view', 'showtools', True)
-    view_positiontools = IniConfig.iniproperty('view', 'positiontools', 0)
-    view_showborderdata = IniConfig.iniproperty('view', 'showborderdata', True)
-    view_colorborderdata = IniConfig.iniproperty('view', 'colorborderdata', QColor(Qt.red).rgb())
-    view_widthborderdata = IniConfig.iniproperty('view', 'widthborderdata', 1)
+    view_showtools = IniConfig.iniproperty('view', 'showTools', True)
+    view_positiontools = IniConfig.iniproperty('view', 'positionTools', 0)
+    view_showborderdata = IniConfig.iniproperty('view', 'showBorderData', True)
+    view_colorborderdata = IniConfig.iniproperty('view', 'colorBorderData', QColor(Qt.red).rgb())
+    view_widthborderdata = IniConfig.iniproperty('view', 'widthBorderData', 1)
 
 #
 # global
