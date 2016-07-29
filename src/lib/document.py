@@ -1,14 +1,16 @@
 from abc import *
 from json import *
 from inspect import *
+from datetime import datetime
 from backports import csv
-import xlrd
 from PyQt4.QtCore import *
+from lib.commandsheet import CommandSheet
+
+
+import xlrd
 import io
 import sys
 import cchardet
-from lib.commandsheet import CommandSheet
-from datetime import datetime
 import lib.helper as helper
 
 

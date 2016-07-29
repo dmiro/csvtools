@@ -29,8 +29,11 @@ class QCheckGroupBox(QRadioButtonGroup):
     # protected
     #
 
-    def newItem(self, text):
-        return QCheckBox(text)
+    def newItem(self, text, toolTip):
+        item = QCheckBox(text)
+        if toolTip:
+            item.setToolTip(toolTip)
+        return item
 
     def setEnabledBuddie(self):
         for item in self.group.buttons():

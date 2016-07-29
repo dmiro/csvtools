@@ -21,8 +21,8 @@ class QRadioButtonGroup(QGroupBox):
         self.group.button(index).setChecked(isChecked)
         self.setEnabledBuddie()
 
-    def addItem(self, text, widget=None, isChecked=False):
-        item = self.newItem(text)
+    def addItem(self, text, widget=None, isChecked=False, toolTip=None):
+        item = self.newItem(text, toolTip)
         index = len(self.group.buttons())
         self.group.addButton(item, index)
         item.buddie = widget
@@ -52,8 +52,11 @@ class QRadioButtonGroup(QGroupBox):
     # protected
     #
 
-    def newItem(self, text):
-        return QRadioButton(text)
+    def newItem(self, text, toolTip):
+        item = QRadioButton(text)
+        if toolTip:
+            item.setToolTip(toolTip)
+        return item
 
     def setEnabledBuddie(self):
         for item in self.group.buttons():
