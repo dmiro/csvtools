@@ -2,12 +2,13 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from widgets.helpers.qlabelclickable import QLabelClickable
+
 import lib.images_rc
 import webbrowser
 
 class QAbout(QDialog):
 
-    TITLE = """<font style="font-size: 24pt; color: black; font-family: Sans-Serif">CSV</font>
+    TITLE = """<img src=":images/app.png"/>&nbsp;<font style="font-size: 24pt; color: black; font-family: Sans-Serif">CSV</font>
 <font style="font-size: 24pt; color: green; font-family: Sans-Serif"> Tools</font>"""
 
     AUTHOR = """Author:  David Miró"""

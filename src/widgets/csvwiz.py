@@ -204,7 +204,7 @@ class QCsvWiz(QDialog):
         buttonBox.rejected.connect(lambda: self.reject())
         return buttonBox
 
-    def _addPreviewGroupBox(self):
+    def _addPreviewGroupBox2(self):
         groupBox = QGroupBox(self.tr('Preview'), parent=self)
         formLayout = QFormLayout(parent=groupBox)
         # Preview TableView
@@ -214,6 +214,53 @@ class QCsvWiz(QDialog):
 ##        self.preview.setEnabled(False)
         formLayout.addRow(self.preview)
         return groupBox
+
+    def _addSourceGroupBox(self):
+        groupBox = QGroupBox(self.tr('Source'), parent=self)
+        formLayout = QFormLayout(parent=groupBox)
+        self.input = QTextEdit()
+        self.output = QTextEdit()
+        splitter = QSplitter(orientation= Qt.Horizontal)
+        splitter.addWidget(self.input)
+        splitter.addWidget(self.output)
+        formLayout.addRow(splitter)
+        return groupBox
+
+    def _addPreviewGroupBox(self):
+
+        groupBox1 = QGroupBox(self.tr('Preview'), parent=self)
+        layout1 = QFormLayout(parent=groupBox1)
+        csvDocument = Csv(self.filename)
+        csvDocument.load(20)
+        self.preview = QCsv(csvDocument)
+        layout1.addRow(self.preview)
+
+        groupBox2 = QGroupBox(self.tr('Input'), parent=self)
+        layout2 = QFormLayout(parent=groupBox2)
+        self.input = QTextEdit()
+        layout2.addRow(self.input)
+
+        groupBox3 = QGroupBox(self.tr('Output'), parent=self)
+        layout3 = QFormLayout(parent=groupBox3)
+        self.output = QTextEdit()
+        layout3.addRow(self.output)
+
+
+        splitter1 = QSplitter(orientation= Qt.Horizontal)
+        splitter1.addWidget(groupBox2)
+        splitter1.addWidget(groupBox3)
+
+    #    w4 = QWidget()
+    #    w4.setLayout(splitter1)
+
+        splitter2 = QSplitter(orientation= Qt.Vertical)
+        splitter2.addWidget(groupBox1)
+        splitter2.addWidget(splitter1)
+
+    #    w5 = QWidget()
+    #    w5.setLayout(splitter2)
+
+        return splitter2
 
     #
     # slots
@@ -283,5 +330,5 @@ class QCsvWiz(QDialog):
         # main
         self.setLayout(grid)
         self.setWindowTitle(self.tr('Import Csv'))
-        self.setFixedSize(800, 400)
+        ##self.setFixedSize(800, 400)
 
