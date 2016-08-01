@@ -5,7 +5,7 @@ from datetime import datetime
 from backports import csv
 from PyQt4.QtCore import *
 from lib.commandsheet import CommandSheet
-
+from StringIO import StringIO # cStringIO module is not able to accept Unicode strings
 
 import xlrd
 import io
@@ -62,11 +62,15 @@ class Document(CommandSheet):
     #
 
     def _watchFile(self):
+        """activate file watcher to detect file changes and emit event
+        """
         self.__watcher = QFileSystemWatcher()
         self.__watcher.fileChanged.connect(self.__fileChanged)
         self.__watcher.addPath(self.filename)
 
     def _unwatchFile(self):
+        """deactivate file watcher
+        """
         try:
             self.__watcher.fileChanged.disconnect(self.__fileChanged)
             del(self.__watcher)
@@ -77,6 +81,8 @@ class Document(CommandSheet):
     #
 
     def __eq__(self, other):
+        """equal
+        """
         if isinstance(other, Document):
             if self.isNew or other.isNew:
                 return False
@@ -86,6 +92,8 @@ class Document(CommandSheet):
             return self == other
 
     def __ne__(self, other):
+        """not equal
+        """
         if isinstance(other, Document):
             if self.isNew or other.isNew:
                 return True
@@ -100,42 +108,87 @@ class Document(CommandSheet):
 
     @abstractmethod
     def new(self):
+        """new empty csv
+        """
         self.encoding_ = 'UTF-8'
         self.isNew = True
 
     @abstractmethod
     def load(self, linesToLoad=-1):
+        """load data from csv file
+        :param linesToLoad: lines to load, -1 to all
+        """
         self.isNew = False
         self._watchFile()
         self.loadRequested.emit()
 
     @abstractmethod
     def save(self, newFilename=None):
+        """write data in csv file
+        """
         self.isNew = False
         self._watchFile()
         self.saveRequested.emit()
 
     @abstractmethod
     def saveACopy(self, filename):
+        """write data in csv file name specified
+        :param filename: file name to save
+        """
         self._watchFile()
         self.saveRequested.emit()
 
+    @abstractmethod
+    def toString(self, linesToLoad=-1):
+        """get data csv format as string
+        :param linesToLoad: lines to obtain, -1 to all
+        :return: string
+        """
+        pass
+
     def encoding(self):
+        """file encoding
+        """
         return self.encoding_
 
     def size(self):
+        """file size
+        """
         if self.isNew:
             return 0
         else:
             return helper.get_size(self.filename)
 
     def modified(self):
+        """data has changes
+        """
         if self.isNew:
             return 0
         else:
             modifiedDateTime = QDateTime(datetime.fromtimestamp(os.path.getmtime(self.filename)))
             strDateTime = modifiedDateTime.toString(Qt.SystemLocaleShortDate)
             return unicode(strDateTime)
+
+    def fromString(self, linesToLoad=-1):
+        """load file in text file format
+        :param linesToLoad: lines to load, -1 to all
+        :return: string
+        """
+        # detect encoding
+        with io.open(self.filename, mode="rb") as f:
+            data = f.read()
+        detect = cchardet.detect(data)
+        self.encoding_ = detect['encoding']
+        with io.open(self.filename, newline='', encoding=self.encoding_) as file:
+            lines = []
+            if linesToLoad > -1:
+                for line, row in enumerate(file):
+                    if line >= linesToLoad:
+                        break
+                    lines.append(row)
+            else:
+                lines = file.readlines()
+            return ''.join(lines)
 
     def toJson(self):
         """Convert Document object to json string.
@@ -193,30 +246,27 @@ class Csv(Document):
 
     def __init__(self,
                  filename,
-                 delimiter=csv.excel.delimiter,
-                 doublequote=csv.excel.doublequote,
-                 escapechar=csv.excel.escapechar,
-                 lineterminator=csv.excel.lineterminator,
-                 quotechar=csv.excel.quotechar,
-                 quoting=csv.excel.quoting,
-                 skipinitialspace=csv.excel.skipinitialspace,
+                 delimiter = csv.excel.delimiter,
+                 doublequote = csv.excel.doublequote,
+                 escapechar = csv.excel.escapechar,
+                 lineterminator = csv.excel.lineterminator,
+                 quotechar = csv.excel.quotechar,
+                 quoting = csv.excel.quoting,
+                 skipinitialspace = csv.excel.skipinitialspace,
                  **kvparams):
         super(Csv, self).__init__(filename)
         self.delimiter = delimiter
-        self.doublequote= doublequote
-        self.escapechar= escapechar
-        self.lineterminator= lineterminator
-        self.quotechar= quotechar
-        self.quoting= quoting
-        self.skipinitialspace= skipinitialspace
+        self.doublequote = doublequote
+        self.escapechar = escapechar
+        self.lineterminator = lineterminator
+        self.quotechar = quotechar
+        self.quoting = quoting
+        self.skipinitialspace = skipinitialspace
         self.canSave = True
 
     def new(self):
         super(Csv, self).new()
 
-    # http://stackoverflow.com/questions/17245415/read-and-write-csv-files-including-unicode-with-python-2-7
-    # https://github.com/jdunck/python-unicodecsv
-    # https://nelsonslog.wordpress.com/2015/02/26/python-csv-benchmarks/
     def load(self, linesToLoad=-1):
         # detect encoding
         with io.open(self.filename, mode="rb") as f:
@@ -231,6 +281,9 @@ class Csv(Document):
                                                                                         # will not be interpreted correctly, and on platforms that use \r\n linendings
                                                                                         # on write an extra \r will be added. It should always be safe to specify
                                                                                         # newline='', since the csv module does its own (universal) newline handling.
+                                                                                        # see:
+                                                                                        # http://stackoverflow.com/questions/17245415/read-and-write-csv-files-including-unicode-with-python-2-7
+                                                                                        # https://nelsonslog.wordpress.com/2015/02/26/python-csv-benchmarks/
             reader = csv.reader(csvFile,
                                 delimiter=self.delimiter,
                                 doublequote=self.doublequote,
@@ -241,7 +294,7 @@ class Csv(Document):
                                 skipinitialspace=self.skipinitialspace)
             if linesToLoad > -1:
                 for line, row in enumerate(reader):
-                    if line > linesToLoad:
+                    if line >= linesToLoad:
                         break
                     data.append([QString(value) for value in row])
             else:
@@ -263,17 +316,34 @@ class Csv(Document):
         self._unwatchFile()
         with io.open(filename, 'w', newline='', encoding=self.encoding_) as csvFile:
             writer = csv.writer(csvFile,
-                                delimiter=self.delimiter,
-                                doublequote=self.doublequote,
+                                delimiter = self.delimiter,
+                                doublequote = self.doublequote,
                                 escapechar = self.escapechar,
-                                lineterminator= self.lineterminator,
-                                quotechar=self.quotechar,
-                                quoting=self.quoting,
-                                skipinitialspace=self.skipinitialspace)
+                                lineterminator = self.lineterminator,
+                                quotechar = self.quotechar,
+                                quoting = self.quoting,
+                                skipinitialspace = self.skipinitialspace)
             data = self.arrayData()
             for row in data:
                 writer.writerow(row)
         super(Csv, self).saveACopy(filename)
+
+    def toString(self, linesToLoad=-1):
+        text = StringIO()
+        writer = csv.writer(text,
+                            delimiter = self.delimiter,
+                            doublequote = self.doublequote,
+                            escapechar = self.escapechar,
+                            lineterminator = self.lineterminator,
+                            quotechar = self.quotechar,
+                            quoting = self.quoting,
+                            skipinitialspace = self.skipinitialspace)
+        data = self.arrayData()
+        for line, row in enumerate(data):
+            if (linesToLoad > -1) and (line >= linesToLoad):
+                break
+            writer.writerow(row)
+        return text.getvalue()
 
 
 class Xsl(Document):

@@ -2,11 +2,37 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from helpers.qradiobuttongroup import QRadioButtonGroup
 from helpers.qcheckboxgroup import QCheckGroupBox
-from widgets.csvm import QCsv
-from lib.document import Csv
+from lib.document import Document, Csv
 from backports import csv
+from lib.config import config
 
+import lib.helper as helper
 import sys
+
+
+class TableModel(QAbstractTableModel):
+    def __init__(self, document, parent=None, *args):
+        super(TableModel, self).__init__(parent, *args)
+        self.document = document
+
+    def rowCount(self, parent=QModelIndex()):
+        return self.document.rowCount()
+
+    def columnCount(self, parent=QModelIndex()):
+        return self.document.columnCount()
+
+    def data(self, index, role):
+        if not index.isValid():
+            return QVariant()
+        if role == Qt.DisplayRole or role == Qt.EditRole:
+            rowIndex = index.row()
+            columnIndex = index.column()
+            return self.document.value(rowIndex, columnIndex)
+
+    def dataChangedEmit(self):
+        topLeftIndex = self.createIndex(0, 0)
+        bottomRightIndex = self.createIndex(self.rowCount(), self.columnCount())
+        self.dataChanged.emit(topLeftIndex, bottomRightIndex)
 
 
 class DelimiterGroupBox(QRadioButtonGroup):
@@ -30,14 +56,31 @@ class DelimiterGroupBox(QRadioButtonGroup):
         elif index == 5:
             return u' '
         else:
-            return unicode(self.buddie(4).text())
+            return unicode(self.buddie(6).text())
+
+    def setValue(self, value):
+        if value == u',':
+            self.setChecked_(0, True)
+        elif value == u';':
+            self.setChecked_(1, True)
+        elif value == u'\t':
+            self.setChecked_(2, True)
+        elif value == u'|':
+            self.setChecked_(3, True)
+        elif value == u':':
+            self.setChecked_(4, True)
+        elif value == u' ':
+            self.setChecked_(5, True)
+        else:
+            self.setChecked_(6, True)
+            self.buddie(6).setText(value)
 
     #
     # private
     #
 
     def __otherTextChangedSlot(self, text):
-        self.selectItemChanged.emit(4, self.buddie(4))
+        self.selectItemChanged.emit(6, self.buddie(6))
 
     #
     # init
@@ -73,6 +116,17 @@ class QuoteGroupBox(QRadioButtonGroup):
             return u'\''
         else:
             return unicode(self.buddie(3).text())
+
+    def setValue(self, value):
+        if value == u'':
+            self.setChecked_(0, True)
+        elif value == u'"':
+            self.setChecked_(1, True)
+        elif value == u'\'':
+            self.setChecked_(2, True)
+        else:
+            self.setChecked_(3, True)
+            self.buddie(3).setText(value)
 
     #
     # private
@@ -111,6 +165,15 @@ class LineTerminatorGroupBox(QRadioButtonGroup):
         else:
             return u'\\n'
 
+    def setValue(self, value):
+        if value == u'\\r\\n':
+            self.setChecked_(0, True)
+        elif value == u'\\n':
+            self.setChecked_(2, True)
+        else:
+            self.setChecked_(1, True)
+            self.buddie(1).setText(value)
+
     #
     # private
     #
@@ -143,6 +206,12 @@ class AdjustsGroupBox(QCheckGroupBox):
     def isDoubleQuote(self):
         return 1 in self.selectedItems()
 
+    def setSkipInitialSpace(self, value):
+        self.setChecked_(0, value)
+
+    def setDoubleQuote(self, value):
+        self.setChecked_(1, value)
+
     #
     # init
     #
@@ -170,6 +239,15 @@ class QuotingGroupBox(QRadioButtonGroup):
         if index == 3:
             return csv.QUOTE_NONE
 
+    def setValue(self, value):
+        if value == csv.QUOTE_ALL:
+            self.setChecked_(0, True)
+        elif value == csv.QUOTE_MINIMAL:
+            self.setChecked_(1, True)
+        elif value == csv.QUOTE_NONNUMERIC:
+            self.setChecked_(2, True)
+        else:
+            self.setChecked_(3, True)
     #
     # init
     #
@@ -186,13 +264,47 @@ class QuotingGroupBox(QRadioButtonGroup):
         # Instructs reader to perform no special processing of quote characters.
         self.addItem(self.tr('None'), toolTip=self.tr('[writer] Never quote fields\n[reader] Perform no special processing of quote characters'))
 
+
 class QCsvWiz(QDialog):
+
+    #
+    # private
+    #
+
+    @helper.waiting
+    def __setValues(self):
+        model = self.preview.model()
+        document = model.document
+        document.delimiter = self.delimiterGroupBox.value()
+        document.lineterminator = self.lineTerminatorGroupBox.value()
+        document.quotechar = self.quoteGroupBox.value()
+        document.skipinitialspace =  self.adjustsGroupBox.isSkipInitialSpace()
+        document.doublequote = self.adjustsGroupBox.isDoubleQuote()
+        document.quoting = self.quotingGroupBox.value()
+        ## document.scapechar = u'@'
+        ## self.preview.document.quoting = True
+        if config.wizard_loadAllLines:
+            document.load()
+            text = document.toString()
+            self.output.setText(text)
+        else:
+            document.load(config.wizard_linesToLoad)
+            text = document.toString(config.wizard_linesToLoad)
+            self.output.setText(text)
+        model.dataChangedEmit()
+
+    #
+    # slots
+    #
+
+    def __groupBoxClickedSlot(self):
+        self.__setValues()
 
     #
     # widgets
     #
 
-    def _addButtonBox(self):
+    def __addButtonBox(self):
         acceptButton = QPushButton(self.tr('Accept'), self)
         acceptButton.setIcon(QIcon(':images/accept.png'))
         cancelButton = QPushButton(self.tr('Cancel'), self)
@@ -204,94 +316,50 @@ class QCsvWiz(QDialog):
         buttonBox.rejected.connect(lambda: self.reject())
         return buttonBox
 
-    def _addPreviewGroupBox2(self):
-        groupBox = QGroupBox(self.tr('Preview'), parent=self)
-        formLayout = QFormLayout(parent=groupBox)
-        # Preview TableView
-        csvDocument = Csv(self.filename)
-        csvDocument.load(20)
-        self.preview = QCsv(csvDocument)
-##        self.preview.setEnabled(False)
-        formLayout.addRow(self.preview)
-        return groupBox
+    def document(self):
+        model = self.preview.model()
+        document = model.document
+        return document
 
-    def _addSourceGroupBox(self):
-        groupBox = QGroupBox(self.tr('Source'), parent=self)
-        formLayout = QFormLayout(parent=groupBox)
+    def __addPreviewGroupBox(self):
+
+        # preview
+        groupBoxPreview = QGroupBox(self.tr('Preview'), parent=self)
+        layoutPreview = QHBoxLayout()
+        groupBoxPreview.setLayout(layoutPreview)
+        self.preview = QTableView()
+        document = Csv(self.filename)
+        if config.wizard_loadAllLines:
+            document.load()
+        else:
+            document.load(config.wizard_linesToLoad)
+        model = TableModel(document)
+        self.preview.setModel(model)
+        layoutPreview.addWidget(self.preview)
+
+        # input
+        groupBoxInput = QGroupBox(self.tr('Input'), parent=self)
+        layoutInput = QHBoxLayout()
+        groupBoxInput.setLayout(layoutInput)
         self.input = QTextEdit()
+        layoutInput.addWidget(self.input)
+
+        # output
+        groupBoxOutput = QGroupBox(self.tr('Output'), parent=self)
+        layoutOutput = QHBoxLayout()
+        groupBoxOutput.setLayout(layoutOutput)
         self.output = QTextEdit()
-        splitter = QSplitter(orientation= Qt.Horizontal)
-        splitter.addWidget(self.input)
-        splitter.addWidget(self.output)
-        formLayout.addRow(splitter)
-        return groupBox
+        layoutOutput.addWidget(self.output)
 
-    def _addPreviewGroupBox(self):
+        # splitters
+        splitterSource = QSplitter(orientation= Qt.Horizontal)
+        splitterSource.addWidget(groupBoxInput)
+        splitterSource.addWidget(groupBoxOutput)
+        splitter = QSplitter(orientation= Qt.Vertical)
+        splitter.addWidget(groupBoxPreview)
+        splitter.addWidget(splitterSource)
 
-        groupBox1 = QGroupBox(self.tr('Preview'), parent=self)
-        layout1 = QFormLayout(parent=groupBox1)
-        csvDocument = Csv(self.filename)
-        csvDocument.load(20)
-        self.preview = QCsv(csvDocument)
-        layout1.addRow(self.preview)
-
-        groupBox2 = QGroupBox(self.tr('Input'), parent=self)
-        layout2 = QFormLayout(parent=groupBox2)
-        self.input = QTextEdit()
-        layout2.addRow(self.input)
-
-        groupBox3 = QGroupBox(self.tr('Output'), parent=self)
-        layout3 = QFormLayout(parent=groupBox3)
-        self.output = QTextEdit()
-        layout3.addRow(self.output)
-
-
-        splitter1 = QSplitter(orientation= Qt.Horizontal)
-        splitter1.addWidget(groupBox2)
-        splitter1.addWidget(groupBox3)
-
-    #    w4 = QWidget()
-    #    w4.setLayout(splitter1)
-
-        splitter2 = QSplitter(orientation= Qt.Vertical)
-        splitter2.addWidget(groupBox1)
-        splitter2.addWidget(splitter1)
-
-    #    w5 = QWidget()
-    #    w5.setLayout(splitter2)
-
-        return splitter2
-
-    #
-    # slots
-    #
-
-    def _groupBoxClickedSlot(self):
-        print 'delimiterGroupBox', self.delimiterGroupBox.value()
-        print 'lineTerminatorGroupBox', self.lineTerminatorGroupBox.value()
-        print 'quoteGroupBox', self.quoteGroupBox.value()
-        #csvDocument = Csv(self.filename,
-        #                       delimiter =self.delimiterGroupBox.value())
-        #csvDocument.load()
-        #self.preview.setDocument(csvDocument)
-##        print 'skipinitialspace', self.preview.document.skipinitialspace
-
-        self.preview.document.delimiter = self.delimiterGroupBox.value()
-        self.preview.document.lineterminator = self.lineTerminatorGroupBox.value()
-        self.preview.document.quotechar = self.quoteGroupBox.value()
-        self.preview.document.skipinitialspace =  self.adjustsGroupBox.isSkipInitialSpace()
-        self.preview.document.doublequote = self.adjustsGroupBox.isDoubleQuote()
-        self.preview.document.quoting = self.quotingGroupBox.value()
-        self.preview.document.scapechar = u'@'
-
-     #   self.preview.document.quoting = True
-
-        self.preview.document.load(20)
-
-        ##self.preview.data = data
-
-       # self.preview.setEnabled(False)
-
+        return splitter
 
     #
     # init
@@ -302,26 +370,36 @@ class QCsvWiz(QDialog):
         self.filename = filename
 
         # widgets
-        self.buttonBox = self._addButtonBox()
         self.delimiterGroupBox = DelimiterGroupBox()
         self.quoteGroupBox = QuoteGroupBox()
         self.adjustsGroupBox = AdjustsGroupBox()
         self.lineTerminatorGroupBox = LineTerminatorGroupBox()
         self.quotingGroupBox = QuotingGroupBox()
-        self.previewGroupBox = self._addPreviewGroupBox()
+        self.previewGroupBox = self.__addPreviewGroupBox()
+        self.buttonBox = self.__addButtonBox()
+
+        # set default values
+        model = self.preview.model()
+        document = model.document
+        self.delimiterGroupBox.setValue(document.delimiter)
+        self.quoteGroupBox.setValue(document.quotechar)
+        self.lineTerminatorGroupBox.setValue(document.lineterminator)
+        self.quotingGroupBox.setValue(document.quoting)
+        self.adjustsGroupBox.setSkipInitialSpace(document.skipinitialspace)
+        self.adjustsGroupBox.setDoubleQuote(document.doublequote)
 
         # signals
-        self.delimiterGroupBox.selectItemChanged.connect(self._groupBoxClickedSlot)
-        self.quoteGroupBox.selectItemChanged.connect(self._groupBoxClickedSlot)
-        self.adjustsGroupBox.selectItemChanged.connect(self._groupBoxClickedSlot)
-        self.lineTerminatorGroupBox.selectItemChanged.connect(self._groupBoxClickedSlot)
-        self.quotingGroupBox.selectItemChanged.connect(self._groupBoxClickedSlot)
+        self.delimiterGroupBox.selectItemChanged.connect(self.__groupBoxClickedSlot)
+        self.quoteGroupBox.selectItemChanged.connect(self.__groupBoxClickedSlot)
+        self.adjustsGroupBox.selectItemChanged.connect(self.__groupBoxClickedSlot)
+        self.lineTerminatorGroupBox.selectItemChanged.connect(self.__groupBoxClickedSlot)
+        self.quotingGroupBox.selectItemChanged.connect(self.__groupBoxClickedSlot)
 
         # layout
         grid = QGridLayout()
         grid.addWidget(self.delimiterGroupBox, 0, 0, 2, 1)
         grid.addWidget(self.quoteGroupBox, 0, 1, 2, 1)
-        grid.addWidget(self.quotingGroupBox, 0, 3, 2, 1)#
+        grid.addWidget(self.quotingGroupBox, 0, 3, 2, 1)
         grid.addWidget(self.adjustsGroupBox, 0, 2)
         grid.addWidget(self.lineTerminatorGroupBox, 1, 2)
         grid.addWidget(self.previewGroupBox, 2, 0, 1, 4)
@@ -329,6 +407,19 @@ class QCsvWiz(QDialog):
 
         # main
         self.setLayout(grid)
-        self.setWindowTitle(self.tr('Import Csv'))
-        ##self.setFixedSize(800, 400)
+        self.setWindowTitle(self.tr('Csv Wizard'))
+
+        # load input file only once
+        if config.wizard_loadAllLines:
+            text = document.fromString()
+            self.input.setText(text)
+        else:
+            text = document.fromString(config.wizard_linesToLoad)
+            self.input.setText(text)
+
+        # set values
+        self.__setValues()
+
+        # set initial size
+        self.resize(800, 600)
 

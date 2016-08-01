@@ -369,7 +369,9 @@ class MainWindow(QMainWindow):
             # use csv wizard
             if useWizard:
                csvWiz = QCsvWiz(filename=filename)
-               csvWiz.exec_()
+               if csvWiz.exec_() ==  QDialog.Accepted:
+                    csv = csvWiz.document()
+                    self.openCsv(csv)
             # open csv with standard parameters
             else:
                 filename = str(filename)

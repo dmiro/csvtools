@@ -42,6 +42,10 @@ class Config(IniConfig):
     view_colorborderdata = IniConfig.iniproperty('view', 'colorBorderData', QColor(Qt.red).rgb())
     view_widthborderdata = IniConfig.iniproperty('view', 'widthBorderData', 1)
 
+    # Format wizard section
+    wizard_loadAllLines = IniConfig.iniproperty('wizard', 'loadAllLines', False)
+    wizard_linesToLoad = IniConfig.iniproperty('wizard', 'linesToLoad', 20)
+
 #
 # global
 #

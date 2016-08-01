@@ -27,6 +27,8 @@ class Preferences(QDialog):
         self.view_showborderdata.setChecked(config.view_showborderdata)
         self.view_colorborderdata.setColor(config.view_colorborderdata)
         self.view_widthborderdata.setCurrentIndex(config.view_widthborderdata - 1)
+        self.wizard_loadAllLines.setChecked(config.wizard_loadAllLines)
+        self.wizard_linesToLoad.setValue(config.wizard_linesToLoad)
         self.__checkDependenciesPreferences()
 
     def __saveConfig(self):
@@ -43,6 +45,8 @@ class Preferences(QDialog):
         config.view_showborderdata = self.view_showborderdata.checkState() == Qt.Checked
         config.view_colorborderdata = self.view_colorborderdata.color().rgb()
         config.view_widthborderdata = self.view_widthborderdata.currentIndex() + 1
+        config.wizard_loadAllLines = self.wizard_loadAllLines.checkState() == Qt.Checked
+        config.wizard_linesToLoad = self.wizard_linesToLoad.value()
 
     def __acceptDialog(self):
         self.__saveConfig()
@@ -53,6 +57,9 @@ class Preferences(QDialog):
         checked = self.view_showborderdata.checkState() == Qt.Checked
         self.view_colorborderdata.setEnabled(checked)
         self.view_widthborderdata.setEnabled(checked)
+        # 'Load all lines' dependencies
+        checked = self.wizard_loadAllLines.checkState() == Qt.Checked
+        self.wizard_linesToLoad.setEnabled(not checked)
 
     def __addButtonBox(self):
         acceptButton = QPushButton(self.tr('Accept'), self)
@@ -69,7 +76,7 @@ class Preferences(QDialog):
     def __addTabOptions(self):
         # tab widget
         tabs = QTabWidget()
-        tabs.setTabBar(QFingerTabWidget(width=75, height=25))
+        tabs.setTabBar(QFingerTabWidget(width=90, height=25))
         tabs.setTabPosition(QTabWidget.West)
 
         # General
@@ -134,6 +141,16 @@ class Preferences(QDialog):
         grid.addRow(self.tr('Width border data'), self.view_widthborderdata)
         grid.addRow(HLine())
 
+        # Format Wizard
+        backup = QWidget()
+        tabs.addTab(backup, self.tr('Format Wizard'))
+        self.wizard_loadAllLines = QCheckBox('')
+        self.wizard_loadAllLines.clicked.connect(self.__checkDependenciesPreferences)
+        self.wizard_linesToLoad = QSpinBox()
+        self.wizard_linesToLoad.setMinimum(1)
+        grid = QFormLayout(parent=backup)
+        grid.addRow(self.tr('Load all lines'), self.wizard_loadAllLines)
+        grid.addRow(self.tr('Lines to load'), self.wizard_linesToLoad)
 
         return tabs
 
