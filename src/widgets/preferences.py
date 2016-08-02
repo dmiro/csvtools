@@ -27,6 +27,10 @@ class Preferences(QDialog):
         self.view_showborderdata.setChecked(config.view_showborderdata)
         self.view_colorborderdata.setColor(config.view_colorborderdata)
         self.view_widthborderdata.setCurrentIndex(config.view_widthborderdata - 1)
+        self.wizard_showToOpenFile.setChecked(config.wizard_showToOpenFile)
+        self.wizard_showToSaveFile.setChecked(config.wizard_showToSaveFile)
+        self.wizard_showToReloadFile.setChecked(config.wizard_showToReloadFile)
+        self.wizard_showToDropFile.setChecked(config.wizard_showToDropFile)
         self.wizard_loadAllLines.setChecked(config.wizard_loadAllLines)
         self.wizard_linesToLoad.setValue(config.wizard_linesToLoad)
         self.__checkDependenciesPreferences()
@@ -45,6 +49,10 @@ class Preferences(QDialog):
         config.view_showborderdata = self.view_showborderdata.checkState() == Qt.Checked
         config.view_colorborderdata = self.view_colorborderdata.color().rgb()
         config.view_widthborderdata = self.view_widthborderdata.currentIndex() + 1
+        config.wizard_showToOpenFile = self.wizard_showToOpenFile.checkState() == Qt.Checked
+        config.wizard_showToSaveFile = self.wizard_showToSaveFile.checkState() == Qt.Checked
+        config.wizard_showToReloadFile = self.wizard_showToReloadFile.checkState() == Qt.Checked
+        config.wizard_showToDropFile = self.wizard_showToDropFile.checkState() == Qt.Checked
         config.wizard_loadAllLines = self.wizard_loadAllLines.checkState() == Qt.Checked
         config.wizard_linesToLoad = self.wizard_linesToLoad.value()
 
@@ -74,7 +82,6 @@ class Preferences(QDialog):
         return buttonBox
 
     def __addTabOptions(self):
-        # tab widget
         tabs = QTabWidget()
         tabs.setTabBar(QFingerTabWidget(width=90, height=25))
         tabs.setTabPosition(QTabWidget.West)
@@ -144,11 +151,22 @@ class Preferences(QDialog):
         # Format Wizard
         backup = QWidget()
         tabs.addTab(backup, self.tr('Format Wizard'))
-        self.wizard_loadAllLines = QCheckBox('')
+
+        self.wizard_showToOpenFile = QCheckBox()
+        self.wizard_showToSaveFile = QCheckBox()
+        self.wizard_showToReloadFile = QCheckBox()
+        self.wizard_showToDropFile = QCheckBox()
+
+        self.wizard_loadAllLines = QCheckBox()
         self.wizard_loadAllLines.clicked.connect(self.__checkDependenciesPreferences)
         self.wizard_linesToLoad = QSpinBox()
         self.wizard_linesToLoad.setMinimum(1)
         grid = QFormLayout(parent=backup)
+        grid.addRow(self.tr('Show to open file'), self.wizard_showToOpenFile)
+        grid.addRow(self.tr('Show to save file'), self.wizard_showToSaveFile)
+        grid.addRow(self.tr('Show to reload file'), self.wizard_showToReloadFile)
+        grid.addRow(self.tr('Show to drag&&drop file'), self.wizard_showToDropFile)
+        grid.addRow(HLine())
         grid.addRow(self.tr('Load all lines'), self.wizard_loadAllLines)
         grid.addRow(self.tr('Lines to load'), self.wizard_linesToLoad)
 

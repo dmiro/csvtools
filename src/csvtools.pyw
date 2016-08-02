@@ -113,12 +113,20 @@ class MainWindow(QMainWindow):
         def _reload():
             csv.document.load()
             self.refreshStatusTab(csv)
-
+        # confirm reload
         if csv.document.hasChanges():
             reloadMsg = self.tr('Are you sure you want to reload the current file and lose your changes?')
             reply = QMessageBox.question(self, self.tr('Message'), reloadMsg, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.No:
                 return
+        # use csv wizard
+        if config.wizard_showToReloadFile:
+            csvWiz = QCsvWiz(filename=csv.document.filename)
+            if csvWiz.exec_() ==  QDialog.Accepted:
+                csv.setDocument(csvWiz.document())
+            else:
+                return
+        # reload
         _reload()
 
     def openCsv(self, filenames):

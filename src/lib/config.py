@@ -6,7 +6,6 @@ from PyQt4.QtCore import *
 class Config(IniConfig):
 
     # File section
-    file_useCsvWizard = IniConfig.iniproperty('file', 'useCsvWizard', True)
     file_recent = IniConfig.iniproperty('file', 'recent', [])
     file_session = IniConfig.iniproperty('file', 'session', [])
 
@@ -43,6 +42,10 @@ class Config(IniConfig):
     view_widthborderdata = IniConfig.iniproperty('view', 'widthBorderData', 1)
 
     # Format wizard section
+    wizard_showToOpenFile = IniConfig.iniproperty('wizard', 'showToOpenFile', True)
+    wizard_showToSaveFile = IniConfig.iniproperty('wizard', 'showToSaveFile', True)
+    wizard_showToReloadFile = IniConfig.iniproperty('wizard', 'showToReloadFile', True)
+    wizard_showToDropFile = IniConfig.iniproperty('wizard', 'showToDropFile', True)
     wizard_loadAllLines = IniConfig.iniproperty('wizard', 'loadAllLines', False)
     wizard_linesToLoad = IniConfig.iniproperty('wizard', 'linesToLoad', 20)
 

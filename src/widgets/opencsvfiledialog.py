@@ -16,10 +16,7 @@ class QOpenCsvFileDialog(QFileDialog):
     #
 
     def __checkboxWizardStateChangedSlot(self, value):
-        if self.checkboxWizard.checkState() == Qt.Checked:
-            config.file_useCsvWizard = True
-        else:
-            config.file_useCsvWizard = False
+        config.wizard_showToOpenFile = self.checkboxWizard.checkState() == Qt.Checked
 
     #
     # init
@@ -27,7 +24,6 @@ class QOpenCsvFileDialog(QFileDialog):
 
     def __init__(self, *args):
         super(QOpenCsvFileDialog, self).__init__(caption='Open File', *args)
-        # caption='Open File',
         self.setViewMode(QFileDialog.Detail);
         self.setFileMode(QFileDialog.ExistingFile)
         self.setNameFilters(['Csv Files (*.csv)','All Files (*)']);
@@ -35,10 +31,8 @@ class QOpenCsvFileDialog(QFileDialog):
         layout = self.layout()
         self.checkboxWizard = QCheckBox(self.tr('Use Wizard'))
         self.checkboxWizard.setStyleSheet("background-color: yellow; font: bold")
-        if config.file_useCsvWizard:
-            self.checkboxWizard.setCheckState(Qt.Checked)
-        else:
-            self.checkboxWizard.setCheckState(Qt.Unchecked)
+        state = Qt.Checked if config.wizard_showToOpenFile else Qt.Unchecked         # https://en.wikipedia.org/wiki/%3F:#Python
+        self.checkboxWizard.setCheckState(state)
         self.checkboxWizard.stateChanged.connect(self.__checkboxWizardStateChangedSlot)
         if layout:
             layout.addWidget(self.checkboxWizard, 4, 2)
