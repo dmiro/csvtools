@@ -112,6 +112,9 @@ class MainWindow(QMainWindow):
         @waiting
         def _reload():
             csv.document.load()
+            self.addRecentFile(csv)
+            self.refreshRecentFileActions()
+            self.saveSessionFile()
             self.refreshStatusTab(csv)
         # confirm reload
         if csv.document.hasChanges():
