@@ -119,10 +119,12 @@ class MainWindow(QMainWindow):
             reply = QMessageBox.question(self, self.tr('Message'), reloadMsg, QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.No:
                 return
-        # use csv wizard
+        # csv wizard
         if config.wizard_showToReloadFile:
-            csvWiz = QCsvWiz(filename=csv.document.filename)
-            if csvWiz.exec_() ==  QDialog.Accepted:
+            csvWiz = QCsvWiz(csv.document)
+            result = csvWiz.exec_()
+            config.wizard_showToReloadFile = csvWiz.useWizard()
+            if result ==  QDialog.Accepted:
                 csv.setDocument(csvWiz.document())
             else:
                 return
@@ -340,7 +342,17 @@ class MainWindow(QMainWindow):
                 if fileExtension == '.xls' or fileExtension == '.xlsx':
                     self.importExcelAction(filename)
                 else:
-                    self.openCsv(filename)
+                    # use csv wizard
+                    if config.wizard_showToDropFile:
+                        csvWiz = QCsvWiz.fromfilename(filename)
+                        result = csvWiz.exec_()
+                        config.wizard_showToDropFile = csvWiz.useWizard()
+                        if result ==  QDialog.Accepted:
+                            csv = csvWiz.document()
+                            self.openCsv(csv)
+                    # open csv with standard parameters
+                    else:
+                        self.openCsv(filename)
         else:
             event.ignore()
 
@@ -376,8 +388,10 @@ class MainWindow(QMainWindow):
         if filename:
             # use csv wizard
             if useWizard:
-               csvWiz = QCsvWiz(filename=filename)
-               if csvWiz.exec_() ==  QDialog.Accepted:
+               csvWiz = QCsvWiz.fromfilename(filename)
+               result = csvWiz.exec_()
+               config.wizard_showToOpenFile = csvWiz.useWizard()
+               if result ==  QDialog.Accepted:
                     csv = csvWiz.document()
                     self.openCsv(csv)
             # open csv with standard parameters

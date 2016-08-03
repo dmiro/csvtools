@@ -77,7 +77,7 @@ class Document(CommandSheet):
         except: pass
 
     #
-    # Magic Methods
+    # magic methods
     #
 
     def __eq__(self, other):
@@ -179,8 +179,9 @@ class Document(CommandSheet):
             data = f.read()
         detect = cchardet.detect(data)
         self.encoding_ = detect['encoding']
+        # read text lines
+        lines = []
         with io.open(self.filename, newline='', encoding=self.encoding_) as file:
-            lines = []
             if linesToLoad > -1:
                 for line, row in enumerate(file):
                     if line >= linesToLoad:
@@ -188,7 +189,13 @@ class Document(CommandSheet):
                     lines.append(row)
             else:
                 lines = file.readlines()
-            return ''.join(lines)
+        return ''.join(lines)
+
+    def copy(self):
+        """return a shadow copy of the instance only with the settings parameters
+        """
+        json_ = self.toJson()
+        return self.fromJson(json_)
 
     def toJson(self):
         """Convert Document object to json string.

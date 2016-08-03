@@ -2,7 +2,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from helpers.qradiobuttongroup import QRadioButtonGroup
 from helpers.qcheckboxgroup import QCheckGroupBox
-from lib.document import Document, Csv
+from lib.document import Csv
 from backports import csv
 from lib.config import config
 
@@ -33,6 +33,7 @@ class TableModel(QAbstractTableModel):
         topLeftIndex = self.createIndex(0, 0)
         bottomRightIndex = self.createIndex(self.rowCount(), self.columnCount())
         self.dataChanged.emit(topLeftIndex, bottomRightIndex)
+        self.headerDataChanged.emit(Qt.Horizontal, 0, self.columnCount() - 1)
 
 
 class DelimiterGroupBox(QRadioButtonGroup):
@@ -273,24 +274,23 @@ class QCsvWiz(QDialog):
 
     @helper.waiting
     def __setValues(self):
-        model = self.preview.model()
-        document = model.document
-        document.delimiter = self.delimiterGroupBox.value()
-        document.lineterminator = self.lineTerminatorGroupBox.value()
-        document.quotechar = self.quoteGroupBox.value()
-        document.skipinitialspace =  self.adjustsGroupBox.isSkipInitialSpace()
-        document.doublequote = self.adjustsGroupBox.isDoubleQuote()
-        document.quoting = self.quotingGroupBox.value()
-        ## document.scapechar = u'@'
+        self.__csv.delimiter = self.delimiterGroupBox.value()
+        self.__csv.lineterminator = self.lineTerminatorGroupBox.value()
+        self.__csv.quotechar = self.quoteGroupBox.value()
+        self.__csv.skipinitialspace =  self.adjustsGroupBox.isSkipInitialSpace()
+        self.__csv.doublequote = self.adjustsGroupBox.isDoubleQuote()
+        self.__csv.quoting = self.quotingGroupBox.value()
+        ## self.__csv.scapechar = u'@'
         ## self.preview.document.quoting = True
         if config.wizard_loadAllLines:
-            document.load()
-            text = document.toString()
+            self.__csv.load()
+            text = self.__csv.toString()
             self.output.setText(text)
         else:
-            document.load(config.wizard_linesToLoad)
-            text = document.toString(config.wizard_linesToLoad)
+            self.__csv.load(config.wizard_linesToLoad)
+            text = self.__csv.toString(config.wizard_linesToLoad)
             self.output.setText(text)
+        model = self.preview.model()
         model.dataChangedEmit()
 
     #
@@ -316,24 +316,14 @@ class QCsvWiz(QDialog):
         buttonBox.rejected.connect(lambda: self.reject())
         return buttonBox
 
-    def document(self):
-        model = self.preview.model()
-        document = model.document
-        return document
-
     def __addPreviewGroupBox(self):
 
         # preview
         groupBoxPreview = QGroupBox(self.tr('Preview'), parent=self)
         layoutPreview = QHBoxLayout()
         groupBoxPreview.setLayout(layoutPreview)
+        model = TableModel(self.__csv)
         self.preview = QTableView()
-        document = Csv(self.filename)
-        if config.wizard_loadAllLines:
-            document.load()
-        else:
-            document.load(config.wizard_linesToLoad)
-        model = TableModel(document)
         self.preview.setModel(model)
         layoutPreview.addWidget(self.preview)
 
@@ -361,13 +351,35 @@ class QCsvWiz(QDialog):
 
         return splitter
 
+    def __addCheckBoxWizard(self):
+        checkBoxWizard = QCheckBox(self.tr('Not show wizard anymore'))
+        checkBoxWizard.setStyleSheet("background-color: yellow; font: bold")
+        checkBoxWizard.setCheckState(Qt.Checked)
+        return checkBoxWizard
+
+    #
+    # public
+    #
+
+    @classmethod
+    def fromfilename(cls, filename):
+        return cls(Csv(filename))
+
+    def document(self):
+        return self.__csv
+
+    def useWizard(self):
+        return True if self.checkBoxWizard.checkState() == Qt.Checked else False
+
     #
     # init
     #
 
-    def __init__(self, filename, *args):
+    def __init__(self, csv, *args):
         QDialog.__init__ (self, *args)
-        self.filename = filename
+        if not csv:
+            raise IndexError('csv is mandatory')
+        self.__csv = csv.copy()
 
         # widgets
         self.delimiterGroupBox = DelimiterGroupBox()
@@ -376,17 +388,16 @@ class QCsvWiz(QDialog):
         self.lineTerminatorGroupBox = LineTerminatorGroupBox()
         self.quotingGroupBox = QuotingGroupBox()
         self.previewGroupBox = self.__addPreviewGroupBox()
+        self.checkBoxWizard = self.__addCheckBoxWizard()
         self.buttonBox = self.__addButtonBox()
 
         # set default values
-        model = self.preview.model()
-        document = model.document
-        self.delimiterGroupBox.setValue(document.delimiter)
-        self.quoteGroupBox.setValue(document.quotechar)
-        self.lineTerminatorGroupBox.setValue(document.lineterminator)
-        self.quotingGroupBox.setValue(document.quoting)
-        self.adjustsGroupBox.setSkipInitialSpace(document.skipinitialspace)
-        self.adjustsGroupBox.setDoubleQuote(document.doublequote)
+        self.delimiterGroupBox.setValue(self.__csv.delimiter)
+        self.quoteGroupBox.setValue(self.__csv.quotechar)
+        self.lineTerminatorGroupBox.setValue(self.__csv.lineterminator)
+        self.quotingGroupBox.setValue(self.__csv.quoting)
+        self.adjustsGroupBox.setSkipInitialSpace(self.__csv.skipinitialspace)
+        self.adjustsGroupBox.setDoubleQuote(self.__csv.doublequote)
 
         # signals
         self.delimiterGroupBox.selectItemChanged.connect(self.__groupBoxClickedSlot)
@@ -403,18 +414,19 @@ class QCsvWiz(QDialog):
         grid.addWidget(self.adjustsGroupBox, 0, 2)
         grid.addWidget(self.lineTerminatorGroupBox, 1, 2)
         grid.addWidget(self.previewGroupBox, 2, 0, 1, 4)
-        grid.addWidget(self.buttonBox, 3, 0, 1, 4)
+        grid.addWidget(self.checkBoxWizard, 3, 3, 1, 1)
+        grid.addWidget(self.buttonBox, 4, 0, 1, 4)
 
         # main
         self.setLayout(grid)
         self.setWindowTitle(self.tr('Csv Wizard'))
 
-        # load input file only once
+        # load input file only one time
         if config.wizard_loadAllLines:
-            text = document.fromString()
+            text = self.__csv.fromString()
             self.input.setText(text)
         else:
-            text = document.fromString(config.wizard_linesToLoad)
+            text = self.__csv.fromString(config.wizard_linesToLoad)
             self.input.setText(text)
 
         # set values

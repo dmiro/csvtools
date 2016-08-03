@@ -6,6 +6,7 @@ from lib.config import config
 from widgets.helpers.qfingertabwidget import QFingerTabWidget
 from widgets.helpers.qcolorbox import QColorBox
 from widgets.helpers.hline import HLine
+from widgets.helpers.htitle import HTitle
 
 class Preferences(QDialog):
 
@@ -137,38 +138,37 @@ class Preferences(QDialog):
         self.view_widthborderdata = QComboBox()
         self.view_widthborderdata.addItems(['1', '2', '3', '4', '5'])
         grid = QFormLayout(parent=backup)
-        grid.addRow(self.tr('Show header row to open file'), self.view_headerrow)
-        grid.addRow(self.tr('Show column number in header row'), self.view_showColumnNumberHeaderRow)
-        grid.addRow(HLine())
-        grid.addRow(self.tr('Show tools to start'), self.view_showtools)
-        grid.addRow(self.tr('Initial position tools'), self.view_positiontools)
-        grid.addRow(HLine())
-        grid.addRow(self.tr('Show border data'), self.view_showborderdata)
-        grid.addRow(self.tr('Color border data'), self.view_colorborderdata)
-        grid.addRow(self.tr('Width border data'), self.view_widthborderdata)
-        grid.addRow(HLine())
+        grid.addRow(HTitle('Header Row'))
+        grid.addRow(self.tr('Show to open file'), self.view_headerrow)
+        grid.addRow(self.tr('Show column number'), self.view_showColumnNumberHeaderRow)
+        grid.addRow(HTitle('Tools'))
+        grid.addRow(self.tr('Show to start'), self.view_showtools)
+        grid.addRow(self.tr('Initial position'), self.view_positiontools)
+        grid.addRow(HTitle('Border Data'))
+        grid.addRow(self.tr('Show'), self.view_showborderdata)
+        grid.addRow(self.tr('Border color'), self.view_colorborderdata)
+        grid.addRow(self.tr('Border width'), self.view_widthborderdata)
 
         # Format Wizard
         backup = QWidget()
         tabs.addTab(backup, self.tr('Format Wizard'))
-
         self.wizard_showToOpenFile = QCheckBox()
         self.wizard_showToSaveFile = QCheckBox()
         self.wizard_showToReloadFile = QCheckBox()
         self.wizard_showToDropFile = QCheckBox()
-
         self.wizard_loadAllLines = QCheckBox()
         self.wizard_loadAllLines.clicked.connect(self.__checkDependenciesPreferences)
         self.wizard_linesToLoad = QSpinBox()
         self.wizard_linesToLoad.setMinimum(1)
         grid = QFormLayout(parent=backup)
-        grid.addRow(self.tr('Show to open file'), self.wizard_showToOpenFile)
-        grid.addRow(self.tr('Show to save file'), self.wizard_showToSaveFile)
-        grid.addRow(self.tr('Show to reload file'), self.wizard_showToReloadFile)
-        grid.addRow(self.tr('Show to drag&&drop file'), self.wizard_showToDropFile)
-        grid.addRow(HLine())
-        grid.addRow(self.tr('Load all lines'), self.wizard_loadAllLines)
-        grid.addRow(self.tr('Lines to load'), self.wizard_linesToLoad)
+        grid.addRow(HTitle('Show Wizard to..'))
+        grid.addRow(self.tr('Open file'), self.wizard_showToOpenFile)
+        grid.addRow(self.tr('Save file'), self.wizard_showToSaveFile)
+        grid.addRow(self.tr('Reload file'), self.wizard_showToReloadFile)
+        grid.addRow(self.tr('Drag&&drop file'), self.wizard_showToDropFile)
+        grid.addRow(HTitle('Lines To Load'))
+        grid.addRow(self.tr('All lines'), self.wizard_loadAllLines)
+        grid.addRow(self.tr('Num. lines'), self.wizard_linesToLoad)
 
         return tabs
 
@@ -194,7 +194,7 @@ class Preferences(QDialog):
         # main
         self.setLayout(main)
         self.setWindowTitle(self.tr('Preferences'))
-        self.setFixedSize(400, 300)
+        self.setFixedSize(400, 350)
 
 
 
