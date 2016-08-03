@@ -160,16 +160,16 @@ class LineTerminatorGroupBox(QRadioButtonGroup):
     def value(self):
         index = self.selectedItem()
         if index == 0:
-            return u'\\r\\n'
+            return u'\r\n'
         if index == 1:
             return unicode(self.buddie(1).text())
         else:
-            return u'\\n'
+            return u'\n'
 
     def setValue(self, value):
-        if value == u'\\r\\n':
+        if value == u'\r\n':
             self.setChecked_(0, True)
-        elif value == u'\\n':
+        elif value == u'\n':
             self.setChecked_(2, True)
         else:
             self.setChecked_(1, True)
@@ -352,7 +352,7 @@ class QCsvWiz(QDialog):
         return splitter
 
     def __addCheckBoxWizard(self):
-        checkBoxWizard = QCheckBox(self.tr('Not show wizard anymore'))
+        checkBoxWizard = QCheckBox(self.tr('Show wizard next time'))
         checkBoxWizard.setStyleSheet("background-color: yellow; font: bold")
         checkBoxWizard.setCheckState(Qt.Checked)
         return checkBoxWizard
