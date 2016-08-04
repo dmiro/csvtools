@@ -821,7 +821,7 @@ class QCsv(QTableView):
         elif action == self.copyAsDelimited:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
-                textClip = lib.exports.ClipboardFormat.toDelimitied(matrix)
+                textClip = lib.exports.ClipboardFormat.toDelimitiedInColumns(matrix)
                 # copy to clipboard
                 clipboard = QApplication.clipboard()
                 clipboard.setText(textClip, mode=QClipboard.Clipboard)

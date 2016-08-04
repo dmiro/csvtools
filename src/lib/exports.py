@@ -1,7 +1,10 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+
+import numpy as np
 import json
 import lib.helper
+
 
 class ClipboardFormat(object):
 
@@ -30,7 +33,7 @@ class ClipboardFormat(object):
         return None
 
     @staticmethod
-    def toDelimitied(rectangularArea):
+    def toDelimitiedInColumns(rectangularArea):
         """from rectangular area (two dimension matrix) to delimitied clipboard format"""
         if rectangularArea:
             textClip = ''
@@ -42,6 +45,17 @@ class ClipboardFormat(object):
                 else:
                     textClip = textClip + '\n'
             return textClip
+        return None
+
+    @staticmethod
+    def toDelimitiedInRows(rectangularArea):
+        if rectangularArea:
+            dimRows = len(rectangularArea)
+            dimColumns = len(rectangularArea[0])
+            numpyArray = np.empty((dimRows, dimColumns), dtype=object)  # numpy array error with QString arrays
+            numpyArray[:] = rectangularArea                             # http://stackoverflow.com/q/36931732/2270217
+            rectangularArea = numpyArray.T.tolist()
+            return ClipboardFormat.toDelimitied(rectangularArea)
         return None
 
     @staticmethod
