@@ -34,7 +34,7 @@ class ClipboardFormat(object):
 
     @staticmethod
     def toDelimitiedInColumns(rectangularArea):
-        """from rectangular area (two dimension matrix) to delimitied clipboard format"""
+        """from rectangular area (two dimension matrix) to delimitied clipboard format in columns"""
         if rectangularArea:
             textClip = ''
             for row in rectangularArea:
@@ -49,13 +49,14 @@ class ClipboardFormat(object):
 
     @staticmethod
     def toDelimitiedInRows(rectangularArea):
+        """from rectangular area (two dimension matrix) to delimitied clipboard format in rows"""
         if rectangularArea:
             dimRows = len(rectangularArea)
             dimColumns = len(rectangularArea[0])
             numpyArray = np.empty((dimRows, dimColumns), dtype=object)  # numpy array error with QString arrays
             numpyArray[:] = rectangularArea                             # http://stackoverflow.com/q/36931732/2270217
             rectangularArea = numpyArray.T.tolist()
-            return ClipboardFormat.toDelimitied(rectangularArea)
+            return ClipboardFormat.toDelimitiedInColumns(rectangularArea)
         return None
 
     @staticmethod

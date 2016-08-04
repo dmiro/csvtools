@@ -818,10 +818,20 @@ class QCsv(QTableView):
             return
 
         # copy As Delimited action
-        elif action == self.copyAsDelimited:
+        elif action == self.copyAsDelimitedInColumns:
             matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
             if matrix:
                 textClip = lib.exports.ClipboardFormat.toDelimitiedInColumns(matrix)
+                # copy to clipboard
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+            return
+
+        # copy As Delimited action
+        elif action == self.copyAsDelimitedInRows:
+            matrix = self._selectedIndexesToRectangularArea(includeHeaderRows=True)
+            if matrix:
+                textClip = lib.exports.ClipboardFormat.toDelimitiedInRows(matrix)
                 # copy to clipboard
                 clipboard = QApplication.clipboard()
                 clipboard.setText(textClip, mode=QClipboard.Clipboard)
@@ -1226,17 +1236,19 @@ class QCsv(QTableView):
 
         # copy special submenu
         self.copySpecialMenu = self._editMenu.addMenu(self.tr('Copy Special'))
-        self.copyToSourceCodeMenu = self._editMenu.addMenu(self.tr('Copy to Source Code'))
-        self.copyToPythonMenu = self.copyToSourceCodeMenu.addMenu(self.tr('Python'))
         self.copyWithHeaderColumnsToClipboard = self.copySpecialMenu.addAction(self.tr('Copy with Column Name(s)'))
         self.copyHeaderColumnsToClipboard = self.copySpecialMenu.addAction(self.tr('Copy Column Name(s)'))
         self.copyAsText = self.copySpecialMenu.addAction(self.tr('Copy As Text'))
-        self.copyAsDelimited = self.copySpecialMenu.addAction(self.tr('Copy As Delimited'))
+        self.copyAsDelimitedMenu = self.copySpecialMenu.addMenu(self.tr('Copy As Delimited'))
+        self.copyAsDelimitedInColumns = self.copyAsDelimitedMenu.addAction(self.tr('In Columns'))
+        self.copyAsDelimitedInRows= self.copyAsDelimitedMenu.addAction(self.tr('In Rows'))
         self.copyAsJSON = self.copySpecialMenu.addAction(self.tr('Copy As JSON'))
         self.copyAsXML = self.copySpecialMenu.addAction(self.tr('Copy As XML'))
         self.copyAsHTML = self.copySpecialMenu.addAction(self.tr('Copy As HTML'))
 
         # copy to Python source code sub-submenu
+        self.copyToSourceCodeMenu = self._editMenu.addMenu(self.tr('Copy to Source Code'))
+        self.copyToPythonMenu = self.copyToSourceCodeMenu.addMenu(self.tr('Python'))
         self.copyPythonAsText = self.copyToPythonMenu.addAction(self.tr('As Text'))
         self.copyPythonAsTuple = self.copyToPythonMenu.addAction(self.tr('As Tuple'))
         self.copyPythonAsList = self.copyToPythonMenu.addAction(self.tr('As List'))
