@@ -38,12 +38,12 @@ class QOpenCsvFileDialog(QFileDialog):
             layout.addWidget(self.checkboxWizard, 4, 2)
 
     #
-    # static
+    # class methods
     #
 
-    @staticmethod
-    def getOpenFileName(parent = None):
-        dialog = QOpenCsvFileDialog(parent)
+    @classmethod
+    def getOpenFileName(cls, parent = None):
+        dialog = cls(parent)
         dialog.exec_()
         filename = ''
         selectedFiles = dialog.selectedFiles()

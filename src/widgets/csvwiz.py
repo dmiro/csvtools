@@ -274,20 +274,29 @@ class QCsvWiz(QDialog):
 
     @helper.waiting
     def __setValues(self):
+
+        # checking values
+        if self.quoteGroupBox.value() == u'':
+            self.quotingGroupBox.setValue(csv.QUOTE_NONE)
+
+        # set values
         self.__csv.delimiter = self.delimiterGroupBox.value()
         self.__csv.lineterminator = self.lineTerminatorGroupBox.value()
         self.__csv.quotechar = self.quoteGroupBox.value()
         self.__csv.skipinitialspace =  self.adjustsGroupBox.isSkipInitialSpace()
         self.__csv.doublequote = self.adjustsGroupBox.isDoubleQuote()
         self.__csv.quoting = self.quotingGroupBox.value()
-        ## self.__csv.scapechar = u'@'
-        ## self.preview.document.quoting = True
+        ##self.__csv.scapechar = u'@'
+
+        # refresh preview
         if config.wizard_loadAllLines:
-            self.__csv.load()
+            if self.__inputIsChangeable:
+                self.__csv.load()
             text = self.__csv.toString()
             self.output.setText(text)
         else:
-            self.__csv.load(config.wizard_linesToLoad)
+            if self.__inputIsChangeable:
+                self.__csv.load(config.wizard_linesToLoad)
             text = self.__csv.toString(config.wizard_linesToLoad)
             self.output.setText(text)
         model = self.preview.model()
@@ -328,22 +337,26 @@ class QCsvWiz(QDialog):
         layoutPreview.addWidget(self.preview)
 
         # input
-        groupBoxInput = QGroupBox(self.tr('Input'), parent=self)
-        layoutInput = QHBoxLayout()
-        groupBoxInput.setLayout(layoutInput)
-        self.input = QTextEdit()
-        layoutInput.addWidget(self.input)
+        if self.__inputIsChangeable:
+            groupBoxInput = QGroupBox(self.tr('Input'), parent=self)
+            layoutInput = QHBoxLayout()
+            groupBoxInput.setLayout(layoutInput)
+            self.input = QTextEdit()
+            self.input.setReadOnly(True)
+            layoutInput.addWidget(self.input)
 
         # output
         groupBoxOutput = QGroupBox(self.tr('Output'), parent=self)
         layoutOutput = QHBoxLayout()
         groupBoxOutput.setLayout(layoutOutput)
         self.output = QTextEdit()
+        self.output.setReadOnly(True)
         layoutOutput.addWidget(self.output)
 
         # splitters
         splitterSource = QSplitter(orientation= Qt.Horizontal)
-        splitterSource.addWidget(groupBoxInput)
+        if self.__inputIsChangeable:
+            splitterSource.addWidget(groupBoxInput)
         splitterSource.addWidget(groupBoxOutput)
         splitter = QSplitter(orientation= Qt.Vertical)
         splitter.addWidget(groupBoxPreview)
@@ -361,10 +374,6 @@ class QCsvWiz(QDialog):
     # public
     #
 
-    @classmethod
-    def fromfilename(cls, filename):
-        return cls(Csv(filename))
-
     def document(self):
         return self.__csv
 
@@ -375,11 +384,15 @@ class QCsvWiz(QDialog):
     # init
     #
 
-    def __init__(self, csv, *args):
+    def __init__(self, csv, inputIsChangeable=True, *args):
         QDialog.__init__ (self, *args)
         if not csv:
             raise IndexError('csv is mandatory')
-        self.__csv = csv.copy()
+        if inputIsChangeable:
+            self.__csv = csv.copy()
+        else:
+            self.__csv = csv
+        self.__inputIsChangeable = inputIsChangeable
 
         # widgets
         self.delimiterGroupBox = DelimiterGroupBox()
@@ -422,16 +435,75 @@ class QCsvWiz(QDialog):
         self.setWindowTitle(self.tr('Csv Wizard'))
 
         # load input file only one time
-        if config.wizard_loadAllLines:
-            text = self.__csv.fromString()
-            self.input.setText(text)
-        else:
-            text = self.__csv.fromString(config.wizard_linesToLoad)
-            self.input.setText(text)
+        if self.__inputIsChangeable:
+            if config.wizard_loadAllLines:
+                text = self.__csv.fromString()
+                self.input.setText(text)
+            else:
+                text = self.__csv.fromString(config.wizard_linesToLoad)
+                self.input.setText(text)
 
         # set values
         self.__setValues()
 
         # set initial size
         self.resize(800, 600)
+
+
+    #
+    # class methods
+    #
+
+    @classmethod
+    def getOpenFileName(cls, filename, parent = None):
+        dialog = cls(Csv(filename))
+        if dialog.exec_() == QDialog.Accepted:
+            document = dialog.document()
+        else:
+            document = None
+        config.wizard_showToOpenFile = dialog.useWizard()
+        return document
+
+    @classmethod
+    def getDropFileName(cls, filename, parent = None):
+        dialog = cls(Csv(filename))
+        if dialog.exec_() == QDialog.Accepted:
+            document = dialog.document()
+        else:
+            document = None
+        config.wizard_showToDropFile = dialog.useWizard()
+        return document
+
+    @classmethod
+    def getReloadFileName(cls, document, parent = None):
+        dialog = cls(document)
+        if dialog.exec_() == QDialog.Accepted:
+            document = dialog.document()
+        else:
+            document = None
+        config.wizard_showToReloadFile = dialog.useWizard()
+        return document
+
+    @classmethod
+    def getSaveFileName(cls, document, parent = None):
+        dialog = cls(document, inputIsChangeable = False)
+        if dialog.exec_() == QDialog.Accepted:
+            document = dialog.document()
+        else:
+            document = None
+        config.wizard_showToSaveFile = dialog.useWizard()
+        return document
+
+    @classmethod
+    def getSaveNewFileName(cls, document, parent = None):
+        dialog = cls(document, inputIsChangeable = False)
+        if dialog.exec_() == QDialog.Accepted:
+            document = dialog.document()
+        else:
+            document = None
+        config.wizard_showSaveNewFile = dialog.useWizard()
+        return document
+
+
+
 

@@ -124,11 +124,9 @@ class MainWindow(QMainWindow):
                 return
         # csv wizard
         if config.wizard_showToReloadFile:
-            csvWiz = QCsvWiz(csv.document)
-            result = csvWiz.exec_()
-            config.wizard_showToReloadFile = csvWiz.useWizard()
-            if result ==  QDialog.Accepted:
-                csv.setDocument(csvWiz.document())
+            document = QCsvWiz.getReloadFileName(csv.document, self)
+            if document:
+                csv.setDocument(document)
             else:
                 return
         # reload
@@ -174,11 +172,35 @@ class MainWindow(QMainWindow):
 
     def saveFile(self, csv):
         if csv.document.isNew:
-            return self.saveAsFile(csv)
+            # use csv wizard
+            if config.wizard_showToSaveFile:
+                document = QCsvWiz.getSaveNewFileName(csv.document, self)
+                if document:
+                    csv.setDocument(document)
+                    return self.saveAsFile(csv)
+            # save without wizard
+            else:
+                return self.saveAsFile(csv)
         else:
-            csv.document.save()
-            self.refreshStatusTab(csv)
-            return True
+            # use csv wizard
+            if config.wizard_showToSaveFile:
+############ falta verificar q pasa si cambio csv y luego cancelo el wizard
+                document = QCsvWiz.getSaveFileName(csv.document, self)
+                if document:
+                    document.save()
+                    csv.setDocument(document)
+############ hace falta cambiarlo, solo refresh csv no todo
+                    self.addRecentFile(csv)
+                    self.refreshRecentFileActions()
+                    self.saveSessionFile()
+                    self.refreshStatusTab(csv)
+                    return True
+            # save without wizard
+            else:
+                csv.document.save()
+                self.refreshStatusTab(csv)
+                return True
+        return False
 
     def saveAsFile(self, csv):
         filename = QFileDialog.getSaveFileName(self, self.tr('Save as file'),
@@ -187,10 +209,10 @@ class MainWindow(QMainWindow):
         if filename:
             filename = str(filename)
             csv.document.save(filename)
-            self.refreshStatusTab(csv)
             self.addRecentFile(csv)
             self.refreshRecentFileActions()
             self.saveSessionFile()
+            self.refreshStatusTab(csv)
             return True
         else:
             return False
@@ -347,11 +369,8 @@ class MainWindow(QMainWindow):
                 else:
                     # use csv wizard
                     if config.wizard_showToDropFile:
-                        csvWiz = QCsvWiz.fromfilename(filename)
-                        result = csvWiz.exec_()
-                        config.wizard_showToDropFile = csvWiz.useWizard()
-                        if result ==  QDialog.Accepted:
-                            csv = csvWiz.document()
+                        csv = QCsvWiz.getDropFileName(filename, self)
+                        if csv:
                             self.openCsv(csv)
                     # open csv with standard parameters
                     else:
@@ -391,11 +410,8 @@ class MainWindow(QMainWindow):
         if filename:
             # use csv wizard
             if useWizard:
-               csvWiz = QCsvWiz.fromfilename(filename)
-               result = csvWiz.exec_()
-               config.wizard_showToOpenFile = csvWiz.useWizard()
-               if result ==  QDialog.Accepted:
-                    csv = csvWiz.document()
+               csv = QCsvWiz.getOpenFileName(filename, self)
+               if csv:
                     self.openCsv(csv)
             # open csv with standard parameters
             else:

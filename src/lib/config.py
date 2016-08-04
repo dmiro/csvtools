@@ -44,6 +44,7 @@ class Config(IniConfig):
     # Format wizard section
     wizard_showToOpenFile = IniConfig.iniproperty('wizard', 'showToOpenFile', True)
     wizard_showToSaveFile = IniConfig.iniproperty('wizard', 'showToSaveFile', True)
+    wizard_showSaveNewFile = IniConfig.iniproperty('wizard', 'showSaveNewFile', True)
     wizard_showToReloadFile = IniConfig.iniproperty('wizard', 'showToReloadFile', True)
     wizard_showToDropFile = IniConfig.iniproperty('wizard', 'showToDropFile', True)
     wizard_loadAllLines = IniConfig.iniproperty('wizard', 'loadAllLines', False)

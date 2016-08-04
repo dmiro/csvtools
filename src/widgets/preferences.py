@@ -30,6 +30,7 @@ class Preferences(QDialog):
         self.view_widthborderdata.setCurrentIndex(config.view_widthborderdata - 1)
         self.wizard_showToOpenFile.setChecked(config.wizard_showToOpenFile)
         self.wizard_showToSaveFile.setChecked(config.wizard_showToSaveFile)
+        self.wizard_showSaveNewFile.setChecked(config.wizard_showSaveNewFile)
         self.wizard_showToReloadFile.setChecked(config.wizard_showToReloadFile)
         self.wizard_showToDropFile.setChecked(config.wizard_showToDropFile)
         self.wizard_loadAllLines.setChecked(config.wizard_loadAllLines)
@@ -52,6 +53,7 @@ class Preferences(QDialog):
         config.view_widthborderdata = self.view_widthborderdata.currentIndex() + 1
         config.wizard_showToOpenFile = self.wizard_showToOpenFile.checkState() == Qt.Checked
         config.wizard_showToSaveFile = self.wizard_showToSaveFile.checkState() == Qt.Checked
+        config.wizard_showSaveNewFile = self.wizard_showSaveNewFile.checkState() == Qt.Checked
         config.wizard_showToReloadFile = self.wizard_showToReloadFile.checkState() == Qt.Checked
         config.wizard_showToDropFile = self.wizard_showToDropFile.checkState() == Qt.Checked
         config.wizard_loadAllLines = self.wizard_loadAllLines.checkState() == Qt.Checked
@@ -154,19 +156,21 @@ class Preferences(QDialog):
         tabs.addTab(backup, self.tr('Format Wizard'))
         self.wizard_showToOpenFile = QCheckBox()
         self.wizard_showToSaveFile = QCheckBox()
+        self.wizard_showSaveNewFile = QCheckBox()
         self.wizard_showToReloadFile = QCheckBox()
         self.wizard_showToDropFile = QCheckBox()
         self.wizard_loadAllLines = QCheckBox()
         self.wizard_loadAllLines.clicked.connect(self.__checkDependenciesPreferences)
         self.wizard_linesToLoad = QSpinBox()
-        self.wizard_linesToLoad.setMinimum(1)
+        self.wizard_linesToLoad.setRange(1, 100000)
         grid = QFormLayout(parent=backup)
-        grid.addRow(HTitle('Show Wizard to..'))
-        grid.addRow(self.tr('Open file'), self.wizard_showToOpenFile)
-        grid.addRow(self.tr('Save file'), self.wizard_showToSaveFile)
-        grid.addRow(self.tr('Reload file'), self.wizard_showToReloadFile)
-        grid.addRow(self.tr('Drag&&drop file'), self.wizard_showToDropFile)
-        grid.addRow(HTitle(text = 'Lines To Load', marginTop = 15))
+        grid.addRow(HTitle('Show Wizard when..'))
+        grid.addRow(self.tr('Open a file'), self.wizard_showToOpenFile)
+        grid.addRow(self.tr('Save a file'), self.wizard_showToSaveFile)
+        grid.addRow(self.tr('Save a NEW file'), self.wizard_showSaveNewFile)
+        grid.addRow(self.tr('Reload a file'), self.wizard_showToReloadFile)
+        grid.addRow(self.tr('Drag && drop a file'), self.wizard_showToDropFile)
+        grid.addRow(HTitle(text = 'Lines to Load', marginTop = 15))
         grid.addRow(self.tr('All lines'), self.wizard_loadAllLines)
         grid.addRow(self.tr('Num. lines'), self.wizard_linesToLoad)
 
