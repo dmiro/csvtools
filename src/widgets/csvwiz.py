@@ -388,10 +388,7 @@ class QCsvWiz(QDialog):
         QDialog.__init__ (self, *args)
         if not csv:
             raise IndexError('csv is mandatory')
-        if inputIsChangeable:
-            self.__csv = csv.copy()
-        else:
-            self.__csv = csv
+        self.__csv = csv
         self.__inputIsChangeable = inputIsChangeable
 
         # widgets
@@ -457,52 +454,59 @@ class QCsvWiz(QDialog):
     @classmethod
     def getOpenFileName(cls, filename, parent = None):
         dialog = cls(Csv(filename))
-        if dialog.exec_() == QDialog.Accepted:
-            document = dialog.document()
-        else:
-            document = None
+        result = dialog.exec_()
         config.wizard_showToOpenFile = dialog.useWizard()
-        return document
+        if result == QDialog.Accepted:
+            return dialog.document()
+        else:
+            return None
 
     @classmethod
     def getDropFileName(cls, filename, parent = None):
         dialog = cls(Csv(filename))
-        if dialog.exec_() == QDialog.Accepted:
-            document = dialog.document()
-        else:
-            document = None
+        result = dialog.exec_()
         config.wizard_showToDropFile = dialog.useWizard()
-        return document
+        if result == QDialog.Accepted:
+            return dialog.document()
+        else:
+            return None
 
     @classmethod
     def getReloadFileName(cls, document, parent = None):
-        dialog = cls(document)
-        if dialog.exec_() == QDialog.Accepted:
-            document = dialog.document()
-        else:
-            document = None
+        docOrigin = document.shadowCopy()
+        dialog = cls(document.shadowCopy())
+        result = dialog.exec_()
         config.wizard_showToReloadFile = dialog.useWizard()
-        return document
+        if result == QDialog.Accepted:
+            return dialog.document()
+        else:
+            document.setParameters(docOrigin)
+            return None
 
     @classmethod
     def getSaveFileName(cls, document, parent = None):
+        docOrigin = document.shadowCopy()
         dialog = cls(document, inputIsChangeable = False)
-        if dialog.exec_() == QDialog.Accepted:
-            document = dialog.document()
-        else:
-            document = None
+        result = dialog.exec_()
         config.wizard_showToSaveFile = dialog.useWizard()
-        return document
+        if result == QDialog.Accepted:
+            return dialog.document()
+        else:
+            document.setParameters(docOrigin)
+            return None
 
     @classmethod
     def getSaveNewFileName(cls, document, parent = None):
+        docOrigin = document.shadowCopy()
         dialog = cls(document, inputIsChangeable = False)
-        if dialog.exec_() == QDialog.Accepted:
-            document = dialog.document()
-        else:
-            document = None
+        result = dialog.exec_()
         config.wizard_showSaveNewFile = dialog.useWizard()
-        return document
+        if result == QDialog.Accepted:
+            return dialog.document()
+        else:
+            document.setParameters(docOrigin)
+            return None
+
 
 
 
