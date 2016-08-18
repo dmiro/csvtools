@@ -27,79 +27,14 @@ class MainWindow(QMainWindow):
     # private
     #
 
-    @waiting
-    def addCsv(self, file_=None, insertIndex=-1):
+    def addCsvToTab(self, csvDoc):
 
-        #
-        # step 1
-        #
-
-        # csv exist yet
-        if isinstance(file_, Document):
-            csv_ = file_
-            file_ = csv_.filename
-        # never open
-        else:
-            csv_ = None
-
-        #
-        # step 2
-        #
-
-        # file exist
-        if file_:
-            file_ = str(file_)
-            for index in range(self.tab.count()):
-                csv = self.tab.widget(index)
-                if file_ in csv.document.filename:
-                    self.tab.setCurrentIndex(index)
-                    return
-        # is new file
-        else:
-            file_ = ''
-
-        #
-        # step 3
-        #
-
-        # import xsl
-        hook = file_.rfind('#')
-        if hook > -1:
-            sheetname = file_[hook+1:]
-            excelfile = file_[:hook]
-            xslDoc = Xsl(excelfile, sheetname)
-            xslDoc.load()
-            csv = QCsv(xslDoc)
-        # open csv
-        elif file_:
-            # csv exist yet
-            if csv_:
-                csv_.load()
-                csv = QCsv(csv_)
-            # never open
-            else:
-                csvDoc = Csv(file_)
-                csvDoc.load()
-                csv = QCsv(csvDoc)
-        # new csv
-        else:
-            file_ = NewFilenameFactory.getNewFilename()
-            csvDoc = Csv(file_)
-            csvDoc.new()
-            csv = QCsv(csvDoc)
-
-        #
-        # step 4
-        #
-
-        # add file to tab
+        # add csv to tab
+        csv = QCsv(csvDoc)
         csv.selectionChanged_.connect(self.csvSelectionChangedEvent)
         csv.fileChanged.connect(self.csvFileChangedEvent)
-        filename = os.path.basename(file_)
-        if insertIndex > -1:
-            index = self.tab.insertTab(insertIndex, csv, filename)
-        else:
-            index = self.tab.addTab(csv, filename)
+        filename = os.path.basename(csvDoc.filename)
+        index = self.tab.addTab(csv, filename)
         self.tab.setCurrentIndex(index)
 
         # add file to recent files
@@ -132,6 +67,23 @@ class MainWindow(QMainWindow):
         # reload
         _reload()
 
+    @waiting
+    def importExcel(self, filename, sheets):
+        warnings = []
+        for sheet in sheets:
+            try:
+                newFilename = NewFilenameFactory.getNewFilename()
+                csvDoc = Csv(newFilename)
+                csvDoc.importXsl(filename, sheet)
+                self.addCsvToTab(csvDoc)
+            except IOError:
+                warnings.append('No such file {0}'.format(filename))
+            except Exception, e:
+                warnings.append('Error opening file {0}: {1}'.format(filename, e))
+        if warnings:
+            report = QReport(warnings)
+            report.exec_()
+
     def openCsv(self, filenames):
         """open a csv file.
         This function accepts as single parameter: *path to a file*, *file path list*, *Document* or a *list of Document*
@@ -147,7 +99,27 @@ class MainWindow(QMainWindow):
             warnings = []
             for filename in filenames:
                 try:
-                    self.addCsv(filename)
+
+                    # if file exist
+                    if isinstance(filename, Document):
+                        file_ = str(filename.filename)
+                    else:
+                        file_ = filename
+                    for index in range(self.tab.count()):
+                        csv = self.tab.widget(index)
+                        if file_ in csv.document.filename:
+                            self.tab.setCurrentIndex(index)
+                            return
+
+                    # open
+                    if isinstance(filename, Document):
+                        filename.load()
+                        self.addCsvToTab(filename)
+                    else:
+                        csvDoc = Csv(file_)
+                        csvDoc.load()
+                        self.addCsvToTab(csvDoc)
+
                 except IOError:
                     if isinstance(filename, Document):
                         filename = filename.filename
@@ -163,7 +135,10 @@ class MainWindow(QMainWindow):
     def newCsv(self):
         warnings = []
         try:
-            self.addCsv()
+            newFilename = NewFilenameFactory.getNewFilename()
+            csvDoc = Csv(newFilename)
+            csvDoc.new()
+            self.addCsvToTab(csvDoc)
         except Exception, e:
             warnings.append('Error : {0}'.format(e))
         if warnings:
@@ -388,8 +363,7 @@ class MainWindow(QMainWindow):
         im = QImportWiz(sheets)
         if im.exec_() == QDialog.Accepted:
             sheets = im.sheets()
-            filenames = ['{0}#{1}'.format(filename, sheet) for sheet in sheets]
-            self.openCsv(filenames)
+            self.importExcel(filename, sheets)
 
     def importDialogAction(self):
         """import xls/xlsx dialog
@@ -469,11 +443,7 @@ class MainWindow(QMainWindow):
         for index in range(self.tab.count()):
             csv = self.tab.widget(index)
             if not csv.document.isNew:
-                file_ = csv.document.filename
-                hook = file_.rfind('#')
-                if hook > -1:
-                    file_ = file_[:hook]
-                files.append(file_)
+                files.append(csv.document.filename)
         # remove duplicates
         files = set(files)
         # copy path files to clipboard

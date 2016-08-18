@@ -274,6 +274,15 @@ class Csv(Document):
     def new(self):
         super(Csv, self).new()
 
+    def importXsl(self, xslFilename, xslSheetName):
+        data = []
+        wb = xlrd.open_workbook(xslFilename)
+        sh = wb.sheet_by_name(xslSheetName)
+        for rownum in xrange(sh.nrows):
+            data.append([QString(unicode(value)) for value in sh.row_values(rownum)])
+        self.setArrayData(data)
+        super(Csv, self).new()
+
     def load(self, linesToLoad=-1):
         # detect encoding
         with io.open(self.filename, mode="rb") as f:
