@@ -61,7 +61,7 @@ class MainWindow(QMainWindow):
         if config.wizard_showToReloadFile:
             document = QCsvWiz.getReloadFileName(csv.document, self)
             if document:
-                csv.setDocument(document)
+                csv.document.setParameters(document)
             else:
                 return
         # reload
@@ -151,7 +151,7 @@ class MainWindow(QMainWindow):
             if config.wizard_showToSaveFile:
                 document = QCsvWiz.getSaveNewFileName(csv.document, self)
                 if document:
-                    csv.setDocument(document)
+                    csv.document.setParameters(document)
                     return self.saveAsFile(csv)
             # save without wizard
             else:
@@ -159,11 +159,10 @@ class MainWindow(QMainWindow):
         else:
             # use csv wizard
             if config.wizard_showToSaveFile:
-############ falta verificar q pasa si cambio csv y luego cancelo el wizard
                 document = QCsvWiz.getSaveFileName(csv.document, self)
                 if document:
+                    csv.document.setParameters(document)
                     document.save()
-                    csv.setDocument(document)
 ############ hace falta cambiarlo, solo refresh csv no todo
                     self.addRecentFile(csv)
                     self.refreshRecentFileActions()
@@ -187,7 +186,9 @@ class MainWindow(QMainWindow):
             self.addRecentFile(csv)
             self.refreshRecentFileActions()
             self.saveSessionFile()
-            self.refreshStatusTab(csv)
+            #self.refreshStatusTab(csv)
+            if self.tab.currentWidget() == csv:
+                tabCurrentChangedEvent(self.tab.indexOf(csv))
             return True
         else:
             return False
@@ -578,7 +579,7 @@ class MainWindow(QMainWindow):
     def tabCurrentChangedEvent(self, index=0):
         """event when a selected tab is changed
         """
-        csv = self.tab.currentWidget()
+        csv = self.tab.widget(index)
         if csv:
             menubar = self.menuBar()
             editMenuAction = self.editMenu.menuAction()

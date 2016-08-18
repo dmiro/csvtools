@@ -191,11 +191,22 @@ class Document(CommandSheet):
                 lines = file.readlines()
         return ''.join(lines)
 
-    def copy(self):
-        """return a shadow copy of the instance only with the settings parameters
+    def shadowCopy(self):
+        """return a shadow copy of the instance only with the document settings parameters
         """
         json_ = self.toJson()
         return self.fromJson(json_)
+
+    def setParameters(self, document):
+        """set document settings parameters
+        """
+        # these attributes are not serializables
+        notSerializable = ('_Document__watcher',
+                                       'stack',
+                                       'sheet')
+        attributes = {k:document.__dict__[k] for k in document.__dict__ if k not in notSerializable}
+        for k, v in attributes.iteritems():
+            setattr(self, k, v)
 
     def toJson(self):
         """Convert Document object to json string.
