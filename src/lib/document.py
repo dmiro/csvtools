@@ -151,7 +151,7 @@ class Document(CommandSheet):
         if self.isNew:
             return True
         else:
-            super(Document, self).hasChanges()
+            return super(Document, self).hasChanges()
 
     def encoding(self):
         """file encoding
