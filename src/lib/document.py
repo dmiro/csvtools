@@ -146,6 +146,13 @@ class Document(CommandSheet):
         """
         pass
 
+    def hasChanges(self):
+        """document has changes"""
+        if self.isNew:
+            return True
+        else:
+            super(Document, self).hasChanges()
+
     def encoding(self):
         """file encoding
         """
@@ -290,7 +297,23 @@ class Csv(Document):
         wb = xlrd.open_workbook(xslFilename)
         sh = wb.sheet_by_name(xslSheetName)
         for rownum in xrange(sh.nrows):
-            data.append([QString(unicode(value)) for value in sh.row_values(rownum)])
+            row = []
+            for cell in sh.row(rownum):
+                cellType = cell.ctype
+                cellValue = cell.value
+                if cellType == xlrd.XL_CELL_NUMBER:
+                    if int(cellValue) == cellValue:
+                        value = int(cellValue)
+                    else:
+                        value = float(cellValue)
+                elif cellType == xlrd.XL_CELL_DATE:
+                    # Returns a tuple.
+                    value = xlrd.xldate.xldate_as_datetime(cellValue, wb.datemode)
+                else:
+                    value = unicode(cellValue)
+                value = unicode(value)
+                row.append(QString(value))
+            data.append(row)
         self.setArrayData(data)
         super(Csv, self).new()
 
