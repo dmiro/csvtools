@@ -1172,7 +1172,7 @@ class QCsv(QTableView):
         # Trim left
         if action == self.fxTrimLeft:
             editOperation = lambda value: value.lstrip()
-            editName = 'Trim feft'
+            editName = 'Trim left'
             self._applyEditionSelectedIndexes(editOperation, editName)
             return
 
@@ -1207,21 +1207,21 @@ class QCsv(QTableView):
         # Space to EOL
         if action == self.fxSpaceToEOL:
             editOperation = lambda value: value.replace(' ', '\n')
-            editName = 'Remove unnecessary blanks'
+            editName = 'Space to EOL'
             self._applyEditionSelectedIndexes(editOperation, editName)
             return
 
         # TAB to space
         if action == self.fxTABtoSpace:
             editOperation = lambda value: value.replace('\t', ' ')
-            editName = 'Remove unnecessary blanks'
+            editName = 'TAB to space'
             self._applyEditionSelectedIndexes(editOperation, editName)
             return
 
         # Space to TAB
         if action == self.fxSpaceToTAB:
             editOperation = lambda value: value.replace(' ', '\t')
-            editName = 'Remove unnecessary blanks'
+            editName = 'Space to TAB'
             self._applyEditionSelectedIndexes(editOperation, editName)
             return
 
