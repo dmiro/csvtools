@@ -2,13 +2,14 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from lib.config import config
+from widgets.qradiobuttondialog import QRadioButtonDialog
+from lib.pointsizes import Pointsizes
+
 import lib.helper as helper
 import lib.enums as enums
 import lib.exports
 import lib.imports
 import lib.images_rc
-from widgets.qradiobuttondialog import QRadioButtonDialog
-from lib.pointsizes import Pointsizes
 import os
 
 ##class NumberSortModel(QSortFilterProxyModel):
@@ -663,7 +664,6 @@ class QCsv(QTableView):
         if dataSelection.hasData:
             undoSelection = self._getCurrentSelection()
             redoSelection = self._getCurrentSelection()
-            mergeId = id(redoSelection)
             with self.document.macro('delete {} cells'.format(len(dataSelection.selectedIndexes))) as macro:
                 for selectedRange in dataSelection.selectedRanges:
                     topLeftIndex = selectedRange.topLeft()
@@ -701,7 +701,6 @@ class QCsv(QTableView):
                 if deleteSelection.hasData:
                     undoSelection = self._getCurrentSelection()
                     redoSelection = self._getCurrentSelection()
-                    mergeId = id(redoSelection)
                     with self.document.macro('cut&paste {} cells'.format(len(deleteSelection.selectedIndexes))) as macro:
                         # delete
                         for selectedRange in deleteSelection.selectedRanges:
@@ -749,6 +748,25 @@ class QCsv(QTableView):
             return result
         else:
             return None
+
+    @helper.waiting
+    def _applyEditionSelectedIndexes(self, editOperation, editName):
+        selection = self.__getDataSelection()
+        if selection.hasData:
+            undoSelection = self._getCurrentSelection()
+            redoSelection = self._getCurrentSelection()
+            with self.document.macro('{0} {1} cells'.format(editName, len(selection.selectedIndexes))) as macro:
+                for selectedIndex in selection.selectedIndexes:
+                    data = selectedIndex.data()
+                    if data:
+                        row = selectedIndex.row()
+                        column = selectedIndex.column()
+                        value = data.toString()
+                        value = unicode(value)
+                        value = editOperation(value)
+                        value = QString(value)
+                        macro.setValue(row, column, value, undoSelection, redoSelection)
+            self._setSelection(redoSelection)
 
     def _globalCut(self):
         QCsv._cuteDataSelection = self.__getDataSelection()
@@ -1123,6 +1141,90 @@ class QCsv(QTableView):
             self._setSelection(redoSelection)
             return
 
+        # Uppercase
+        if action == self.fxUppercase:
+            editOperation = lambda value: value.upper()
+            editName = 'Uppercase'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # Lowercase
+        if action == self.fxLowercase:
+            editOperation = lambda value: value.lower()
+            editName = 'Lowercase'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # Capitalize
+        if action == self.fxCapitalize:
+            editOperation = lambda value: value.capitalize()
+            editName = 'Capitalize'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # Capitalize words
+        if action == self.fxCapitalizeWords:
+            editOperation = lambda value: value.title()
+            editName = 'Capitalize words'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # Trim left
+        if action == self.fxTrimLeft:
+            editOperation = lambda value: value.lstrip()
+            editName = 'Trim feft'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # Trim right
+        if action == self.fxTrimRight:
+            editOperation = lambda value: value.rstrip()
+            editName = 'Trim right'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # Trim all
+        if action == self.fxTrimAll:
+            editOperation = lambda value: value.strip()
+            editName = 'Trim all'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # Remove blanks
+        if action == self.fxRemoveBlanks:
+            editOperation = lambda value: ' '.join(value.split())
+            editName = 'Remove unnecessary blanks'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # EOL to space
+        if action == self.fxEOLtoSpace:
+            editOperation = lambda value: value.replace('\n', ' ')
+            editName = 'EOL to space'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # Space to EOL
+        if action == self.fxSpaceToEOL:
+            editOperation = lambda value: value.replace(' ', '\n')
+            editName = 'Remove unnecessary blanks'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # TAB to space
+        if action == self.fxTABtoSpace:
+            editOperation = lambda value: value.replace('\t', ' ')
+            editName = 'Remove unnecessary blanks'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
+        # Space to TAB
+        if action == self.fxSpaceToTAB:
+            editOperation = lambda value: value.replace(' ', '\t')
+            editName = 'Remove unnecessary blanks'
+            self._applyEditionSelectedIndexes(editOperation, editName)
+            return
+
     def _viewAction(self, action):
 
         # header row action
@@ -1232,6 +1334,27 @@ class QCsv(QTableView):
         self.editCellsMenu.addSeparator()
         self.mergeCellsTopAction = self.editCellsMenu.addAction(QIcon(':tools/mergecellstop.png'), self.tr('Merge and move up'))
         self.mergeCellsLeftAction = self.editCellsMenu.addAction(QIcon(':tools/mergecellsleft.png'), self.tr('Merge and move to the left'))
+        self._editMenu.addSeparator()
+
+        # Convert to submenu
+        self.convertToMenu = self._editMenu.addMenu(QIcon(':tools/fx.png'), self.tr('Convert to'))
+        self.fxUppercase = self.convertToMenu.addAction(self.tr('UPPERCASE'))
+        self.fxLowercase = self.convertToMenu.addAction(self.tr('lowercase'))
+        self.fxCapitalize = self.convertToMenu.addAction(self.tr('Capitalize'))
+        self.fxCapitalizeWords = self.convertToMenu.addAction(self.tr('Capitalize Words'))
+
+        # blank operations submenu
+        self.blankOperationsMenu = self._editMenu.addMenu(QIcon(':tools/fx.png'), self.tr('Blank operations'))
+        self.fxTrimLeft = self.blankOperationsMenu.addAction(self.tr('Trim left'))
+        self.fxTrimRight = self.blankOperationsMenu.addAction(self.tr('Trim right'))
+        self.fxTrimAll = self.blankOperationsMenu.addAction(self.tr('Trim all'))
+        self.fxRemoveBlanks = self.blankOperationsMenu.addAction(self.tr('Remove unnecessary blanks'))
+        self.blankOperationsMenu.addSeparator()
+        self.fxEOLtoSpace = self.blankOperationsMenu.addAction(self.tr('EOL to space'))
+        self.fxSpaceToEOL = self.blankOperationsMenu.addAction(self.tr('Space to EOL'))
+        self.blankOperationsMenu.addSeparator()
+        self.fxTABtoSpace = self.blankOperationsMenu.addAction(self.tr('TAB to space'))
+        self.fxSpaceToTAB = self.blankOperationsMenu.addAction(self.tr('Space to TAB'))
         self._editMenu.addSeparator()
 
         # copy special submenu

@@ -37,9 +37,8 @@
 	<file alias="eraser.png">flaticon/eraser.png</file>
 	<file alias="save.png">icons/glyphicons-444-floppy-disk.png</file>
 	<file alias="duplicate.png">icons/glyphicons-511-duplicate.png</file>
-
-
 </qresource>
+
 <qresource prefix="/tools">
     <file alias="removecolumn.png">tools/removecolumn.png</file>
 	<file alias="removerow.png">tools/removerow.png</file>
@@ -67,5 +66,7 @@
 	<file alias="mergecellstop.png">tools/mergecellstop.png</file>
 	<file alias="removecellleft.png">tools/removecellleft.png</file>
 	<file alias="removecelltop.png">tools/removecelltop.png</file>
+	<file alias="fx.png">tools/sign.png</file>
 </qresource>
+
 </RCC>
