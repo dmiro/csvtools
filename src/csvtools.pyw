@@ -497,6 +497,12 @@ class MainWindow(QMainWindow):
         csv = self.tab.currentWidget()
         if csv:
             csv.refresh()
+        if config.view_showTitleTools:
+            self.toolTab.setTabText(0, self.tr('Explorer'))
+            self.toolTab.setTabText(1, self.tr('Search'))
+        else:
+            self.toolTab.setTabText(0, '')
+            self.toolTab.setTabText(1, '')
 
     #
     # help menu action methods
@@ -893,10 +899,13 @@ class MainWindow(QMainWindow):
         self.search.resultClicked.connect(self.searchResultClickedEvent)
         # toolbar
         self.toolTab = QTabWidget()
-        index = self.toolTab.addTab(self.explorer, QIcon(':images/explorer.png'), 'Explorer')
-        self.toolTab.setTabToolTip(index, 'Explorer')
-        index = self.toolTab.addTab(self.search, QIcon(':images/search.png'), 'Search')
-        self.toolTab.setTabToolTip(index, 'Search')
+        index = self.toolTab.addTab(self.explorer, QIcon(':images/explorer.png'), self.tr('Explorer'))
+        self.toolTab.setTabToolTip(index, self.tr('Explorer'))
+        index = self.toolTab.addTab(self.search, QIcon(':images/search.png'), self.tr('Search'))
+        self.toolTab.setTabToolTip(index, self.tr('Search'))
+        if not config.view_showTitleTools:
+            self.toolTab.setTabText(0, '')
+            self.toolTab.setTabText(1, '')
 
     def tabBarDoubleClickEvent(self, index):
         if config.tabbar_doubleclicktoclose and index > -1:

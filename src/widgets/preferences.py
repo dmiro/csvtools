@@ -25,6 +25,7 @@ class Preferences(QDialog):
         self.view_showColumnNumberHeaderRow.setChecked(config.view_showColumnNumberHeaderRow)
         self.view_showtools.setChecked(config.view_showtools)
         self.view_positiontools.setCurrentIndex(config.view_positiontools)
+        self.view_showTitleTools.setChecked(config.view_showTitleTools)
         self.view_showborderdata.setChecked(config.view_showborderdata)
         self.view_colorborderdata.setColor(config.view_colorborderdata)
         self.view_widthborderdata.setCurrentIndex(config.view_widthborderdata - 1)
@@ -48,6 +49,7 @@ class Preferences(QDialog):
         config.view_showColumnNumberHeaderRow = self.view_showColumnNumberHeaderRow.checkState() == Qt.Checked
         config.view_showtools = self.view_showtools.checkState() == Qt.Checked
         config.view_positiontools = self.view_positiontools.currentIndex()
+        config.view_showTitleTools = self.view_showTitleTools.checkState() == Qt.Checked
         config.view_showborderdata = self.view_showborderdata.checkState() == Qt.Checked
         config.view_colorborderdata = self.view_colorborderdata.color().rgb()
         config.view_widthborderdata = self.view_widthborderdata.currentIndex() + 1
@@ -86,7 +88,7 @@ class Preferences(QDialog):
 
     def __addTabOptions(self):
         tabs = QTabWidget()
-        tabs.setTabBar(QFingerTabWidget(width=90, height=25))
+        tabs.setTabBar(QFingerTabWidget(width=110, height=25))
         tabs.setTabPosition(QTabWidget.West)
 
         # General
@@ -133,6 +135,7 @@ class Preferences(QDialog):
         self.view_showColumnNumberHeaderRow = QCheckBox('')
         self.view_showtools = QCheckBox('')
         self.view_positiontools = QComboBox()
+        self.view_showTitleTools = QCheckBox('')
         self.view_positiontools.addItems(['Left', 'Right', 'Top', 'Bottom'])
         self.view_showborderdata = QCheckBox('')
         self.view_showborderdata.clicked.connect(self.__checkDependenciesPreferences)
@@ -146,6 +149,7 @@ class Preferences(QDialog):
         grid.addRow(HTitle(text = 'Tools', marginTop = 15))
         grid.addRow(self.tr('Show to start'), self.view_showtools)
         grid.addRow(self.tr('Initial position'), self.view_positiontools)
+        grid.addRow(self.tr('Show title'), self.view_showTitleTools)
         grid.addRow(HTitle(text = 'Border Data', marginTop = 15))
         grid.addRow(self.tr('Show'), self.view_showborderdata)
         grid.addRow(self.tr('Border color'), self.view_colorborderdata)
@@ -153,7 +157,7 @@ class Preferences(QDialog):
 
         # Format Wizard
         backup = QWidget()
-        tabs.addTab(backup, self.tr('Format Wizard'))
+        tabs.addTab(backup, self.tr('CSV Format Wizard'))
         self.wizard_showToOpenFile = QCheckBox()
         self.wizard_showToSaveFile = QCheckBox()
         self.wizard_showSaveNewFile = QCheckBox()
@@ -164,14 +168,14 @@ class Preferences(QDialog):
         self.wizard_linesToLoad = QSpinBox()
         self.wizard_linesToLoad.setRange(1, 100000)
         grid = QFormLayout(parent=backup)
-        grid.addRow(HTitle('Show Wizard when..'))
+        grid.addRow(HTitle('Show when..'))
         grid.addRow(self.tr('Open a file'), self.wizard_showToOpenFile)
         grid.addRow(self.tr('Save a file'), self.wizard_showToSaveFile)
         grid.addRow(self.tr('Save a NEW file'), self.wizard_showSaveNewFile)
         grid.addRow(self.tr('Reload a file'), self.wizard_showToReloadFile)
         grid.addRow(self.tr('Drag && drop a file'), self.wizard_showToDropFile)
         grid.addRow(HTitle(text = 'Lines to Load', marginTop = 15))
-        grid.addRow(self.tr('All lines'), self.wizard_loadAllLines)
+        grid.addRow(self.tr('Load all lines'), self.wizard_loadAllLines)
         grid.addRow(self.tr('Num. lines'), self.wizard_linesToLoad)
 
         return tabs

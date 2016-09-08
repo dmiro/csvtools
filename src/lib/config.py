@@ -37,6 +37,7 @@ class Config(IniConfig):
     view_showColumnNumberHeaderRow = IniConfig.iniproperty('view', 'showColumnNumberHeaderRow', True)
     view_showtools = IniConfig.iniproperty('view', 'showTools', True)
     view_positiontools = IniConfig.iniproperty('view', 'positionTools', 0)
+    view_showTitleTools = IniConfig.iniproperty('view', 'showTitleTools', True)
     view_showborderdata = IniConfig.iniproperty('view', 'showBorderData', True)
     view_colorborderdata = IniConfig.iniproperty('view', 'colorBorderData', QColor(Qt.red).rgb())
     view_widthborderdata = IniConfig.iniproperty('view', 'widthBorderData', 1)
