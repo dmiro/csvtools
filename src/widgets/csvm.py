@@ -1733,6 +1733,18 @@ class QCsv(QTableView):
         except:
             pass
 
+    def mouseMoveEvent (self,  event):
+        index = self.indexAt(event.pos())
+        if index:
+            if index.isValid():
+                print 'row', index.row()
+                print 'column', index.column()
+                #print 'data', index.data()
+                #http://doc.qt.io/archives/4.6/widgets-tooltips.html
+                #http://stackoverflow.com/questions/23157234/qt-pyside-pyqt-custom-tooltip-not-transparent-for-mouse-events
+                #http://pyqt.sourceforge.net/Docs/PyQt4/qtooltip.html
+        super(QCsv, self).mouseMoveEvent(event)
+
     #
     # init
     #
@@ -1747,6 +1759,7 @@ class QCsv(QTableView):
         verticalScrollBar.valueChanged.connect(self._scrollbarChangedEvent)
         horizontalScrollBar = self.horizontalScrollBar()
         horizontalScrollBar.valueChanged.connect(self._scrollbarChangedEvent)
+        self.setMouseTracking(True)
 
         # set item delegate
         self.setItemDelegate(QItemDataBorderDelegate(parent=self))
