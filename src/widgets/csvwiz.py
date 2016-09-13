@@ -275,32 +275,51 @@ class QCsvWiz(QDialog):
     @helper.waiting
     def __setValues(self):
 
-        # checking values
+        # change values
         if self.quoteGroupBox.value() == u'':
             self.quotingGroupBox.setValue(csv.QUOTE_NONE)
 
-        # set values
-        self.__csv.delimiter = self.delimiterGroupBox.value()
-        self.__csv.lineterminator = self.lineTerminatorGroupBox.value()
-        self.__csv.quotechar = self.quoteGroupBox.value()
-        self.__csv.skipinitialspace =  self.adjustsGroupBox.isSkipInitialSpace()
-        self.__csv.doublequote = self.adjustsGroupBox.isDoubleQuote()
-        self.__csv.quoting = self.quotingGroupBox.value()
-        ##self.__csv.scapechar = u'@'
+        # checking values
+        checkingResult = []
+        if self.delimiterGroupBox.value() == u'':
+            checkingResult.append('* Delimiter needs value')
+        if self.lineTerminatorGroupBox.value() == u'':
+            checkingResult.append('* Line Terminator needs value')
 
-        # refresh preview
-        if config.wizard_loadAllLines:
-            if self.__inputIsChangeable:
-                self.__csv.load()
-            text = self.__csv.toString()
-            self.output.setText(text)
+        # disable widgets
+        if len(checkingResult) > 0:
+            self.labelMessage.setText('\n'.join(checkingResult))
+            self.previewGroupBox.setEnabled(False)
+            self.buttonBox.buttons()[0].setEnabled(False)
+
+        # enable widgets
         else:
-            if self.__inputIsChangeable:
-                self.__csv.load(config.wizard_linesToLoad)
-            text = self.__csv.toString(config.wizard_linesToLoad)
-            self.output.setText(text)
-        model = self.preview.model()
-        model.dataChangedEmit()
+            self.labelMessage.setText('')
+            self.previewGroupBox.setEnabled(True)
+            self.buttonBox.buttons()[0].setEnabled(True)
+
+            # set values
+            self.__csv.delimiter = self.delimiterGroupBox.value()
+            self.__csv.lineterminator = self.lineTerminatorGroupBox.value()
+            self.__csv.quotechar = self.quoteGroupBox.value()
+            self.__csv.skipinitialspace =  self.adjustsGroupBox.isSkipInitialSpace()
+            self.__csv.doublequote = self.adjustsGroupBox.isDoubleQuote()
+            self.__csv.quoting = self.quotingGroupBox.value()
+            ##self.__csv.scapechar = u'@'
+
+            # refresh preview
+            if config.wizard_loadAllLines:
+                if self.__inputIsChangeable:
+                    self.__csv.load()
+                text = self.__csv.toString()
+                self.output.setText(text)
+            else:
+                if self.__inputIsChangeable:
+                    self.__csv.load(config.wizard_linesToLoad)
+                text = self.__csv.toString(config.wizard_linesToLoad)
+                self.output.setText(text)
+            model = self.preview.model()
+            model.dataChangedEmit()
 
     #
     # slots
@@ -370,6 +389,11 @@ class QCsvWiz(QDialog):
         checkBoxWizard.setCheckState(Qt.Checked)
         return checkBoxWizard
 
+    def __addLabelMessage(self):
+        labelMessage = QLabel('')
+        labelMessage.setStyleSheet("color: red;")
+        return labelMessage
+
     #
     # public
     #
@@ -400,6 +424,7 @@ class QCsvWiz(QDialog):
         self.previewGroupBox = self.__addPreviewGroupBox()
         self.checkBoxWizard = self.__addCheckBoxWizard()
         self.buttonBox = self.__addButtonBox()
+        self.labelMessage = self.__addLabelMessage()
 
         # set default values
         self.delimiterGroupBox.setValue(self.__csv.delimiter)
@@ -426,6 +451,7 @@ class QCsvWiz(QDialog):
         grid.addWidget(self.previewGroupBox, 2, 0, 1, 4)
         grid.addWidget(self.checkBoxWizard, 3, 3, 1, 1)
         grid.addWidget(self.buttonBox, 4, 0, 1, 4)
+        grid.addWidget(self.labelMessage, 3, 0, 2, 1)
 
         # main
         self.setLayout(grid)
