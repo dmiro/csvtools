@@ -41,6 +41,9 @@ class Config(IniConfig):
     view_showborderdata = IniConfig.iniproperty('view', 'showBorderData', True)
     view_colorborderdata = IniConfig.iniproperty('view', 'colorBorderData', QColor(Qt.red).rgb())
     view_widthborderdata = IniConfig.iniproperty('view', 'widthBorderData', 1)
+    view_showHighlightSections = IniConfig.iniproperty('view', 'showHighlightSections', True)
+    view_colorHighlightSections = IniConfig.iniproperty('view', 'colorHighlightSections', QColor(Qt.white).rgb())
+    view_backgroundColorHighlightSections = IniConfig.iniproperty('view', 'backgroundColorHighlightSections', QColor(Qt.black).rgb())
 
     # Format wizard section
     wizard_showToOpenFile = IniConfig.iniproperty('wizard', 'showToOpenFile', True)

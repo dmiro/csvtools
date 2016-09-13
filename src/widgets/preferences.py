@@ -29,6 +29,9 @@ class Preferences(QDialog):
         self.view_showborderdata.setChecked(config.view_showborderdata)
         self.view_colorborderdata.setColor(config.view_colorborderdata)
         self.view_widthborderdata.setCurrentIndex(config.view_widthborderdata - 1)
+        self.view_showHighlightSections.setChecked(config.view_showHighlightSections)
+        self.view_colorHighlightSections.setColor(config.view_colorHighlightSections)
+        self.view_backgroundColorHighlightSections.setColor(config.view_backgroundColorHighlightSections)
         self.wizard_showToOpenFile.setChecked(config.wizard_showToOpenFile)
         self.wizard_showToSaveFile.setChecked(config.wizard_showToSaveFile)
         self.wizard_showSaveNewFile.setChecked(config.wizard_showSaveNewFile)
@@ -53,6 +56,9 @@ class Preferences(QDialog):
         config.view_showborderdata = self.view_showborderdata.checkState() == Qt.Checked
         config.view_colorborderdata = self.view_colorborderdata.color().rgb()
         config.view_widthborderdata = self.view_widthborderdata.currentIndex() + 1
+        config.view_showHighlightSections = self.view_showHighlightSections.checkState() == Qt.Checked
+        config.view_colorHighlightSections = self.view_colorHighlightSections.color().rgb()
+        config.view_backgroundColorHighlightSections = self.view_backgroundColorHighlightSections.color().rgb()
         config.wizard_showToOpenFile = self.wizard_showToOpenFile.checkState() == Qt.Checked
         config.wizard_showToSaveFile = self.wizard_showToSaveFile.checkState() == Qt.Checked
         config.wizard_showSaveNewFile = self.wizard_showSaveNewFile.checkState() == Qt.Checked
@@ -95,10 +101,8 @@ class Preferences(QDialog):
         general = QWidget()
         tabs.addTab(general, self.tr('General'))
         self.config_language = QComboBox()
-        self.config_autodetect = QCheckBox('')
         grid = QFormLayout(parent=general)
         grid.addRow(self.tr('Language'), self.config_language)
-        grid.addRow(self.tr('Detect format'), self.config_autodetect)
 
         # Tab bar
         tabBar = QWidget()
@@ -142,6 +146,9 @@ class Preferences(QDialog):
         self.view_colorborderdata = QColorBox(defaultColor=Qt.red)
         self.view_widthborderdata = QComboBox()
         self.view_widthborderdata.addItems(['1', '2', '3', '4', '5'])
+        self.view_showHighlightSections = QCheckBox('')
+        self.view_colorHighlightSections = QColorBox(defaultColor=Qt.white)
+        self.view_backgroundColorHighlightSections = QColorBox(defaultColor=Qt.black)
         grid = QFormLayout(parent=backup)
         grid.addRow(HTitle('Header Row'))
         grid.addRow(self.tr('Show to open file'), self.view_headerrow)
@@ -154,6 +161,10 @@ class Preferences(QDialog):
         grid.addRow(self.tr('Show'), self.view_showborderdata)
         grid.addRow(self.tr('Border color'), self.view_colorborderdata)
         grid.addRow(self.tr('Border width'), self.view_widthborderdata)
+        grid.addRow(HTitle(text = 'Highlight Sections', marginTop = 15))
+        grid.addRow(self.tr('Show'), self.view_showHighlightSections)
+        grid.addRow(self.tr('Color'), self.view_colorHighlightSections)
+        grid.addRow(self.tr('Background color'), self.view_backgroundColorHighlightSections)
 
         # Format Wizard
         backup = QWidget()
@@ -202,7 +213,7 @@ class Preferences(QDialog):
         # main
         self.setLayout(main)
         self.setWindowTitle(self.tr('Preferences'))
-        self.setFixedSize(400, 350)
+        self.setFixedSize(400, 450)
 
 
 

@@ -234,8 +234,11 @@ class QCsvModel(QAbstractTableModel):
             rowIndex = index.row()
             columnIndex = index.column()
             # set data
-            selection = QItemSelection(index, index)
-            self.document.setValue(rowIndex, columnIndex, value.toString(), selection, selection)
+            newValue = value.toString()
+            oldValue = self.document.value(rowIndex, columnIndex)
+            if oldValue != newValue:
+                selection = QItemSelection(index, index)
+                self.document.setValue(rowIndex, columnIndex, newValue, selection, selection)
             # emit data changed
             bottomRight = self.createIndex(self.rowCount(), self.columnCount())
             self.dataChanged.emit(index, bottomRight)
@@ -272,6 +275,14 @@ class QCsv(QTableView):
     #
     # private
     #
+
+    def _setHighlightSections(self):
+        self.horizontalHeader().setHighlightSections(config.view_showHighlightSections)
+        self.verticalHeader().setHighlightSections(config.view_showHighlightSections)
+        backgroundColor = QColor(config.view_backgroundColorHighlightSections).name()
+        color = QColor(config.view_colorHighlightSections).name()
+        style = 'QHeaderView::section:checked {{background-color:{0}; color:{1}; border:1px solid #6c6c6c; padding-left: 4px;}}'.format(backgroundColor, color) # http://doc.qt.io/qt-4.8/stylesheet-reference.html
+        self.setStyleSheet(style)                                                                                                                               # http://doc.qt.io/qt-4.8/stylesheet-examples.html#customizing-qheaderview
 
     def _setMenuDisabled(self, menu, disabled):
         for action in menu.actions():
@@ -1537,6 +1548,12 @@ class QCsv(QTableView):
         else:
             super(QCsv, self).wheelEvent(wheelEvent)
 
+    def showEvent (self, showEvent):
+        """refresh some settings when widget is active
+        """
+        self._setHighlightSections()
+        super(QCsv, self).showEvent(showEvent)
+
     #
     # public
     #
@@ -1618,6 +1635,7 @@ class QCsv(QTableView):
         model = self.model()
         model.dataChangedEmit()
         #self.resizeRowsToContents()
+        self._setHighlightSections()
 
     def setPointSize(self, value):
         model = self.model()
@@ -1749,9 +1767,7 @@ class QCsv(QTableView):
         horizontalScrollBar.valueChanged.connect(self._scrollbarChangedEvent)
 
         # change highlight sections
-        self.horizontalHeader().setHighlightSections(True)      # http://doc.qt.io/qt-4.8/stylesheet-reference.html
-        self.verticalHeader().setHighlightSections(True)        # http://doc.qt.io/qt-4.8/stylesheet-examples.html#customizing-qheaderview
-        self.setStyleSheet('QHeaderView::section:checked { background-color:black; color:white; border:1px solid #6c6c6c; padding-left: 4px;}')
+        self._setHighlightSections()
 
         # set item delegate
         self.setItemDelegate(QItemDataBorderDelegate(parent=self))
