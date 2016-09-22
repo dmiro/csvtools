@@ -7,6 +7,7 @@ from widgets.report import QReport
 from widgets.importwiz import QImportWiz
 from widgets.csvm import QCsv
 from widgets.explorer import QExplorer
+from widgets.querycsv import QQueryCsv
 from widgets.status import QStatus
 from widgets.search import QSearch
 from widgets.opencsvfiledialog import QOpenCsvFileDialog
@@ -476,9 +477,12 @@ class MainWindow(QMainWindow):
         """
         if action == self.explorerTool:
             self.toolTab.setCurrentIndex(0)
+            self.dockToolTab.show()
         if action == self.searchTool:
             self.toolTab.setCurrentIndex(1)
-        self.dockToolTab.show()
+            self.dockToolTab.show()
+        if action == self.csvQueryTool:
+            self.dockToolQueryCsv.show()
         return
 
     #
@@ -837,6 +841,11 @@ class MainWindow(QMainWindow):
         self.searchTool.setShortcut('Ctrl+F')
         self.searchTool.setStatusTip(self.tr('Search'))
 
+        # csv query action
+        self.csvQueryTool = self.toolsMenu.addAction(QIcon(':images/sql.png'), self.tr('Query'))
+        self.csvQueryTool.setShortcut('Ctrl+Q')
+        self.csvQueryTool.setStatusTip(self.tr('Csv Query'))
+
         # connect tools action
         self.toolsMenu.triggered.connect(self._toolsAction)
 
@@ -907,6 +916,9 @@ class MainWindow(QMainWindow):
             self.toolTab.setTabText(0, '')
             self.toolTab.setTabText(1, '')
 
+    def createToolQueryCsv(self):
+        self.toolQueryCsv = QQueryCsv()
+
     def tabBarDoubleClickEvent(self, index):
         if config.tabbar_doubleclicktoclose and index > -1:
             self.tabCloseRequestedEvent(index)
@@ -953,6 +965,7 @@ class MainWindow(QMainWindow):
         # add widgets
         self.createMenus()
         self.createToolTab()
+        self.createToolQueryCsv()
         self.createCsvTab()
         self.createStatusBar()
 
@@ -965,7 +978,7 @@ class MainWindow(QMainWindow):
         # statusbar
         self.setStatusBar(self.statusBar)
 
-        # dock widget
+        # tooltab dock widget
         self.dockToolTab = QDockWidget("Tools", self)
         self.dockToolTab.setWidget(self.toolTab)
         if config.view_positiontools == 1:
@@ -979,6 +992,11 @@ class MainWindow(QMainWindow):
         if not config.view_showtools:
             self.dockToolTab.hide()
 
+        # querycsv dock widgets
+        self.dockToolQueryCsv = QDockWidget("Query Csv", self)
+        self.dockToolQueryCsv.setWidget(self.toolQueryCsv)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.dockToolQueryCsv)
+        self.dockToolQueryCsv.hide()
 
 #
 # MAIN
