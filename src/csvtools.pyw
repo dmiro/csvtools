@@ -992,7 +992,7 @@ class MainWindow(QMainWindow):
         if not config.view_showtools:
             self.dockToolTab.hide()
 
-        # querycsv dock widgets
+        # querycsv dock widget
         self.dockToolQueryCsv = QDockWidget("Query Csv", self)
         self.dockToolQueryCsv.setWidget(self.toolQueryCsv)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.dockToolQueryCsv)

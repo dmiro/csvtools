@@ -38,6 +38,7 @@
 	<file alias="save.png">icons/glyphicons-444-floppy-disk.png</file>
 	<file alias="duplicate.png">icons/glyphicons-511-duplicate.png</file>
 	<file alias="sql.png">flaticon/sql.png</file>
+	<file alias="play.png">icons/glyphicons-174-play.png</file>
 </qresource>
 
 <qresource prefix="/tools">

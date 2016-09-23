@@ -3,6 +3,27 @@ from PyQt4.QtGui import *
 
 import lib.images_rc
 
+
+class Tab(QTabWidget):
+
+    #
+    # public
+    #
+
+    def newScript(self):
+        textEdit = QTextEdit()
+        self.addTab(textEdit, 'script {0}'.format(self.countNewScript))
+        self.countNewScript = self.countNewScript + 1
+
+    #
+    # init
+    #
+
+    def __init__(self):
+        QTabWidget.__init__ (self)
+        self.countNewScript = 1
+        self.setTabsClosable(True)
+
 class ToolBar(QToolBar):
 
     #
@@ -26,23 +47,38 @@ class ToolBar(QToolBar):
 
     def __init__(self):
         QToolBar.__init__ (self)
+        self.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
         # actions
-        self.newQueryAction = QAction(QIcon(':images/refresh.png'), self.tr('New script'), self)
-        self.runQueryAction = QAction(QIcon(':images/refresh.png'), self.tr('Run script'), self)
-        self.loadQueryAction = QAction(QIcon(':images/refresh.png'), self.tr('Load script'), self)
-        self.saveQueryAction = QAction(QIcon(':images/refresh.png'), self.tr('Save script'), self)
-        self.resultToCsvAction = QAction(QIcon(':images/refresh.png'), self.tr('Result to new csv'), self)
+        self.newQueryAction = QAction(QIcon(':images/new.png'), self.tr('New script'), self)
+        self.runQueryAction = QAction(QIcon(':images/play.png'), self.tr('Run script'), self)
+        self.loadQueryAction = QAction(QIcon(':images/open.png'), self.tr('Open script'), self)
+        self.saveQueryAction = QAction(QIcon(':images/save.png'), self.tr('Save script'), self)
         self.showResultInTab = QAction(self.tr('Result in tab'), self)
         self.showResultInTab.setCheckable(True)
+        self.showResultBelow = QAction(self.tr('Result below'), self)
+        self.showResultBelow.setCheckable(True)
+        self.showResultToNewCsv = QAction(self.tr('Result to new csv'), self)
+        self.showResultToNewCsv.setCheckable(True)
+
         self.showColumnWizard = QAction('Show column wizard', self)
         self.showColumnWizard.setCheckable(True)
 
         # options button
         self.optionsMenu = QMenu()
         self.optionsMenu.addAction(self.showResultInTab)
+        self.optionsMenu.addAction(self.showResultBelow)
+        self.optionsMenu.addAction(self.showResultToNewCsv)
+        self.optionsMenu.addSeparator()
         self.optionsMenu.addAction(self.showColumnWizard)
         self.optionsMenu.triggered.connect(self.__toolBarActionTriggeredEvent)
+        #
+        actionGroup = QActionGroup(self.optionsMenu)
+        self.showResultInTab.setActionGroup(actionGroup)
+        self.showResultBelow.setActionGroup(actionGroup)
+        self.showResultToNewCsv.setActionGroup(actionGroup)
+        self.showResultInTab.setChecked(True)
+        #
         self.optionsButton = QToolButton()
         self.optionsButton.setMenu(self.optionsMenu)
         self.optionsButton.setIcon(QIcon(':images/filteroptions.png'))
@@ -56,7 +92,6 @@ class ToolBar(QToolBar):
         self.addAction(self.runQueryAction)
         self.addAction(self.loadQueryAction)
         self.addAction(self.saveQueryAction)
-        self.addAction(self.resultToCsvAction)
         self.addSeparator()
         self.addWidget(self.optionsButton)
         self.actionTriggered.connect(self.__toolBarActionTriggeredEvent)
@@ -95,10 +130,22 @@ class QQueryCsv(QDialog):
 
         # widgets
         self.toolbar = ToolBar()
+        self.tab = Tab()
+
+        # splitter
+        self.splitter= QSplitter(Qt.Horizontal)
+
+        #
+        self.tab.newScript()
+        self.tab.newScript()
+        self.b = QLabel('adios')
+        self.splitter.addWidget(self.tab)
+        self.splitter.addWidget(self.b)
 
         # main layout
         layout= QVBoxLayout()
         layout.addWidget(self.toolbar)
+        layout.addWidget(self.splitter)
         layout.setContentsMargins(4, 4, 4, 4)
         self.setLayout(layout)
         self.setWindowTitle(self.tr('Query Csv'))
