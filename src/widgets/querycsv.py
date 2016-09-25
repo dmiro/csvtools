@@ -2,7 +2,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 import lib.images_rc
-
+import lib.querycsv
 
 class Tab(QTabWidget):
 
@@ -14,6 +14,12 @@ class Tab(QTabWidget):
         textEdit = QTextEdit()
         self.addTab(textEdit, 'script {0}'.format(self.countNewScript))
         self.countNewScript = self.countNewScript + 1
+
+    def import_array(array, table_name, header=None, overwrite=False):
+        #':memory:'
+        #import_array(self.db, self.array, 'result')
+        #results = query_sqlite('select * from result where name="dog"', self.db)
+        pass
 
     #
     # init
@@ -36,9 +42,25 @@ class ToolBar(QToolBar):
         self.optionsMenu.exec_(point)
 
     def __toolBarActionTriggeredEvent(self, action):
+
+        # options button
         if action == self.showResultInTab:
             pass
+        elif action == self.showResultBelow:
+            pass
+        elif action == self.showResultToNewCsv:
+            pass
         elif action == self.showColumnWizard:
+            pass
+
+        # actions
+        elif action == self.runQueryAction:
+            print 'runQueryAction'
+        elif action == self.newQueryAction:
+            pass
+        elif action == self.loadQueryAction:
+            pass
+        elif action == self.saveQueryAction:
             pass
 
     #
@@ -50,8 +72,9 @@ class ToolBar(QToolBar):
         self.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
         # actions
+        self.runQueryAction = QAction(QIcon(':images/play.png'), self.tr('Run script (F5)'), self)
+        self.runQueryAction.setShortcut('F5')
         self.newQueryAction = QAction(QIcon(':images/new.png'), self.tr('New script'), self)
-        self.runQueryAction = QAction(QIcon(':images/play.png'), self.tr('Run script'), self)
         self.loadQueryAction = QAction(QIcon(':images/open.png'), self.tr('Open script'), self)
         self.saveQueryAction = QAction(QIcon(':images/save.png'), self.tr('Save script'), self)
         self.showResultInTab = QAction(self.tr('Result in tab'), self)
@@ -60,7 +83,6 @@ class ToolBar(QToolBar):
         self.showResultBelow.setCheckable(True)
         self.showResultToNewCsv = QAction(self.tr('Result to new csv'), self)
         self.showResultToNewCsv.setCheckable(True)
-
         self.showColumnWizard = QAction('Show column wizard', self)
         self.showColumnWizard.setCheckable(True)
 
@@ -88,8 +110,8 @@ class ToolBar(QToolBar):
 
         # toolbar
         self.setIconSize(QSize(16, 16))
-        self.addAction(self.newQueryAction)
         self.addAction(self.runQueryAction)
+        self.addAction(self.newQueryAction)
         self.addAction(self.loadQueryAction)
         self.addAction(self.saveQueryAction)
         self.addSeparator()
