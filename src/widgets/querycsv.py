@@ -15,12 +15,6 @@ class Tab(QTabWidget):
         self.addTab(textEdit, 'script {0}'.format(self.countNewScript))
         self.countNewScript = self.countNewScript + 1
 
-    def import_array(array, table_name, header=None, overwrite=False):
-        #':memory:'
-        #import_array(self.db, self.array, 'result')
-        #results = query_sqlite('select * from result where name="dog"', self.db)
-        pass
-
     #
     # init
     #
@@ -31,6 +25,12 @@ class Tab(QTabWidget):
         self.setTabsClosable(True)
 
 class ToolBar(QToolBar):
+
+    #
+    # public
+    #
+
+    runQueryRequested = pyqtSignal()
 
     #
     # event
@@ -55,7 +55,7 @@ class ToolBar(QToolBar):
 
         # actions
         elif action == self.runQueryAction:
-            print 'runQueryAction'
+            self.runQueryRequested.emit()
         elif action == self.newQueryAction:
             pass
         elif action == self.loadQueryAction:
@@ -126,11 +126,28 @@ class QQueryCsv(QDialog):
     #
 
     #
-    # slots
+    # event
     #
 
-    ##def __groupBoxClickedSlot(self):
-    ##    pass
+    def __runQueryRequested(self):
+
+        currentScript = self.tab.currentWidget()
+        if currentScript:
+            script = currentScript.toPlainText()
+            script = unicode(script)
+
+        # test   u'select * from result where name="dog"'
+        _array = [
+        [u'name', u'number'],
+        [u'cat', u'1'],
+        [u'dog', u'2'],
+        [u'bird', u'3']
+        ]
+        lib.querycsv.import_array(self.db, _array, 'result', overwrite=True)
+        results = lib.querycsv.query_sqlite(script, self.db)
+        print results
+        # test
+        self.runQueryRequested.emit()
 
     #
     # widgets
@@ -143,6 +160,15 @@ class QQueryCsv(QDialog):
     # public
     #
 
+    runQueryRequested = pyqtSignal()
+
+    def importCsv(self, csv):
+        #':memory:'
+        #lib.querycsv.import_array(array, table_name, header=None, overwrite=False):
+        #lib.querycsv.import_array(self.db, self.array, 'result')
+        #results = query_sqlite('select * from result where name="dog"', self.db)
+        pass
+
     #
     # init
     #
@@ -150,9 +176,15 @@ class QQueryCsv(QDialog):
     def __init__(self, *args):
         QDialog.__init__ (self, *args)
 
+        import sqlite3
+        self.db = sqlite3.connect(':memory:')
+
         # widgets
         self.toolbar = ToolBar()
         self.tab = Tab()
+
+        # events
+        self.toolbar.runQueryRequested.connect(self.__runQueryRequested)
 
         # splitter
         self.splitter= QSplitter(Qt.Horizontal)
