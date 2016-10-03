@@ -4,97 +4,55 @@ from PyQt4.QtGui import *
 import lib.images_rc
 import lib.querycsv
 
-# https://wiki.python.org/moin/PyQt/Python%20syntax%20highlighting
-# http://python.jpvweb.com/mesrecettespython/doku.php?id=pyqt4_colorisation_syntaxe_qtextedit
 
 class SQLHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for the SQL language.
+    """Syntax highlighter for Sqlite SQL language.
+       source:
+       http://python.jpvweb.com/mesrecettespython/doku.php?id=pyqt4_colorisation_syntaxe_qtextedit
+       https://wiki.python.org/moin/PyQt/Python%20syntax%20highlighting
     """
 
-    # SQL keywords
+    # Keywords
     KEYWORDS = [
-        'ABORT','COLUMN','ESCAPE','INSERT','ORDER','TABLE',
-        'ACTION','COMMIT','EXCEPT','INSTEAD','OUTER','TEMP',
-        'ADD','CONFLICT','EXCLUSIVE','INTERSECT','PLAN','TEMPORARY',
-        'AFTER','CONSTRAINT','EXISTS','INTO','PRAGMA','THEN',
-        'ALL','CREATE','EXPLAIN','IS','PRIMARY','TO',
-        'ALTER','CROSS','FAIL','ISNULL','QUERY','TRANSACTION',
-        'ANALYZE','CURRENT_DATE','FOR','JOIN','RAISE','TRIGGER',
-        'AND','CURRENT_TIME','FOREIGN','KEY','RECURSIVE','UNION',
-        'AS','CURRENT_TIMESTAMP','FROM','LEFT','REFERENCES','UNIQUE',
-        'ASC','DATABASE','FULL','LIKE','REGEXP','UPDATE',
-        'ATTACH','DEFAULT','GLOB','LIMIT','REINDEX','USING',
-        'AUTOINCREMENT','DEFERRABLE','GROUP','MATCH','RELEASE','VACUUM',
-        'BEFORE','DEFERRED','HAVING','NATURAL','RENAME','VALUES',
-        'BEGIN','DELETE','IF','NO','REPLACE','VIEW',
-        'BETWEEN','DESC','IGNORE','NOT','RESTRICT','VIRTUAL',
-        'BY','DETACH','IMMEDIATE','NOTNULL','RIGHT','WHEN',
-        'CASCADE','DISTINCT','IN','NULL','ROLLBACK','WHERE',
-        'CASE','DROP','INDEX','OF','ROW','WITH',
-        'CAST','EACH','INDEXED','OFFSET','SAVEPOINT','WITHOUT',
-        'CHECK','ELSE','INITIALLY','ON','SELECT',
-        'COLLATE','END','INNER','OR','SET',
-        'TEXT', 'INTEGER', 'REAL', 'NUMERIC' 'NONE', 'BLOB','TRUE', 'FALSE'
+        'ABORT','COLUMN','ESCAPE','INSERT','ORDER','TABLE','ACTION','COMMIT',
+        'EXCEPT','INSTEAD','OUTER','TEMP','ADD','CONFLICT','EXCLUSIVE',
+        'INTERSECT','PLAN','TEMPORARY','AFTER','CONSTRAINT','EXISTS','INTO',
+        'PRAGMA','THEN','ALL','CREATE','EXPLAIN','IS','PRIMARY','TO','ALTER',
+        'CROSS','FAIL','ISNULL','QUERY','TRANSACTION','ANALYZE','CURRENT_DATE',
+        'FOR','JOIN','RAISE','TRIGGER','AND','CURRENT_TIME','FOREIGN','KEY',
+        'RECURSIVE','UNION','AS','CURRENT_TIMESTAMP','FROM','LEFT','REFERENCES',
+        'UNIQUE','ASC','DATABASE','FULL','LIKE','REGEXP','UPDATE','ATTACH',
+        'DEFAULT','GLOB','LIMIT','REINDEX','USING','AUTOINCREMENT','DEFERRABLE',
+        'GROUP','MATCH','RELEASE','VACUUM','BEFORE','DEFERRED','HAVING','NATURAL',
+        'RENAME','VALUES','BEGIN','DELETE','IF','NO','REPLACE','VIEW','BETWEEN',
+        'DESC','IGNORE','NOT','RESTRICT','VIRTUAL','BY','DETACH','IMMEDIATE',
+        'NOTNULL','RIGHT','WHEN','CASCADE','DISTINCT','IN','NULL','ROLLBACK',
+        'WHERE','CASE','DROP','INDEX','OF','ROW','WITH','CAST','EACH','INDEXED',
+        'OFFSET','SAVEPOINT','WITHOUT','CHECK','ELSE','INITIALLY','ON','SELECT',
+        'COLLATE','END','INNER','OR','SET','TEXT','INTEGER','REAL','NUMERIC',
+        'NONE','BLOB','TRUE','FALSE'
     ]
 
-    def format(self, color):
+    def format(self, color, bold=None):
         """Return a QTextCharFormat with the given attributes.
         """
         textFormat = QTextCharFormat()
         textFormat.setForeground(color)
+        if bold:
+            textFormat.setFontWeight(QFont.Bold)
         return textFormat
-
-    def __init__(self, document):
-        QSyntaxHighlighter.__init__(self, document)
-
-        # Syntax styles
-        keywordSyntaxStyle = self.format(Qt.blue)
-        braceSyntaxStyle = self.format(Qt.gray)
-        stringSyntaxStyle = self.format(Qt.magenta)
-        commentSyntaxStyle = self.format(Qt.darkGray)
-        numbersSyntaxStyle = self.format(Qt.darkGreen)
-
-        # Syntax style and QRegExp for comment multi-line pattern /*...*/
-        self.commentMultilineSyntaxStyle = self.format(Qt.darkGray)
-        self.commentStartRegex = QRegExp("/\\*")
-        self.commentEndRegex = QRegExp("\\*/")
-
-        # Rules
-        rules = [
-            # Double-quoted string, possibly containing escape sequences
-            (r'"[^"\\]*(\\.[^"\\]*)*"', 0, stringSyntaxStyle),
-            # Single-quoted string, possibly containing escape sequences
-            (r"'[^'\\]*(\\.[^'\\]*)*'", 0, stringSyntaxStyle),
-            # braces
-            (r'[\)\(]+|[\{\}]+|[][]+', 0, braceSyntaxStyle),
-            # From '--' until a newline
-            (r'--[^\n]*', 0, commentSyntaxStyle),
-            # Numeric literals
-            ('\\b[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?\\b', 0, numbersSyntaxStyle)
-        ]
-
-        # Keyword rules
-        rules += [(r'\b%s\b' % w, 0, keywordSyntaxStyle)
-            for w in SQLHighlighter.KEYWORDS]
-
-        # Build a QRegExp for each pattern
-        self.rules = [(QRegExp(pat, Qt.CaseInsensitive), index, fmt)
-            for (pat, index, fmt) in rules]
-
 
     def highlightBlock(self, text):
         """Apply syntax highlighting to the given block of text.
         """
 
         # Do syntax formatting
-        for expression, nth, format in self.rules:
+        for expression, fmt in self.rules:
             index = expression.indexIn(text, 0)
 
             while index >= 0:
-                # We actually want the index of the nth match
-                index = expression.pos(nth)
-                length = expression.cap(nth).length()
-                self.setFormat(index, length, format)
+                length = expression.matchedLength()
+                self.setFormat(index, length, fmt)
                 index = expression.indexIn(text, index + length)
 
         self.setCurrentBlockState(0)
@@ -114,8 +72,52 @@ class SQLHighlighter(QSyntaxHighlighter):
             self.setFormat(startIndex, commentml_lg, self.commentMultilineSyntaxStyle)
             startIndex = self.commentStartRegex.indexIn(text, startIndex + commentml_lg)
 
+    #
+    # init
+    #
+
+    def __init__(self, document):
+        QSyntaxHighlighter.__init__(self, document)
+
+        # Syntax styles
+        keywordSyntaxStyle = self.format(Qt.blue)
+        braceSyntaxStyle = self.format(Qt.black, bold=True)
+        stringSyntaxStyle = self.format(Qt.magenta)
+        commentSyntaxStyle = self.format(Qt.darkGreen)
+        numbersSyntaxStyle = self.format(Qt.red)
+
+        # Syntax style and QRegExp for comment multi-line pattern /*...*/
+        self.commentMultilineSyntaxStyle = self.format(Qt.darkGreen)
+        self.commentStartRegex = QRegExp("/\\*")
+        self.commentEndRegex = QRegExp("\\*/")
+
+        # Rules
+        rules = [
+            # Double-quoted string, possibly containing escape sequences
+            (r'"[^"\\]*(\\.[^"\\]*)*"', stringSyntaxStyle),
+            # Single-quoted string, possibly containing escape sequences
+            (r"'[^'\\]*(\\.[^'\\]*)*'", stringSyntaxStyle),
+            # braces
+            (r'[\)\(]+|[\{\}]+|[][]+', braceSyntaxStyle),
+            # From '--' until a newline
+            (r'--[^\n]*', commentSyntaxStyle),
+            # Numeric literals
+            ('\\b[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?\\b', numbersSyntaxStyle)
+        ]
+
+        # Keyword rules
+        rules += [(r'\b%s\b' % w, keywordSyntaxStyle)
+            for w in SQLHighlighter.KEYWORDS]
+
+        # Build a QRegExp for each pattern
+        self.rules = [(QRegExp(rule, Qt.CaseInsensitive), fmt)
+            for (rule, fmt) in rules]
 
 class Editor(QPlainTextEdit):
+
+    #
+    # init
+    #
 
     def __init__(self):
         QPlainTextEdit.__init__ (self)
@@ -262,6 +264,14 @@ class QQueryCsv(QDialog):
         [u'bird', u'3']
         ]
         lib.querycsv.import_array(self.db, _array, 'result', overwrite=True)
+        lib.querycsv.import_array(self.db, _array, 'result2', overwrite=True)
+        lib.querycsv.import_array(self.db, _array, 'result3', overwrite=True)
+        #
+        results = lib.querycsv.query_sqlite('SELECT * FROM sqlite_master WHERE type="table"', self.db)
+        print results
+        results = lib.querycsv.query_sqlite('PRAGMA table_info(''result'')', self.db)
+        print results
+        #
         results = lib.querycsv.query_sqlite(script, self.db)
         print results
         # test
