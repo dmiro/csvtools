@@ -5,47 +5,37 @@ import lib.images_rc
 import lib.querycsv
 
 
-class TablesModel(QStandardItemModel):
+class Tables(QTreeWidget):
 
-    #
-    # override
-    #
+    def removeData(self):
+        pass
 
-    def data(self, index, role = Qt.DisplayRole):
-        if role == Qt.DecorationRole:
-            return QIcon(':images/favfolder.png')
-
-    #
-    # init
-    #
-
-    def __init__(self, *args):
-        QStandardItemModel.__init__ (self, *args)
-
-        self.setHeaderData(0, Qt.Horizontal, QVariant("Tablas"))
-        #self.model.setHeaderData(1, Qt.Horizontal, QVariant("Topic2"))
-        tabla1 = QStandardItem('tabla1')
-        tabla1.appendRow(QStandardItem('row1'))
-        tabla1.appendRow(QStandardItem('row2'))
-        tabla2 = QStandardItem('tabla2')
-        tabla2.appendRow(QStandardItem('row1'))
-        tabla2.appendRow(QStandardItem('row2'))
-        tabla2.appendRow(QStandardItem('row3'))
-        self.appendRow(tabla1)
-        self.appendRow(tabla2)
-
-
-class Tables(QTreeView):
+    def addData(self, data):
+        """
+        :param data: [ ('table', ('field1', 'field2',...)), ...]
+        :return: None
+        """
+        self.removeData()
+        for dataTable in data:
+            table = QTreeWidgetItem(self)
+            table.setText(0, dataTable[0])
+            table.setIcon(0, QIcon(':images/table.png'))
+            for dataField in dataTable[1]:
+                field = QTreeWidgetItem(table)
+                field.setText(0, dataField)
+                field.setIcon(0, QIcon(':images/field.png'))
 
     #
     # init
     #
 
     def __init__(self, *args):
-        QTreeView.__init__ (self, *args)
-
-        self.model = TablesModel(0, 1, self)
-        self.setModel(self.model)
+        QTreeWidget.__init__ (self, *args)
+        self.setHeaderLabel('Tables')
+        self.setIndentation(10)
+        self.addData([('table1', ('field1', 'field2')),
+                      ('table2', ('field1', 'field2')),
+                      ('table3', ('field1', 'field2', 'field3', 'field4'))])
 
 
 class SQLHighlighter(QSyntaxHighlighter):
@@ -364,8 +354,8 @@ class QQueryCsv(QDialog):
         self.tab.newScript()
         self.tab.newScript()
         self.tables = Tables()
-        self.splitter.addWidget(self.tab)
         self.splitter.addWidget(self.tables)
+        self.splitter.addWidget(self.tab)
 
         # main layout
         layout= QVBoxLayout()
