@@ -7,15 +7,15 @@ import lib.querycsv
 
 class Tables(QTreeWidget):
 
-    def removeData(self):
-        pass
+    def delData(self):
+        self.clear()
 
-    def addData(self, data):
+    def setData(self, data):
         """
         :param data: [ ('table', ('field1', 'field2',...)), ...]
         :return: None
         """
-        self.removeData()
+        self.delData()
         for dataTable in data:
             table = QTreeWidgetItem(self)
             table.setText(0, dataTable[0])
@@ -33,9 +33,6 @@ class Tables(QTreeWidget):
         QTreeWidget.__init__ (self, *args)
         self.setHeaderLabel('Tables')
         self.setIndentation(10)
-        self.addData([('table1', ('field1', 'field2')),
-                      ('table2', ('field1', 'field2')),
-                      ('table3', ('field1', 'field2', 'field3', 'field4'))])
 
 
 class SQLHighlighter(QSyntaxHighlighter):
@@ -145,6 +142,7 @@ class SQLHighlighter(QSyntaxHighlighter):
         # Build a QRegExp for each pattern
         self.rules = [(QRegExp(rule, Qt.CaseInsensitive), fmt)
             for (rule, fmt) in rules]
+
 
 class Editor(QPlainTextEdit):
 
@@ -278,6 +276,16 @@ class QQueryCsv(QDialog):
     # private
     #
 
+    def __setTables(self):
+        data = []
+        tables = lib.querycsv.query_sqlite('SELECT tbl_name FROM sqlite_master WHERE type="table"', self.db)
+        tables = [table[0] for table in tables[1:]]
+        for tableName in tables:
+            tableInfo = lib.querycsv.query_sqlite('PRAGMA table_info(''{0}'')'.format(tableName), self.db)
+            tableInfo = (tableName, [field[1] for field in tableInfo[1:]])
+            data.append(tableInfo)
+        self.tables.setData(data)
+
     #
     # event
     #
@@ -291,24 +299,22 @@ class QQueryCsv(QDialog):
 
         # test   u'select * from result where name="dog"'
         _array = [
-        [u'name', u'number'],
-        [u'cat', u'1'],
-        [u'dog', u'2'],
-        [u'bird', u'3']
+        [u'name', u'number', u'color'],
+        [u'cat', u'1', u'red'],
+        [u'dog', u'2', u'green'],
+        [u'bird', u'3', u'blue']
         ]
         lib.querycsv.import_array(self.db, _array, 'result', overwrite=True)
         lib.querycsv.import_array(self.db, _array, 'result2', overwrite=True)
         lib.querycsv.import_array(self.db, _array, 'result3', overwrite=True)
         #
-        results = lib.querycsv.query_sqlite('SELECT * FROM sqlite_master WHERE type="table"', self.db)
-        print results
-        results = lib.querycsv.query_sqlite('PRAGMA table_info(''result'')', self.db)
-        print results
+        self.__setTables()
         #
         results = lib.querycsv.query_sqlite(script, self.db)
         print results
         # test
         self.runQueryRequested.emit()
+
 
     #
     # widgets
