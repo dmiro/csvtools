@@ -146,6 +146,18 @@ class SQLHighlighter(QSyntaxHighlighter):
 
 class Editor(QPlainTextEdit):
 
+    isEmpty = pyqtSignal(bool)
+
+    #
+    # event
+    #
+
+    def __textChangedEvent(self):
+        if self.toPlainText():
+            self.isEmpty.emit(True)
+        else:
+            self.isEmpty.emit(False)
+
     #
     # init
     #
@@ -153,9 +165,12 @@ class Editor(QPlainTextEdit):
     def __init__(self):
         QPlainTextEdit.__init__ (self)
         self.highlight = SQLHighlighter(self.document())
+        self.textChanged.connect(self.__textChangedEvent)
 
 
 class Tab(QTabWidget):
+
+    isEmpty = pyqtSignal(bool)
 
     #
     # public
@@ -165,6 +180,7 @@ class Tab(QTabWidget):
         editor = Editor()
         self.addTab(editor, 'script {0}'.format(self.countNewScript))
         self.countNewScript = self.countNewScript + 1
+ ##       editor.isEmpty.connect(lambda empty=empty: self.isEmpty(empty))
 
     #
     # init
@@ -174,6 +190,7 @@ class Tab(QTabWidget):
         QTabWidget.__init__ (self)
         self.countNewScript = 1
         self.setTabsClosable(True)
+
 
 class ToolBar(QToolBar):
 
@@ -357,6 +374,7 @@ class QQueryCsv(QDialog):
         self.splitter= QSplitter(Qt.Horizontal)
 
         #
+##        self.tab.isEmpty.connect(lambda empty=empty: self.toolbar.runQueryAction.setDisabled(empty))
         self.tab.newScript()
         self.tab.newScript()
         self.tables = Tables()
