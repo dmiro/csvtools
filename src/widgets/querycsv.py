@@ -153,10 +153,14 @@ class Editor(QPlainTextEdit):
     #
 
     def __textChangedEvent(self):
-        if self.toPlainText():
-            self.isEmpty.emit(True)
-        else:
-            self.isEmpty.emit(False)
+        self.isEmpty.emit(self.isTextEmpty())
+
+    #
+    # public
+    #
+
+    def isTextEmpty(self):
+        return not self.toPlainText()
 
     #
     # init
@@ -173,6 +177,19 @@ class Tab(QTabWidget):
     isEmpty = pyqtSignal(bool)
 
     #
+    # event
+    #
+
+    def __isEmptyEvent(self, empty):
+        self.isEmpty.emit(empty)
+
+    def __currentChangedEvent(self, index):
+        editor = self.widget(index)
+        if editor:
+            empty = editor.isTextEmpty()
+            self.isEmpty.emit(empty)
+
+    #
     # public
     #
 
@@ -180,7 +197,7 @@ class Tab(QTabWidget):
         editor = Editor()
         self.addTab(editor, 'script {0}'.format(self.countNewScript))
         self.countNewScript = self.countNewScript + 1
- ##       editor.isEmpty.connect(lambda empty=empty: self.isEmpty(empty))
+        editor.isEmpty.connect(self.__isEmptyEvent)
 
     #
     # init
@@ -190,6 +207,7 @@ class Tab(QTabWidget):
         QTabWidget.__init__ (self)
         self.countNewScript = 1
         self.setTabsClosable(True)
+        self.currentChanged.connect(self.__currentChangedEvent)
 
 
 class ToolBar(QToolBar):
@@ -332,6 +350,9 @@ class QQueryCsv(QDialog):
         # test
         self.runQueryRequested.emit()
 
+    def __isEmptyEvent(self, empty):
+        self.toolbar.runQueryAction.setDisabled(empty)
+
 
     #
     # widgets
@@ -370,16 +391,18 @@ class QQueryCsv(QDialog):
         # events
         self.toolbar.runQueryRequested.connect(self.__runQueryRequested)
 
-        # splitter
-        self.splitter= QSplitter(Qt.Horizontal)
-
-        #
-##        self.tab.isEmpty.connect(lambda empty=empty: self.toolbar.runQueryAction.setDisabled(empty))
+        # tab
+        self.tab.isEmpty.connect(self.__isEmptyEvent)
         self.tab.newScript()
         self.tab.newScript()
         self.tables = Tables()
+
+        # splitter
+        self.splitter= QSplitter(Qt.Horizontal)
         self.splitter.addWidget(self.tables)
         self.splitter.addWidget(self.tab)
+        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(1, 5)
 
         # main layout
         layout= QVBoxLayout()
