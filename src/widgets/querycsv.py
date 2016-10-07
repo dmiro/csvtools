@@ -3,6 +3,7 @@ from PyQt4.QtGui import *
 
 import lib.images_rc
 import lib.querycsv
+import os
 
 
 class Tables(QTreeWidget):
@@ -177,6 +178,17 @@ class Tab(QTabWidget):
     isEmpty = pyqtSignal(bool)
 
     #
+    # private
+    #
+
+    def __getScriptForFilename(self, filename):
+        for index in xrange(self.count()):
+            tabFilename = self.tabToolTip(index)
+            if tabFilename == filename:
+                return index
+        return None
+
+    #
     # event
     #
 
@@ -189,15 +201,29 @@ class Tab(QTabWidget):
             empty = editor.isTextEmpty()
             self.isEmpty.emit(empty)
 
+    def __tabCloseRequestedEvent(self, index):
+        self.removeTab(index)
+
     #
     # public
     #
 
+    def addScript(self, filename, script=''):
+        index = self.__getScriptForFilename(filename)
+        # if filename doesn't exist create tab
+        if index == None:
+            editor = Editor()
+            editor.setPlainText(script)
+            index = self.addTab(editor, os.path.basename(filename))
+            self.setTabToolTip(index, filename)
+            editor.isEmpty.connect(self.__isEmptyEvent)
+        self.setCurrentIndex(index)
+
     def newScript(self):
-        editor = Editor()
-        self.addTab(editor, 'script {0}'.format(self.countNewScript))
+        filename = 'script {0}'.format(self.countNewScript)
         self.countNewScript = self.countNewScript + 1
-        editor.isEmpty.connect(self.__isEmptyEvent)
+        self.addScript(filename)
+
 
     #
     # init
@@ -207,7 +233,9 @@ class Tab(QTabWidget):
         QTabWidget.__init__ (self)
         self.countNewScript = 1
         self.setTabsClosable(True)
+        self.setMovable(True)
         self.currentChanged.connect(self.__currentChangedEvent)
+        self.tabCloseRequested.connect(self.__tabCloseRequestedEvent)
 
 
 class ToolBar(QToolBar):
@@ -217,6 +245,8 @@ class ToolBar(QToolBar):
     #
 
     runQueryRequested = pyqtSignal()
+    newQueryRequested = pyqtSignal()
+    loadQueryRequested = pyqtSignal()
 
     #
     # event
@@ -243,9 +273,9 @@ class ToolBar(QToolBar):
         elif action == self.runQueryAction:
             self.runQueryRequested.emit()
         elif action == self.newQueryAction:
-            pass
+            self.newQueryRequested.emit()
         elif action == self.loadQueryAction:
-            pass
+            self.loadQueryRequested.emit()
         elif action == self.saveQueryAction:
             pass
 
@@ -350,6 +380,17 @@ class QQueryCsv(QDialog):
         # test
         self.runQueryRequested.emit()
 
+    def __newQueryRequested(self):
+        self.tab.newScript()
+
+    def __loadQueryRequested(self):
+        filename = QFileDialog.getOpenFileName(parent = self, caption = self.tr('Open'), filter = 'All Files (*.*);;Scripts (*.sql *.qry)')
+        if filename:
+            filename = str(filename)
+            with open(filename, 'r') as fileScript:
+                script = fileScript.read()
+                self.tab.addScript(filename, script)
+
     def __isEmptyEvent(self, empty):
         self.toolbar.runQueryAction.setDisabled(empty)
 
@@ -390,6 +431,8 @@ class QQueryCsv(QDialog):
 
         # events
         self.toolbar.runQueryRequested.connect(self.__runQueryRequested)
+        self.toolbar.newQueryRequested.connect(self.__newQueryRequested)
+        self.toolbar.loadQueryRequested.connect(self.__loadQueryRequested)
 
         # tab
         self.tab.isEmpty.connect(self.__isEmptyEvent)
