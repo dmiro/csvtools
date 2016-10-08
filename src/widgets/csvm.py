@@ -76,7 +76,7 @@ class QItemDataBorderDelegate(QStyledItemDelegate):
                     columnIndex = index.column()
                     columnDataCount = model.columnDataCount()-1
                     rowDataCount = model.rowDataCount()-1
-                    borderColor = QColor(config.view_colorborderdata)
+                    borderlambda = QColor(config.view_colorborderdata)
                     borderWith = config.view_widthborderdata
                     if (rowDataCount == rowIndex) and (columnIndex <= columnDataCount):
                         painter.setPen(QPen(borderColor, borderWith, style=Qt.DotLine))

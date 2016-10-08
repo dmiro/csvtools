@@ -1,5 +1,6 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from widgets.helpers.qlnplaintextedit import QLNPlainTextEdit
 
 import lib.images_rc
 import lib.querycsv
@@ -145,7 +146,7 @@ class SQLHighlighter(QSyntaxHighlighter):
             for (rule, fmt) in rules]
 
 
-class Editor(QPlainTextEdit):
+class Editor(QLNPlainTextEdit):
 
     isEmpty = pyqtSignal(bool)
 
@@ -168,7 +169,7 @@ class Editor(QPlainTextEdit):
     #
 
     def __init__(self):
-        QPlainTextEdit.__init__ (self)
+        QLNPlainTextEdit.__init__ (self)
         self.highlight = SQLHighlighter(self.document())
         self.textChanged.connect(self.__textChangedEvent)
 
@@ -248,6 +249,8 @@ class ToolBar(QToolBar):
     newQueryRequested = pyqtSignal()
     loadQueryRequested = pyqtSignal()
 
+    showColumnWizardRequested = pyqtSignal()
+
     #
     # event
     #
@@ -267,6 +270,7 @@ class ToolBar(QToolBar):
         elif action == self.showResultToNewCsv:
             pass
         elif action == self.showColumnWizard:
+            self.showColumnWizardRequested.emit()
             pass
 
         # actions
@@ -295,12 +299,14 @@ class ToolBar(QToolBar):
         self.saveQueryAction = QAction(QIcon(':images/save.png'), self.tr('Save script'), self)
         self.showResultInTab = QAction(self.tr('Result in tab'), self)
         self.showResultInTab.setCheckable(True)
+        self.showResultInTab.setChecked(True)
         self.showResultBelow = QAction(self.tr('Result below'), self)
         self.showResultBelow.setCheckable(True)
         self.showResultToNewCsv = QAction(self.tr('Result to new csv'), self)
         self.showResultToNewCsv.setCheckable(True)
         self.showColumnWizard = QAction('Show column wizard', self)
         self.showColumnWizard.setCheckable(True)
+        self.showColumnWizard.setChecked(True)
 
         # options button
         self.optionsMenu = QMenu()
@@ -315,7 +321,6 @@ class ToolBar(QToolBar):
         self.showResultInTab.setActionGroup(actionGroup)
         self.showResultBelow.setActionGroup(actionGroup)
         self.showResultToNewCsv.setActionGroup(actionGroup)
-        self.showResultInTab.setChecked(True)
         #
         self.optionsButton = QToolButton()
         self.optionsButton.setMenu(self.optionsMenu)
@@ -342,6 +347,9 @@ class QQueryCsv(QDialog):
     #
 
     def __setTables(self):
+        """
+        Get list of tables and fields in the database
+        """
         data = []
         tables = lib.querycsv.query_sqlite('SELECT tbl_name FROM sqlite_master WHERE type="table"', self.db)
         tables = [table[0] for table in tables[1:]]
@@ -391,9 +399,12 @@ class QQueryCsv(QDialog):
                 script = fileScript.read()
                 self.tab.addScript(filename, script)
 
+    def __showColumnWizardRequested(self):
+        isVisible = not self.tables.isVisible()
+        self.tables.setVisible(isVisible)
+
     def __isEmptyEvent(self, empty):
         self.toolbar.runQueryAction.setDisabled(empty)
-
 
     #
     # widgets
@@ -433,10 +444,10 @@ class QQueryCsv(QDialog):
         self.toolbar.runQueryRequested.connect(self.__runQueryRequested)
         self.toolbar.newQueryRequested.connect(self.__newQueryRequested)
         self.toolbar.loadQueryRequested.connect(self.__loadQueryRequested)
+        self.toolbar.showColumnWizardRequested.connect(self.__showColumnWizardRequested)
 
         # tab
         self.tab.isEmpty.connect(self.__isEmptyEvent)
-        self.tab.newScript()
         self.tab.newScript()
         self.tables = Tables()
 
