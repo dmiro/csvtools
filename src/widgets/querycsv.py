@@ -174,6 +174,65 @@ class Editor(QLNPlainTextEdit):
         self.textChanged.connect(self.__textChangedEvent)
 
 
+class Result(QFrame):
+
+    class TableModel(QAbstractTableModel):
+        def __init__(self, parent=None, *args):
+            QAbstractTableModel.__init__(self, *args)
+            self.array_ = [[]]
+
+        def rowCount(self, parent=QModelIndex()):
+            return len(self.array_)
+
+        def columnCount(self, parent=QModelIndex()):
+            return len(self.array_[0])
+
+        def data(self, index, role):
+            if not index.isValid():
+                return QVariant()
+            if role == Qt.DisplayRole or role == Qt.EditRole:
+                rowIndex = index.row()
+                columnIndex = index.column()
+                return self.array_[rowIndex][columnIndex]
+
+        def setArray(self, array_):
+            self.array_ = array_
+
+    #
+    # public
+    #
+
+    def setResult(self, result):
+        if isinstance(result, list):
+            print 'list'
+            self.modelResult.setArray(result)
+            self.box.setCurrentWidget(self.tableResult)
+        else:
+            print 'string'
+            self.textResult.setPlainText(result)
+            self.box.setCurrentWidget(self.textResult)
+
+    #
+    # init
+    #
+
+    def __init__(self, *args):
+        QFrame.__init__(self, *args)
+        self.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
+
+        self.textResult = QPlainTextEdit()
+        self.textResult.setReadOnly(True)
+
+        self.modelResult = self.TableModel()
+        self.tableResult = QTableView()
+        self.tableResult.setModel(self.modelResult)
+
+        self.box = QStackedLayout(self)
+        self.box.addWidget(self.textResult)
+        self.box.addWidget(self.tableResult)
+        self.box.setCurrentWidget(self.textResult)
+
+
 class Tab(QTabWidget):
 
     isEmpty = pyqtSignal(bool)
@@ -383,8 +442,13 @@ class QQueryCsv(QDialog):
         #
         self.__setTables()
         #
-        results = lib.querycsv.query_sqlite(script, self.db)
-        print results
+        try:
+            results = lib.querycsv.query_sqlite(script, self.db)
+            print results
+            self.result.setResult(results)
+        except Exception as ex:
+            print 'me', ex.message
+            self.result.setResult(ex.message)
         # test
         self.runQueryRequested.emit()
 
@@ -439,6 +503,7 @@ class QQueryCsv(QDialog):
         # widgets
         self.toolbar = ToolBar()
         self.tab = Tab()
+        self.result = Result()
 
         # events
         self.toolbar.runQueryRequested.connect(self.__runQueryRequested)
@@ -452,16 +517,23 @@ class QQueryCsv(QDialog):
         self.tables = Tables()
 
         # splitter
-        self.splitter= QSplitter(Qt.Horizontal)
-        self.splitter.addWidget(self.tables)
-        self.splitter.addWidget(self.tab)
-        self.splitter.setStretchFactor(0, 1)
-        self.splitter.setStretchFactor(1, 5)
+        self.editSplitter = QSplitter(Qt.Vertical)
+        self.editSplitter.addWidget(self.tab)
+        self.editSplitter.addWidget(self.result)
+        self.editSplitter.setStretchFactor(0, 5)
+        self.editSplitter.setStretchFactor(1, 1)
+
+        # splitter
+        self.mainSplitter= QSplitter(Qt.Horizontal)
+        self.mainSplitter.addWidget(self.tables)
+        self.mainSplitter.addWidget(self.editSplitter)
+        self.mainSplitter.setStretchFactor(0, 1)
+        self.mainSplitter.setStretchFactor(1, 5)
 
         # main layout
         layout= QVBoxLayout()
         layout.addWidget(self.toolbar)
-        layout.addWidget(self.splitter)
+        layout.addWidget(self.mainSplitter)
         layout.setContentsMargins(4, 4, 4, 4)
         self.setLayout(layout)
         self.setWindowTitle(self.tr('Query Csv'))
