@@ -4,8 +4,10 @@ import os
 import xlrd
 import csv
 
-# http://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
 def singleton(class_):
+  """singleton class
+  http://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
+  """
   instances = {}
   def getinstance(*args, **kwargs):
     if class_ not in instances:
@@ -31,7 +33,8 @@ class SimpleNamespace(object):
             return object.__eq__(other)
 
 def waiting(function):
-    """decorator function. Show hour glass while waiting end method"""
+    """decorator function. Show hour glass while waiting end method
+    """
     def new_function(*args, **kwargs):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         try:
@@ -57,12 +60,15 @@ def bestUnitSize(bytes_size):
     return {"s":bu_size, "u":unit, "b":bytes_size}
 
 def get_size(filename):
-    """Get the file size in format string"""
+    """Get the file size in format string
+    """
     bytesize = os.lstat(filename).st_size
     size = bestUnitSize(bytesize)
     return "{0:.2f} {1}".format(size['s'], size['u'])
 
 def get_excel_sheets(filename):
+    """Return sheet list
+    """
     sh = []
     wb = xlrd.open_workbook(filename)
     for sheet in wb.sheets():
@@ -70,7 +76,7 @@ def get_excel_sheets(filename):
     return sh
 
 def QStringToUnicode(qstring):
-    return unicode(qstring.toUtf8(), encoding="UTF-8")
+    return unicode(qstring.toUtf8(), encoding="UTF-8") if qstring != None else ''
 
 def QStringListToUnicode(qstringlist):
     return [QStringToUnicode(value) for value in qstringlist]

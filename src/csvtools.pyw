@@ -697,6 +697,11 @@ class MainWindow(QMainWindow):
         else:
             event.ignore()
 
+    def toolQueryCsvRunQueryRequestedEvent(self):
+        print 'toolQueryCsvRunQueryRequestedEvent'
+        csvList = [self.tab.widget(index).document for index in range(self.tab.count())]
+        self.toolQueryCsv.setCsvData(csvList)
+
     #
     # widgets
     #
@@ -918,6 +923,7 @@ class MainWindow(QMainWindow):
 
     def createToolQueryCsv(self):
         self.toolQueryCsv = QQueryCsv()
+        self.toolQueryCsv.runQueryRequested.connect(self.toolQueryCsvRunQueryRequestedEvent)
 
     def tabBarDoubleClickEvent(self, index):
         if config.tabbar_doubleclicktoclose and index > -1:

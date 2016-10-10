@@ -1,9 +1,12 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from widgets.helpers.qlnplaintextedit import QLNPlainTextEdit
+from lib.helper import waiting, QStringMatrixToUnicode
 
 import lib.images_rc
 import lib.querycsv
+import lib.helper
+
 import os
 
 
@@ -44,7 +47,7 @@ class SQLHighlighter(QSyntaxHighlighter):
        https://wiki.python.org/moin/PyQt/Python%20syntax%20highlighting
     """
 
-    # Keywords
+    # Sqlite Keywords
     KEYWORDS = [
         'ABORT','COLUMN','ESCAPE','INSERT','ORDER','TABLE','ACTION','COMMIT',
         'EXCEPT','INSTEAD','OUTER','TEMP','ADD','CONFLICT','EXCLUSIVE',
@@ -177,9 +180,9 @@ class Editor(QLNPlainTextEdit):
 class Result(QFrame):
 
     class TableModel(QAbstractTableModel):
-        def __init__(self, parent=None, *args):
-            QAbstractTableModel.__init__(self, *args)
-            self.array_ = [[]]
+        def __init__(self, array_):
+            QAbstractTableModel.__init__(self)
+            self.array_ = array_
 
         def rowCount(self, parent=QModelIndex()):
             return len(self.array_)
@@ -195,8 +198,6 @@ class Result(QFrame):
                 columnIndex = index.column()
                 return self.array_[rowIndex][columnIndex]
 
-        def setArray(self, array_):
-            self.array_ = array_
 
     #
     # public
@@ -204,11 +205,10 @@ class Result(QFrame):
 
     def setResult(self, result):
         if isinstance(result, list):
-            print 'list'
-            self.modelResult.setArray(result)
+            modelResult = self.TableModel(result)
+            self.tableResult.setModel(modelResult)
             self.box.setCurrentWidget(self.tableResult)
         else:
-            print 'string'
             self.textResult.setPlainText(result)
             self.box.setCurrentWidget(self.textResult)
 
@@ -219,14 +219,12 @@ class Result(QFrame):
     def __init__(self, *args):
         QFrame.__init__(self, *args)
         self.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
-
         self.textResult = QPlainTextEdit()
         self.textResult.setReadOnly(True)
-
-        self.modelResult = self.TableModel()
+        palette = self.textResult.palette()
+        palette.setColor(QPalette.Text, Qt.red)
+        self.textResult.setPalette(palette)
         self.tableResult = QTableView()
-        self.tableResult.setModel(self.modelResult)
-
         self.box = QStackedLayout(self)
         self.box.addWidget(self.textResult)
         self.box.addWidget(self.tableResult)
@@ -263,6 +261,8 @@ class Tab(QTabWidget):
 
     def __tabCloseRequestedEvent(self, index):
         self.removeTab(index)
+        if self.count() == 0:
+            self.__isEmptyEvent(True)
 
     #
     # public
@@ -283,6 +283,15 @@ class Tab(QTabWidget):
         filename = 'script {0}'.format(self.countNewScript)
         self.countNewScript = self.countNewScript + 1
         self.addScript(filename)
+
+    def currentScript(self):
+        editor = self.currentWidget()
+        if editor:
+            script = editor.toPlainText()
+            script = unicode(script)
+        else:
+            script = None
+        return script
 
 
     #
@@ -419,38 +428,51 @@ class QQueryCsv(QDialog):
         self.tables.setData(data)
 
     #
+    # public
+    #
+
+    def setCsvData(self, documents):
+        for document in documents:
+            data = lib.helper.QStringMatrixToUnicode(document.arrayData())
+            filename = os.path.basename(document.filename)
+            tableName, _ = os.path.splitext(filename)
+## aqui faltara algun funcion que elimine de 'tableName' caracteres invalidos para sqlite
+            lib.querycsv.import_array(self.db, data, tableName, overwrite=True)
+
+    #
     # event
     #
 
+    @waiting
     def __runQueryRequested(self):
 
-        currentScript = self.tab.currentWidget()
-        if currentScript:
-            script = currentScript.toPlainText()
-            script = unicode(script)
+        script = self.tab.currentScript()
 
-        # test   u'select * from result where name="dog"'
-        _array = [
-        [u'name', u'number', u'color'],
-        [u'cat', u'1', u'red'],
-        [u'dog', u'2', u'green'],
-        [u'bird', u'3', u'blue']
-        ]
-        lib.querycsv.import_array(self.db, _array, 'result', overwrite=True)
-        lib.querycsv.import_array(self.db, _array, 'result2', overwrite=True)
-        lib.querycsv.import_array(self.db, _array, 'result3', overwrite=True)
-        #
-        self.__setTables()
-        #
-        try:
-            results = lib.querycsv.query_sqlite(script, self.db)
-            print results
-            self.result.setResult(results)
-        except Exception as ex:
-            print 'me', ex.message
-            self.result.setResult(ex.message)
-        # test
-        self.runQueryRequested.emit()
+        if script:
+
+            # throw event to pass the CSV data calling the method setCsv
+            self.runQueryRequested.emit()
+
+            # test
+            _array = [
+            [u'name', u'number', u'color'],
+            [u'cat', u'1', u'red'],
+            [u'dog', u'2', u'green'],
+            [u'bird', u'3', u'blue']
+            ]
+            lib.querycsv.import_array(self.db, _array, 'result', overwrite=True)
+            #
+            self.__setTables()
+            #
+            try:
+                results = lib.querycsv.query_sqlite(script, self.db)
+                self.result.setResult(results)
+            except Exception as ex:
+                self.result.setResult(ex.message)
+
+
+        else:
+           self.result.setResult('')
 
     def __newQueryRequested(self):
         self.tab.newScript()
