@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
             self.saveSessionFile()
             #self.refreshStatusTab(csv)
             if self.tab.currentWidget() == csv:
-                tabCurrentChangedEvent(self.tab.indexOf(csv))
+                self.tabCurrentChangedEvent(self.tab.indexOf(csv))
             return True
         else:
             return False
