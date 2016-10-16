@@ -428,18 +428,6 @@ class QQueryCsv(QDialog):
         self.tables.setData(data)
 
     #
-    # public
-    #
-
-    def setCsvData(self, documents):
-        for document in documents:
-            data = lib.helper.QStringMatrixToUnicode(document.arrayData())
-            filename = os.path.basename(document.filename)
-            tableName, _ = os.path.splitext(filename)
-## aqui faltara algun funcion que elimine de 'tableName' caracteres invalidos para sqlite
-            lib.querycsv.import_array(self.db, data, tableName, overwrite=True)
-
-    #
     # event
     #
 
@@ -505,12 +493,49 @@ class QQueryCsv(QDialog):
 
     runQueryRequested = pyqtSignal()
 
-    def importCsv(self, csv):
+
+##    from lib.helper import SimpleNamespace
+##    def setCsvData2(self, documents):
+##
+##        for document in documents:
+##            filename = os.path.basename(document.filename)
+##            #timestamp = document.timestampLastChange
+##            tableName, _ = os.path.splitext(filename)
+
+
+    def setCsvData(self, documents):
+
+## aqui antes tienes que eliminar la base de datos
+## para no tener q hacerlo cada vez, hay que guardar en una variable en este widget un campo modificado.
+## modificado=True al inicio, cuando entra aqui si es true, borra e inserta, si es false no hace nada.
+## la variable pasa a True para cualquier operacion de csvs (1) add, modify, del csv
+## tb puede servir una variable en cada csv tipo 'fecha ultima modificacion' <-- mejor.
+## el problema viene si anado o quito un CSV... como controlo esto?
+## y que tal algo con hashes? los objetos python tiene algo parecido a un hash?
+
+        for document in documents:
+            data = lib.helper.QStringMatrixToUnicode(document.arrayData())
+            filename = os.path.basename(document.filename)
+            tableName, _ = os.path.splitext(filename)
+            print document.timestamp()
+
+## no crear tabla si el csv no tiene datos
+
+## columnas sin cabecera, columnas con cabecera repetida
+
+## cuando elijes el nombre de la tabla, antes de add comprobar q no exista una tabla con mismo nombre.
+## Si existe, entonces add un sufijo _1 _2 etc.
+
+## aqui faltara algun funcion que elimine de 'tableName' caracteres invalidos para sqlite, si asi esta configurado
+## sino se supone q con " o con [ ya sirve
+
+            lib.querycsv.import_array(self.db, data, tableName, overwrite=True)
+
         #':memory:'
         #lib.querycsv.import_array(array, table_name, header=None, overwrite=False):
         #lib.querycsv.import_array(self.db, self.array, 'result')
         #results = query_sqlite('select * from result where name="dog"', self.db)
-        pass
+
 
     #
     # init

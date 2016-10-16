@@ -2,6 +2,8 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import lib.enums as enums
 import lib.undostack as undostack
+
+from datetime import datetime
 from lib.sheet import Sheet
 from contextlib import contextmanager
 
@@ -12,6 +14,7 @@ class QUndoSelectionCommand(QUndoCommand):
         super(QUndoSelectionCommand, self).__init__(description)
         self.undoSelection = undoSelection
         self.redoSelection = redoSelection
+        self.timestamp = datetime.today()
 
 
 class CommandSetValue(QUndoSelectionCommand):
@@ -486,6 +489,14 @@ class CommandSheet(QObject):
 
     def getArray(self, startRow, startColumn, dimRows, dimColumns, transpose=False):
         return self.sheet.getArray(startRow, startColumn, dimRows, dimColumns, transpose)
+
+    def timestamp(self):
+        index = self.stack.index()
+        if index > 0:
+            command = self.stack.command(index - 1)
+            if command:
+                return command.timestamp
+        return None
 
     #
     # public undo and redo methods
