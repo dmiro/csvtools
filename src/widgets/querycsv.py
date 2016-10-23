@@ -12,6 +12,10 @@ import os
 
 class Tables(QTreeWidget):
 
+    #
+    # public
+    #
+
     def delData(self):
         self.clear()
 
@@ -31,6 +35,20 @@ class Tables(QTreeWidget):
                 field.setIcon(0, QIcon(':images/field.png'))
 
     #
+    # event
+    #
+
+    def __itemDoubleClickedEvent (self, item, column):
+        if item:
+            script = ""
+            if item.childCount() > 0:
+                script = 'select * from "{0}"'.format(item.text(column))
+            else:
+                table = item.parent()
+                script = '"{0}"."{1}"'.format(table.text(column), item.text(column))
+            print script
+
+    #
     # init
     #
 
@@ -38,6 +56,7 @@ class Tables(QTreeWidget):
         QTreeWidget.__init__ (self, *args)
         self.setHeaderLabel('Tables')
         self.setIndentation(10)
+        self.itemDoubleClicked.connect(self.__itemDoubleClickedEvent)
 
 
 class SQLHighlighter(QSyntaxHighlighter):
@@ -517,6 +536,7 @@ class QQueryCsv(QDialog):
             data = lib.helper.QStringMatrixToUnicode(document.arrayData())
             filename = os.path.basename(document.filename)
             tableName, _ = os.path.splitext(filename)
+            timestamp = document.timestamp()
             print document.timestamp()
 
 ## no crear tabla si el csv no tiene datos
