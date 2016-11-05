@@ -275,17 +275,46 @@ class Tab(QTabWidget):
     def __currentChangedEvent(self, index):
         editor = self.widget(index)
         if editor:
-            empty = editor.isTextEmpty()
-            self.isEmpty.emit(empty)
+            if isinstance(editor, Editor):
+                empty = editor.isTextEmpty()
+                self.isEmpty.emit(empty)
+            # it's result tab
+            else:
+                self.isEmpty.emit(True)
 
     def __tabCloseRequestedEvent(self, index):
         self.removeTab(index)
         if self.count() == 0:
             self.__isEmptyEvent(True)
 
+    def __removeTabResult(self):
+        for index in range(self.count()):
+            widget = self.widget(index)
+            if isinstance(widget, Result):
+                self.removeTab(index)
+
+    def __addTabResult(self):
+        self.insertTab(0, self.result, 'RESULT')
+        self.tabBar().setTabTextColor(0, Qt.red)
+
     #
     # public
     #
+
+    def setEnabledTabResult(self, enabled):
+        self.__enabledTabResult = enabled
+        if enabled:
+            self.__addTabResult()
+        else:
+            self.__removeTabResult()
+
+    def setResult(self, result):
+        # set result
+        self.result.setResult(result)
+        if self.__enabledTabResult:
+            self.__removeTabResult()
+            self.__addTabResult()
+            self.setCurrentIndex(0)
 
     def addScript(self, filename, script=''):
         index = self.__getScriptForFilename(filename)
@@ -305,11 +334,11 @@ class Tab(QTabWidget):
 
     def currentScript(self):
         editor = self.currentWidget()
+        script = None
         if editor:
-            script = editor.toPlainText()
-            script = unicode(script)
-        else:
-            script = None
+            if isinstance(editor, Editor):
+                script = editor.toPlainText()
+                script = unicode(script)
         return script
 
 
@@ -319,11 +348,13 @@ class Tab(QTabWidget):
 
     def __init__(self):
         QTabWidget.__init__ (self)
+        self.result = Result()
         self.countNewScript = 1
         self.setTabsClosable(True)
         self.setMovable(True)
         self.currentChanged.connect(self.__currentChangedEvent)
         self.tabCloseRequested.connect(self.__tabCloseRequestedEvent)
+        self.__enabledTabResult = False
 
 
 class ToolBar(QToolBar):
@@ -331,11 +362,11 @@ class ToolBar(QToolBar):
     #
     # public
     #
-
     runQueryRequested = pyqtSignal()
     newQueryRequested = pyqtSignal()
     loadQueryRequested = pyqtSignal()
-
+    showResultBelowRequested = pyqtSignal()
+    showResultInTabRequested = pyqtSignal()
     showColumnWizardRequested = pyqtSignal()
 
     #
@@ -350,15 +381,14 @@ class ToolBar(QToolBar):
     def __toolBarActionTriggeredEvent(self, action):
 
         # options button
-        if action == self.showResultInTab:
-            pass
-        elif action == self.showResultBelow:
-            pass
+        if action == self.showResultBelow:
+            self.showResultBelowRequested.emit()
+        elif action == self.showResultInTab:
+            self.showResultInTabRequested.emit()
         elif action == self.showResultToNewCsv:
             pass
         elif action == self.showColumnWizard:
             self.showColumnWizardRequested.emit()
-            pass
 
         # actions
         elif action == self.runQueryAction:
@@ -386,9 +416,9 @@ class ToolBar(QToolBar):
         self.saveQueryAction = QAction(QIcon(':images/save.png'), self.tr('Save script'), self)
         self.showResultInTab = QAction(self.tr('Result in tab'), self)
         self.showResultInTab.setCheckable(True)
-        self.showResultInTab.setChecked(True)
         self.showResultBelow = QAction(self.tr('Result below'), self)
         self.showResultBelow.setCheckable(True)
+        self.showResultBelow.setChecked(True)
         self.showResultToNewCsv = QAction(self.tr('Result to new csv'), self)
         self.showResultToNewCsv.setCheckable(True)
         self.showColumnWizard = QAction('Show column wizard', self)
@@ -397,16 +427,16 @@ class ToolBar(QToolBar):
 
         # options button
         self.optionsMenu = QMenu()
-        self.optionsMenu.addAction(self.showResultInTab)
         self.optionsMenu.addAction(self.showResultBelow)
+        self.optionsMenu.addAction(self.showResultInTab)
         self.optionsMenu.addAction(self.showResultToNewCsv)
         self.optionsMenu.addSeparator()
         self.optionsMenu.addAction(self.showColumnWizard)
         self.optionsMenu.triggered.connect(self.__toolBarActionTriggeredEvent)
         #
         actionGroup = QActionGroup(self.optionsMenu)
-        self.showResultInTab.setActionGroup(actionGroup)
         self.showResultBelow.setActionGroup(actionGroup)
+        self.showResultInTab.setActionGroup(actionGroup)
         self.showResultToNewCsv.setActionGroup(actionGroup)
         #
         self.optionsButton = QToolButton()
@@ -474,12 +504,16 @@ class QQueryCsv(QDialog):
             try:
                 results = lib.querycsv.query_sqlite(script, self.db)
                 self.result.setResult(results)
+                self.tab.setResult(results)
             except Exception as ex:
                 self.result.setResult(ex.message)
+                self.tab.setResult(ex.message)
 
 
         else:
-           self.result.setResult('')
+            self.result.setResult('')
+            self.tab.setResult('')
+
 
     def __newQueryRequested(self):
         self.tab.newScript()
@@ -495,6 +529,16 @@ class QQueryCsv(QDialog):
     def __showColumnWizardRequested(self):
         isVisible = not self.tables.isVisible()
         self.tables.setVisible(isVisible)
+
+    def __showResultBelowRequested(self):
+        self.tab.setEnabledTabResult(False)
+        self.result.setVisible(True)
+        pass
+
+    def __showResultInTabRequested(self):
+        self.tab.setEnabledTabResult(True)
+        self.result.setVisible(False)
+        pass
 
     def __isEmptyEvent(self, empty):
         self.toolbar.runQueryAction.setDisabled(empty)
@@ -571,26 +615,28 @@ class QQueryCsv(QDialog):
         self.toolbar = ToolBar()
         self.tab = Tab()
         self.result = Result()
+        self.tables = Tables()
 
         # events
         self.toolbar.runQueryRequested.connect(self.__runQueryRequested)
         self.toolbar.newQueryRequested.connect(self.__newQueryRequested)
         self.toolbar.loadQueryRequested.connect(self.__loadQueryRequested)
         self.toolbar.showColumnWizardRequested.connect(self.__showColumnWizardRequested)
+        self.toolbar.showResultBelowRequested.connect(self.__showResultBelowRequested)
+        self.toolbar.showResultInTabRequested.connect(self.__showResultInTabRequested)
 
         # tab
         self.tab.isEmpty.connect(self.__isEmptyEvent)
         self.tab.newScript()
-        self.tables = Tables()
 
-        # splitter
+        # edit splitter
         self.editSplitter = QSplitter(Qt.Vertical)
         self.editSplitter.addWidget(self.tab)
         self.editSplitter.addWidget(self.result)
         self.editSplitter.setStretchFactor(0, 5)
         self.editSplitter.setStretchFactor(1, 1)
 
-        # splitter
+        # main splitter
         self.mainSplitter= QSplitter(Qt.Horizontal)
         self.mainSplitter.addWidget(self.tables)
         self.mainSplitter.addWidget(self.editSplitter)
