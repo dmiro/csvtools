@@ -1001,6 +1001,9 @@ class MainWindow(QMainWindow):
         # querycsv dock widget
         self.dockToolQueryCsv = QDockWidget("Query Csv", self)
         self.dockToolQueryCsv.setWidget(self.toolQueryCsv)
+       # self.dockToolQueryCsv.resize(0,0)
+        #self.dockToolQueryCsv.setMinimumSize(0, 0)
+       # self.dockToolQueryCsv.setMaximumHeight(100)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.dockToolQueryCsv)
         self.dockToolQueryCsv.hide()
 

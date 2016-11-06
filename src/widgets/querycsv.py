@@ -296,6 +296,7 @@ class Tab(QTabWidget):
     def __addTabResult(self):
         self.insertTab(0, self.result, 'RESULT')
         self.tabBar().setTabTextColor(0, Qt.red)
+        self.setCurrentIndex(0)
 
     #
     # public
@@ -314,7 +315,6 @@ class Tab(QTabWidget):
         if self.__enabledTabResult:
             self.__removeTabResult()
             self.__addTabResult()
-            self.setCurrentIndex(0)
 
     def addScript(self, filename, script=''):
         index = self.__getScriptForFilename(filename)
