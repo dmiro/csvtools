@@ -204,18 +204,77 @@ class Result(QFrame):
             self.array_ = array_
 
         def rowCount(self, parent=QModelIndex()):
-            return len(self.array_)
+            return len(self.array_) - 1
 
         def columnCount(self, parent=QModelIndex()):
             return len(self.array_[0])
+
+        def headerData(self, section, orientation, role=Qt.DisplayRole):
+            if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+                value = self.array_[0][section]
+                return value
+            return QAbstractTableModel.headerData(self, section, orientation, role)
 
         def data(self, index, role):
             if not index.isValid():
                 return QVariant()
             if role == Qt.DisplayRole or role == Qt.EditRole:
-                rowIndex = index.row()
+                rowIndex = index.row() + 1
                 columnIndex = index.column()
                 return self.array_[rowIndex][columnIndex]
+
+    class TableResult(QTableView):
+
+        def __getCurrentSelection(self):
+            selectionModel = self.selectionModel()
+            return selectionModel.selection()
+
+        def __getHeaderValue(self, column):
+            model = self.model()
+            value = model.headerData(column, orientation=Qt.Horizontal, role = Qt.DisplayRole)
+            return value
+
+        def __getValue(self, row, column):
+            model = self.model()
+            index = model.createIndex (row, column)
+            value = model.data(index, role = Qt.DisplayRole)
+            return value
+
+        def __copy(self, includeHeaders, includeRowNumbers):
+            selectedRanges = self.__getCurrentSelection()
+            if len(selectedRanges) == 1:
+                topLeftIndex = selectedRanges[0].topLeft()
+                bottomRightIndex = selectedRanges[0].bottomRight()
+                leftColumn = topLeftIndex.column()
+                rightColumn = bottomRightIndex.column()
+                topRow = topLeftIndex.row()
+                bottomRow = bottomRightIndex.row()
+                if includeRowNumbers:
+                   textClip = '\t'
+                else:
+                    textClip = ''
+                if includeHeaders:
+                    textClip = textClip+'\t'.join([self.__getHeaderValue(i) for i in xrange(leftColumn, rightColumn + 1)]) + '\n'
+                for row in xrange(topRow, bottomRow + 1):
+                    if includeRowNumbers:
+                        textClip += str(row + 1) + '\t'
+                    for column in xrange(leftColumn, rightColumn + 1):
+                        try:
+                            textClip += self.__getValue(row, column) + '\t'
+                        except AttributeError:
+                            textClip += '\t'
+                    textClip = textClip[:-1] + '\n'
+                clipboard = QApplication.clipboard()
+                clipboard.setText(textClip, mode=QClipboard.Clipboard)
+
+        def keyPressEvent(self, e):
+            # copy selection to clipboard
+            if (e.modifiers() & Qt.ControlModifier):
+                if e.key() == Qt.Key_C:
+                    self.__copy(includeHeaders=False, includeRowNumbers=False)
+
+        def __init__(self, *args):
+            QTableView.__init__(self, *args)
 
 
     #
@@ -243,7 +302,7 @@ class Result(QFrame):
         palette = self.textResult.palette()
         palette.setColor(QPalette.Text, Qt.red)
         self.textResult.setPalette(palette)
-        self.tableResult = QTableView()
+        self.tableResult = self.TableResult()
         self.box = QStackedLayout(self)
         self.box.addWidget(self.textResult)
         self.box.addWidget(self.tableResult)

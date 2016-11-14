@@ -218,15 +218,6 @@ class QCsvModel(QAbstractTableModel):
             columnIndex = index.column()
             if rowIndex == 0 and columnIndex < self.columnDataCount():
                 return QBrush(QColor(255, 255, 0, 16))
-#        elif role == Qt.BackgroundRole:
-#            return QBrush(QColor(8, 8, 8, 8))
-##        elif role == Qt.BackgroundRole:
-##            rowIndex = index.row()
-##            columnIndex = index.column()
-##            if self.rowDataCount() > rowIndex:
-##                if self.columnDataCount() > columnIndex:
-##                    return QBrush(QColor(8, 8, 8, 8))
-        ###return QVariant()
 
     def setData(self, index, value, role=Qt.EditRole):
         if role == Qt.EditRole:
@@ -247,24 +238,6 @@ class QCsvModel(QAbstractTableModel):
 
     def flags(self, index):
         return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
-
-##    def insertRows(self, row, count, parent = QModelIndex()):
-##        self.beginInsertRows(parent, row, row+count)
-##        self.document.insertEmptyRows(row, count)
-##        self.endInsertRows()
-##        return True
-
-##    def insertRow(self, row, parent = QModelIndex()):
-##        return self.insertRows(row, 1, parent)
-
-##    def insertColumns(self, column, count, parent = QModelIndex()):
-##        self.beginInsertColumns(parent, column, column+count)
-##        self.document.insertEmptyColumns(column, count)
-##        self.endInsertColumns()
-##        return True
-
-##    def insertColumn(self, column, parent = QModelIndex()):
-##        return self.insertColumn(column, 1, parent)
 
 #
 # class QCsv
