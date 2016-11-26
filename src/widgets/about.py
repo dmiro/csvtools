@@ -6,16 +6,20 @@ from widgets.helpers.qlabelclickable import QLabelClickable
 import lib.images_rc
 import webbrowser
 
+__version_info__ = (0, 0, 9)
+__version__ = '.'.join(str(v) for v in __version_info__)
+
+
 class QAbout(QDialog):
 
-    TITLE = """<img src=":images/app.png"/>&nbsp;<font style="font-size: 24pt; color: black; font-family: Sans-Serif">CSV</font>
+    TITLE = """<font style="font-size: 24pt; color: black; font-family: Sans-Serif">CSV</font>
 <font style="font-size: 24pt; color: green; font-family: Sans-Serif"> Tools</font>"""
 
     AUTHOR = """Author:  David Miró"""
 
     HOMEPAGE = """Home Page:&nbsp;&nbsp;<a href="http://www.3engine.net">http://www.3engine.net</a>"""
 
-    VERSION = """Version:  1.0.0"""
+    VERSION = """Version: """ + __version__
 
     BUILDTIME = """<font style="font-size: 10px; color: gray">Build time:  03/11/2015 - 10:33:25</font>"""
 
