@@ -1,4 +1,22 @@
 # -*- coding: utf-8 -*-
+
+# Csv Tools
+# Written by David Miro aka dmiro
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from widgets.about import QAbout
@@ -1034,22 +1052,5 @@ def main():
 
     sys.exit(app.exec_())
 
-
-# http://rowinggolfer.blogspot.com.es/2010/05/qtreeview-and-qabractitemmodel-example.html
-# https://wiki.python.org/moin/PyQt/Creating%20a%20context%20menu%20for%20a%20tree%20view
-# http://ftp.ics.uci.edu/pub/centos0/ics-custom-build/BUILD/PyQt-x11-gpl-4.7.2/examples/itemviews/simpletreemodel/simpletreemodel.py
-
-# http://popdevelop.com/2010/05/an-example-on-how-to-make-qlabel-clickable/
-# http://pyqt.sourceforge.net/Docs/PyQt4/classes.html
-# print QtCore.QCoreApplication.translate("MyWindow", "About")
-# https://kuanyui.github.io/2014/09/03/pyqt-i18n/
-# http://pyqt.sourceforge.net/Docs/PyQt4/i18n.html
-# The release manage may optionally use pyrcc4 to embed the .qm files, along with other application
-# resources such as icons, in a Python module. This may make packaging and distribution of the application easier.
-# http://stackoverflow.com/questions/13032774/pyqt-english-to-finnish-translation
-# 		self._app.removeTranslator(self._enTranslator)
-#		self._app.installTranslator(self._deTranslator)
-#		self.retranslateUi(self)
-# http://activityworkshop.net/software/beaver/pyqt.html
 if __name__ == "__main__":
     main()
