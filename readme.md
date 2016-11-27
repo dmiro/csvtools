@@ -12,7 +12,7 @@ Have an idea? Found a bug? [add a new issue](https://github.com/csvtools/csvtool
 :scroll: License
 ----------------
 
-Licensed under the MIT, see `LICENSE`
+Licensed under the GNU, see `LICENSE`
 
 :heart_eyes: Contributors
 --------------------------
