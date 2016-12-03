@@ -1,6 +1,6 @@
 # Csv Tools
 
-[![Python](https://img.shields.io/badge/Version-aplha-green.svg)]()
+[![Python](https://img.shields.io/badge/Version-alpha-green.svg)]()
 [![GitHub license](https://img.shields.io/badge/license-GNU-blue.svg)](https://raw.githubusercontent.com/csvtools/csvtools/master/LICENSE)
 [![Python](https://img.shields.io/badge/Python-2.6%20|%202.7-green.svg)]()
 

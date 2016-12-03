@@ -48,6 +48,33 @@ class Tables(QTreeWidget):
                 script = '"{0}"."{1}"'.format(table.text(column), item.text(column))
             print script
 
+    def mouseMoveEvent(self, e):
+        if e.buttons() != Qt.LeftButton:
+            return
+
+        script = []
+        selectedItems = self.selectedItems()
+        for item in selectedItems:
+            if item.childCount() > 0:
+                script.append('"{0}"'.format(item.text(0)))
+            else:
+                table = item.parent()
+                script.append('"{0}"."{1}"'.format(table.text(0), item.text(0)))
+        script = ','.join(script)
+
+        mimeData = QMimeData()
+        mimeData.setText(script)
+        drag = QDrag(self)
+        drag.setMimeData(mimeData)
+        drag.exec_()
+
+        # exec_ will return the accepted action from dropEvent
+        #if drag.exec_(Qt.CopyAction | Qt.MoveAction) == Qt.MoveAction:
+        #    print 'moved'
+        #else:
+        #    print 'copied'
+
+
     #
     # init
     #
@@ -56,7 +83,9 @@ class Tables(QTreeWidget):
         QTreeWidget.__init__ (self, *args)
         self.setHeaderLabel('Tables')
         self.setIndentation(10)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.itemDoubleClicked.connect(self.__itemDoubleClickedEvent)
+        #self.setAcceptDrops(True)
 
 
 class SQLHighlighter(QSyntaxHighlighter):
@@ -194,6 +223,7 @@ class Editor(QLNPlainTextEdit):
         QLNPlainTextEdit.__init__ (self)
         self.highlight = SQLHighlighter(self.document())
         self.textChanged.connect(self.__textChangedEvent)
+        self.setAcceptDrops(True)
 
 
 class Result(QFrame):
