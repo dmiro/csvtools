@@ -13,6 +13,15 @@ import os
 class Tables(QTreeWidget):
 
     #
+    # private
+    #
+
+    def __extractTableName(self, item):
+        text = item.text(0)
+        text = unicode(text)
+        return text[:text.rfind('(') - 1]
+
+    #
     # public
     #
 
@@ -21,15 +30,15 @@ class Tables(QTreeWidget):
 
     def setData(self, data):
         """
-        :param data: [ ('table', ('field1', 'field2',...)), ...]
+        :param data: [ ('table', 250, ('field1', 'field2',...)), ...]
         :return: None
         """
         self.delData()
         for dataTable in data:
             table = QTreeWidgetItem(self)
-            table.setText(0, dataTable[0])
+            table.setText(0, '{0} ({1})'.format(dataTable[0], dataTable[1]))
             table.setIcon(0, QIcon(':images/table.png'))
-            for dataField in dataTable[1]:
+            for dataField in dataTable[2]:
                 field = QTreeWidgetItem(table)
                 field.setText(0, dataField)
                 field.setIcon(0, QIcon(':images/field.png'))
@@ -38,14 +47,32 @@ class Tables(QTreeWidget):
     # event
     #
 
+    def __customContextMenuRequestedEvent(self, position):
+        """show popup edit menu"""
+
+        indexes = self.selectedIndexes()
+        if len(indexes) > 0:
+            level = 0
+            index = indexes[0]
+            while index.parent().isValid():
+                index = index.parent()
+                level += 1
+
+            menu = QMenu()
+            if level == 0:
+                menu.addAction(self.tr("Edit Table"))
+            elif level == 1:
+                menu.addAction(self.tr("Edit Field"))
+
+            menu.exec_(self.viewport().mapToGlobal(position))
+
     def __itemDoubleClickedEvent (self, item, column):
         if item:
             script = ""
             if item.childCount() > 0:
-                script = 'select * from "{0}"'.format(item.text(column))
+                script = 'select * from "{0}"'.format(self.__extractTableName(item))
             else:
-                table = item.parent()
-                script = '"{0}"."{1}"'.format(table.text(column), item.text(column))
+                script = '"{0}"."{1}"'.format(self.__extractTableName(item.parent()), item.text(0))
             print script
 
     def mouseMoveEvent(self, e):
@@ -56,24 +83,16 @@ class Tables(QTreeWidget):
         selectedItems = self.selectedItems()
         for item in selectedItems:
             if item.childCount() > 0:
-                script.append('"{0}"'.format(item.text(0)))
+                script.append('"{0}"'.format(self.__extractTableName(item)))
             else:
-                table = item.parent()
-                script.append('"{0}"."{1}"'.format(table.text(0), item.text(0)))
+                script.append('"{0}"."{1}"'.format(self.__extractTableName(item.parent()), item.text(0)))
         script = ','.join(script)
 
         mimeData = QMimeData()
         mimeData.setText(script)
         drag = QDrag(self)
         drag.setMimeData(mimeData)
-        drag.exec_()
-
-        # exec_ will return the accepted action from dropEvent
-        #if drag.exec_(Qt.CopyAction | Qt.MoveAction) == Qt.MoveAction:
-        #    print 'moved'
-        #else:
-        #    print 'copied'
-
+        drag.exec_(Qt.CopyAction)
 
     #
     # init
@@ -85,7 +104,9 @@ class Tables(QTreeWidget):
         self.setIndentation(10)
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.itemDoubleClicked.connect(self.__itemDoubleClickedEvent)
-        #self.setAcceptDrops(True)
+        self.setAcceptDrops(False)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.__customContextMenuRequestedEvent)
 
 
 class SQLHighlighter(QSyntaxHighlighter):
@@ -214,6 +235,18 @@ class Editor(QLNPlainTextEdit):
 
     def isTextEmpty(self):
         return not self.toPlainText()
+
+    #
+    # override
+    #
+
+    def toPlainText(self):
+        cursor = self.textCursor()
+        textSelected = cursor.selectedText()
+        if textSelected:
+            return unicode(textSelected)
+        else:
+            return QLNPlainTextEdit.toPlainText(self)
 
     #
     # init
@@ -427,7 +460,7 @@ class Tab(QTabWidget):
         if editor:
             if isinstance(editor, Editor):
                 script = editor.toPlainText()
-                script = unicode(script)
+                #script = unicode(script)
         return script
 
 
@@ -561,7 +594,9 @@ class QQueryCsv(QDialog):
         tables = [table[0] for table in tables[1:]]
         for tableName in tables:
             tableInfo = lib.querycsv.query_sqlite('PRAGMA table_info(''{0}'')'.format(tableName), self.db)
-            tableInfo = (tableName, [field[1] for field in tableInfo[1:]])
+            tableCount = lib.querycsv.query_sqlite('SELECT COUNT(*) FROM "{0}"'.format(tableName), self.db)
+            tableCount = tableCount[1][0]
+            tableInfo = (tableName, tableCount, [field[1] for field in tableInfo[1:]])
             data.append(tableInfo)
         self.tables.setData(data)
 
