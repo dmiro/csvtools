@@ -106,8 +106,7 @@ class QLNPlainTextEdit(QFrame):
         self.edit.textChanged.connect(lambda: self.textChanged.emit())
 
     def toPlainText(self):
-        #return self.edit.toPlainText()
-        return unicode(self.edit.toPlainText())
+        return self.edit.toPlainText()
 
     def setPlainText(self, text):
         self.edit.setPlainText(text)

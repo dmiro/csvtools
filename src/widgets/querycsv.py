@@ -246,7 +246,7 @@ class Editor(QLNPlainTextEdit):
         if textSelected:
             return unicode(textSelected)
         else:
-            return QLNPlainTextEdit.toPlainText(self)
+            return unicode(QLNPlainTextEdit.toPlainText(self))
 
     #
     # init
@@ -627,8 +627,12 @@ class QQueryCsv(QDialog):
             #
             try:
                 results = lib.querycsv.query_sqlite(script, self.db)
-                self.result.setResult(results)
-                self.tab.setResult(results)
+                if results:
+                    self.result.setResult(results)
+                    self.tab.setResult(results)
+                else:
+                    self.result.setResult('No results.')
+                    self.tab.setResult('No results.')
             except Exception as ex:
                 self.result.setResult(ex.message)
                 self.tab.setResult(ex.message)
