@@ -388,6 +388,26 @@ class Tab(QTabWidget):
         return None
 
     #
+    # drag and drop events
+    #
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls:
+            for url in event.mimeData().urls():
+                filename = str(url.toLocalFile())
+                with open(filename, 'r') as fileScript:
+                    script = fileScript.read()
+                    self.addScript(filename, script)
+        else:
+            event.ignore()
+
+    #
     # event
     #
 
@@ -463,7 +483,6 @@ class Tab(QTabWidget):
                 #script = unicode(script)
         return script
 
-
     #
     # init
     #
@@ -477,6 +496,7 @@ class Tab(QTabWidget):
         self.currentChanged.connect(self.__currentChangedEvent)
         self.tabCloseRequested.connect(self.__tabCloseRequestedEvent)
         self.__enabledTabResult = False
+        self.setAcceptDrops(True)
 
 
 class ToolBar(QToolBar):
