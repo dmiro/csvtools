@@ -50,6 +50,23 @@ class Tables(QTreeWidget):
     def __customContextMenuRequestedEvent(self, position):
         """show popup edit menu"""
 
+        #itemIndex = self.itemAt(position)
+        #if itemIndex:
+        #    if not itemIndex.parent():
+        #        self.setCurrentItem(itemIndex)
+
+        # crear un menu en funcion de los items seleccionados:
+        # - SELECT *
+        # - SELECT <all fields>
+        # - SELECT <selected fields>
+        # - SELECT * ... WHERE <selected fields>
+        # - SELECT <selected fields> ... WHERE <selected fields>
+
+        # - SELECT * ... JOIN <selected tables>
+        # - SELECT * ... JOIN <selected tables> WHERE <selected fields>
+        # - SELECT <all fields> ... JOIN <selected tables>
+        # - SELECT <selected fields> ... JOIN <selected tables>
+
         indexes = self.selectedIndexes()
         if len(indexes) > 0:
             level = 0
@@ -203,15 +220,15 @@ class SQLHighlighter(QSyntaxHighlighter):
             (r"'[^'\\]*(\\.[^'\\]*)*'", stringSyntaxStyle),
             # braces
             (r'[\)\(]+|[\{\}]+|[][]+', braceSyntaxStyle),
-            # From '--' until a newline
-            (r'--[^\n]*', commentSyntaxStyle),
             # Numeric literals
-            ('\\b[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?\\b', numbersSyntaxStyle)
+            ('\\b[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?\\b', numbersSyntaxStyle),
+            # From '--' until a newline (this rule is mandatory in the last position)
+            (r'--[^\n]*', commentSyntaxStyle)
         ]
 
         # Keyword rules
-        rules += [(r'\b%s\b' % w, keywordSyntaxStyle)
-            for w in SQLHighlighter.KEYWORDS]
+        rules = [(r'\b%s\b' % w, keywordSyntaxStyle)
+                 for w in SQLHighlighter.KEYWORDS] + rules
 
         # Build a QRegExp for each pattern
         self.rules = [(QRegExp(rule, Qt.CaseInsensitive), fmt)
