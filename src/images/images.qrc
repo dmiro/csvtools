@@ -71,6 +71,11 @@
 	<file alias="removecellleft.png">tools/removecellleft.png</file>
 	<file alias="removecelltop.png">tools/removecelltop.png</file>
 	<file alias="fx.png">tools/sign.png</file>
+	<file alias="drag.png">tools/drag.png</file>
+	<file alias="select.png">flaticon/two-rows-and-three-columns-layout.png</file>
+	<file alias="innerjoin.png">seaicons/sql-join-inner-icon.png</file>
+	<file alias="selectwhere.png">icons/glyphicons-321-filter.png</file>
+	
 </qresource>
 
 </RCC>

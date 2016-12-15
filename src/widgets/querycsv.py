@@ -21,6 +21,37 @@ class Tables(QTreeWidget):
         text = unicode(text)
         return text[:text.rfind('(') - 1]
 
+    def __makeMenu(self):
+        # make actions
+        self.dragOption = QAction(QIcon(':tools/drag.png'), self.tr('Drag items'), self)
+        self.select1Option = QAction(QIcon(':tools/select.png'), self.tr('SELECT *'), self)
+        self.select2Option = QAction(QIcon(':tools/select.png'),self.tr('SELECT <all fields>'), self)
+        self.select3Option = QAction(QIcon(':tools/select.png'),self.tr('SELECT <selected fields>'), self)
+        self.select4Option = QAction(QIcon(':tools/selectwhere.png'), self.tr('SELECT * ... WHERE <selected fields>'), self)
+        self.select5Option = QAction(QIcon(':tools/selectwhere.png'), self.tr('SELECT <selected fields> ... WHERE <selected fields>'), self)
+        self.join1Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT * ... JOIN <selected tables>'), self)
+        self.join2Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT * ... JOIN <selected tables> WHERE <selected fields>'), self)
+        self.join3Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT <all fields> ... JOIN <selected tables>'), self)
+        self.join4Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT <selected fields> ... JOIN <selected tables>'), self)
+        # make menu
+        self.__menu = QMenu()
+        self.__menu.addAction(self.dragOption)
+        self.__menu.addSeparator()
+        self.__menu.addAction(self.select1Option)
+        self.__menu.addAction(self.select2Option)
+        self.__menu.addAction(self.select3Option)
+        self.__menu.addAction(self.select4Option)
+        self.__menu.addAction(self.select5Option)
+        self.__menu.addSeparator()
+        self.__menu.addAction(self.join1Option)
+        self.__menu.addAction(self.join2Option)
+        self.__menu.addAction(self.join3Option)
+        self.__menu.addAction(self.join4Option)
+        self.__menu.triggered.connect(self.__menuAction)
+
+    def __setStatusMenuOptions(self, indexes):
+        pass
+
     #
     # public
     #
@@ -30,7 +61,7 @@ class Tables(QTreeWidget):
 
     def setData(self, data):
         """
-        :param data: [ ('table', 250, ('field1', 'field2',...)), ...]
+        :param data: [ ('table', numrows, ('field1', 'field2',...)), ...]
         :return: None
         """
         self.delData()
@@ -47,6 +78,16 @@ class Tables(QTreeWidget):
     # event
     #
 
+    def __menuAction(self, action):
+
+        print '__menuAction'
+        if action == self.select1Option:
+            pass
+
+        if action == self.select2Option:
+            pass
+
+
     def __customContextMenuRequestedEvent(self, position):
         """show popup edit menu"""
 
@@ -55,33 +96,22 @@ class Tables(QTreeWidget):
         #    if not itemIndex.parent():
         #        self.setCurrentItem(itemIndex)
 
-        # crear un menu en funcion de los items seleccionados:
-        # - SELECT *
-        # - SELECT <all fields>
-        # - SELECT <selected fields>
-        # - SELECT * ... WHERE <selected fields>
-        # - SELECT <selected fields> ... WHERE <selected fields>
-
-        # - SELECT * ... JOIN <selected tables>
-        # - SELECT * ... JOIN <selected tables> WHERE <selected fields>
-        # - SELECT <all fields> ... JOIN <selected tables>
-        # - SELECT <selected fields> ... JOIN <selected tables>
-
         indexes = self.selectedIndexes()
-        if len(indexes) > 0:
-            level = 0
-            index = indexes[0]
-            while index.parent().isValid():
-                index = index.parent()
-                level += 1
+##        if len(indexes) > 0:
+##            level = 0
+##            index = indexes[0]
+##            while index.parent().isValid():
+##                index = index.parent()
+##                level += 1
+##
+##            menu = QMenu()
+##            if level == 0:
+##                menu.addAction(self.tr("Edit Table"))
+##            elif level == 1:
+##                menu.addAction(self.tr("Edit Field"))
 
-            menu = QMenu()
-            if level == 0:
-                menu.addAction(self.tr("Edit Table"))
-            elif level == 1:
-                menu.addAction(self.tr("Edit Field"))
-
-            menu.exec_(self.viewport().mapToGlobal(position))
+        self.__setStatusMenuOptions(indexes)
+        self.__menu.exec_(self.viewport().mapToGlobal(position))
 
     def __itemDoubleClickedEvent (self, item, column):
         if item:
@@ -124,6 +154,7 @@ class Tables(QTreeWidget):
         self.setAcceptDrops(False)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.__customContextMenuRequestedEvent)
+        self.__makeMenu()
 
 
 class SQLHighlighter(QSyntaxHighlighter):
