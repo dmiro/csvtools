@@ -49,8 +49,41 @@ class Tables(QTreeWidget):
         self.__menu.addAction(self.join4Option)
         self.__menu.triggered.connect(self.__menuAction)
 
-    def __setStatusMenuOptions(self, indexes):
-        pass
+    def __getSelectedItemsArray(self):
+        """
+        :param: None
+        :return: [ ('table', ['field1', 'field2',...]), ...]
+        """
+        selected = []
+        root = self.invisibleRootItem()
+        for indexTables in xrange(root.childCount()):
+            itemTable = root.child(indexTables)
+            fields = []
+            for indexFields in xrange(itemTable.childCount()):
+                itemField = itemTable.child(indexFields)
+                if self.isItemSelected(itemField):
+                    fields.append(unicode(itemField.text(0)))
+            if fields or self.isItemSelected(itemTable):
+                selected.append((self.__extractTableName(itemTable), fields))
+        return selected
+
+    def __setStatusMenuOptions(self):
+        """enable/disable options menu in order selected items
+        """
+        selected = self.__getSelectedItemsArray()
+        flagSelect = len(selected) > 0
+        flagSeletedFields = len([table[0] for table in selected if table[1]]) > 0
+        flagJoin = len(selected) > 1
+        self.dragOption.setEnabled(flagSelect)
+        self.select1Option.setEnabled(flagSelect)
+        self.select2Option.setEnabled(flagSelect)
+        self.select3Option.setEnabled(flagSeletedFields)
+        self.select4Option.setEnabled(flagSeletedFields)
+        self.select5Option.setEnabled(flagSeletedFields)
+        self.join1Option.setEnabled(flagJoin)
+        self.join2Option.setEnabled(flagJoin and flagSeletedFields)
+        self.join3Option.setEnabled(flagJoin)
+        self.join4Option.setEnabled(flagJoin)
 
     #
     # public
@@ -81,6 +114,8 @@ class Tables(QTreeWidget):
     def __menuAction(self, action):
 
         print '__menuAction'
+        selected = self.__getSelectedItemsArray()
+
         if action == self.select1Option:
             pass
 
@@ -96,21 +131,7 @@ class Tables(QTreeWidget):
         #    if not itemIndex.parent():
         #        self.setCurrentItem(itemIndex)
 
-        indexes = self.selectedIndexes()
-##        if len(indexes) > 0:
-##            level = 0
-##            index = indexes[0]
-##            while index.parent().isValid():
-##                index = index.parent()
-##                level += 1
-##
-##            menu = QMenu()
-##            if level == 0:
-##                menu.addAction(self.tr("Edit Table"))
-##            elif level == 1:
-##                menu.addAction(self.tr("Edit Field"))
-
-        self.__setStatusMenuOptions(indexes)
+        self.__setStatusMenuOptions()
         self.__menu.exec_(self.viewport().mapToGlobal(position))
 
     def __itemDoubleClickedEvent (self, item, column):
@@ -361,7 +382,7 @@ class Result(QFrame):
                 topRow = topLeftIndex.row()
                 bottomRow = bottomRightIndex.row()
                 if includeRowNumbers:
-                   textClip = '\t'
+                    textClip = '\t'
                 else:
                     textClip = ''
                 if includeHeaders:
