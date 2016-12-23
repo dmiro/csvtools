@@ -12,6 +12,8 @@ import os
 
 class Tables(QTreeWidget):
 
+    insertScript = pyqtSignal(str)
+
     #
     # private
     #
@@ -27,8 +29,10 @@ class Tables(QTreeWidget):
         self.select1Option = QAction(QIcon(':tools/select.png'), self.tr('SELECT *'), self)
         self.select2Option = QAction(QIcon(':tools/select.png'),self.tr('SELECT <all fields>'), self)
         self.select3Option = QAction(QIcon(':tools/select.png'),self.tr('SELECT <selected fields>'), self)
-        self.select4Option = QAction(QIcon(':tools/selectwhere.png'), self.tr('SELECT * ... WHERE <selected fields>'), self)
-        self.select5Option = QAction(QIcon(':tools/selectwhere.png'), self.tr('SELECT <selected fields> ... WHERE <selected fields>'), self)
+        self.select4Option = QAction(QIcon(':tools/selectwhere.png'), self.tr('SELECT * ... WHERE <AND selected fields>'), self)
+        self.select5Option = QAction(QIcon(':tools/selectwhere.png'), self.tr('SELECT * ... WHERE <OR selected fields>'), self)
+        self.select6Option = QAction(QIcon(':tools/selectwhere.png'), self.tr('SELECT <all fields> ... WHERE <AND selected fields>'), self)
+        self.select7Option = QAction(QIcon(':tools/selectwhere.png'), self.tr('SELECT <all fields> ... WHERE <OR selected fields>'), self)
         self.join1Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT * ... JOIN <selected tables>'), self)
         self.join2Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT * ... JOIN <selected tables> WHERE <selected fields>'), self)
         self.join3Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT <all fields> ... JOIN <selected tables>'), self)
@@ -42,6 +46,8 @@ class Tables(QTreeWidget):
         self.__menu.addAction(self.select3Option)
         self.__menu.addAction(self.select4Option)
         self.__menu.addAction(self.select5Option)
+        self.__menu.addAction(self.select6Option)
+        self.__menu.addAction(self.select7Option)
         self.__menu.addSeparator()
         self.__menu.addAction(self.join1Option)
         self.__menu.addAction(self.join2Option)
@@ -52,27 +58,40 @@ class Tables(QTreeWidget):
     def __getSelectedItemsArray(self):
         """
         :param: None
-        :return: [ ('table', ['field1', 'field2',...]), ...]
+        :return: [ ('table', ['selected field 1', 'selected field 2',...], ['field 1', 'field 2',..., 'field N']), ...]
         """
         selected = []
         root = self.invisibleRootItem()
         for indexTables in xrange(root.childCount()):
             itemTable = root.child(indexTables)
             fields = []
+            allFields = []
             for indexFields in xrange(itemTable.childCount()):
                 itemField = itemTable.child(indexFields)
                 if self.isItemSelected(itemField):
                     fields.append(unicode(itemField.text(0)))
+                allFields.append(unicode(itemField.text(0)))
             if fields or self.isItemSelected(itemTable):
-                selected.append((self.__extractTableName(itemTable), fields))
+                selected.append((self.__extractTableName(itemTable), fields, allFields))
         return selected
+
+    def __getSelectedItemsScript(self):
+        script = []
+        selectedItems = self.selectedItems()
+        for item in selectedItems:
+            if item.childCount() > 0:
+                script.append('"{0}"'.format(self.__extractTableName(item)))
+            else:
+                script.append('"{0}"."{1}"'.format(self.__extractTableName(item.parent()), item.text(0)))
+        script = ','.join(script)
+        return script
 
     def __setStatusMenuOptions(self):
         """enable/disable options menu in order selected items
         """
         selected = self.__getSelectedItemsArray()
         flagSelect = len(selected) > 0
-        flagSeletedFields = len([table[0] for table in selected if table[1]]) > 0
+        flagSeletedFields = len([table[0] for table in selected if table[1]]) == len(selected)
         flagJoin = len(selected) > 1
         self.dragOption.setEnabled(flagSelect)
         self.select1Option.setEnabled(flagSelect)
@@ -80,10 +99,12 @@ class Tables(QTreeWidget):
         self.select3Option.setEnabled(flagSeletedFields)
         self.select4Option.setEnabled(flagSeletedFields)
         self.select5Option.setEnabled(flagSeletedFields)
+        self.select6Option.setEnabled(flagSeletedFields)
+        self.select7Option.setEnabled(flagSeletedFields)
         self.join1Option.setEnabled(flagJoin)
         self.join2Option.setEnabled(flagJoin and flagSeletedFields)
         self.join3Option.setEnabled(flagJoin)
-        self.join4Option.setEnabled(flagJoin)
+        self.join4Option.setEnabled(flagJoin and flagSeletedFields)
 
     #
     # public
@@ -113,49 +134,112 @@ class Tables(QTreeWidget):
 
     def __menuAction(self, action):
 
-        print '__menuAction'
         selected = self.__getSelectedItemsArray()
+        mainScript = ''
 
+        # Drag items
+        if action == self.dragOption:
+            mainScript = self.__getSelectedItemsScript()
+
+        # SELECT *
         if action == self.select1Option:
-            pass
+            script = []
+            for table in selected:
+                script.append('SELECT * FROM "{0}";'.format(table[0]))
+            mainScript = '\n'.join(script)
 
+        # SELECT <all fields>
         if action == self.select2Option:
-            pass
+            script = []
+            for table in selected:
+                fields = ', '.join(['"{0}"'.format(field) for field in table[2]])
+                script.append('SELECT {0} FROM "{1}";'.format(fields, table[0]))
+            mainScript = '\n'.join(script)
 
+        # SELECT <selected fields>
+        if action == self.select3Option:
+            script = []
+            for table in selected:
+                fields = ', '.join(['"{0}"'.format(field) for field in table[1]])
+                script.append('SELECT {0} FROM "{1}";'.format(fields, table[0]))
+            mainScript = '\n'.join(script)
+
+        # SELECT * ... WHERE <AND selected fields>
+        if action == self.select4Option:
+            script = []
+            for table in selected:
+                fields = ' AND '.join(['"{0}" = "?"'.format(field) for field in table[1]])
+                script.append('SELECT * FROM "{0}" WHERE {1};'.format(table[0], fields))
+            mainScript = '\n'.join(script)
+
+        # SELECT * ... WHERE <OR selected fields>
+        if action == self.select5Option:
+            script = []
+            for table in selected:
+                fields = ' OR '.join(['"{0}" = "?"'.format(field) for field in table[1]])
+                script.append('SELECT * FROM "{0}" WHERE {1};'.format(table[0], fields))
+            mainScript = '\n'.join(script)
+
+        # SELECT <all fields> ... WHERE <AND selected fields>
+        if action == self.select6Option:
+            script = []
+            for table in selected:
+                fields1 = ', '.join(['"{0}"'.format(field) for field in table[2]])
+                fields2 = ' AND '.join(['"{0}" = "?"'.format(field) for field in table[1]])
+                script.append('SELECT {0} FROM "{1}" WHERE {2};'.format(fields1, table[0], fields2))
+            mainScript = '\n'.join(script)
+
+        # SELECT <all fields> ... WHERE <OR selected fields>
+        if action == self.select7Option:
+            script = []
+            for table in selected:
+                fields1 = ', '.join(['"{0}"'.format(field) for field in table[2]])
+                fields2 = ' OR '.join(['"{0}" = "?"'.format(field) for field in table[1]])
+                script.append('SELECT {0} FROM "{1}" WHERE {2};'.format(fields1, table[0], fields2))
+            mainScript = '\n'.join(script)
+
+        # SELECT * ... JOIN <selected tables>
+        if action == self.join1Option:
+            joins = []
+            mainTable = selected[0][0]
+            for table in selected:
+                joins.append('JOIN "{0}" ON "{0}"."?" = "?"'.format(table[0]))
+            joins = ' '.join(joins)
+            mainScript = 'SELECT "{0}".* FROM "{0}" {1};'.format(mainTable, joins)
+
+        # SELECT * ... JOIN <selected tables> WHERE <selected fields>
+        if action == self.join2Option:
+            return
+
+        # SELECT <all fields> ... JOIN <selected tables>
+        if action == self.join3Option:
+            return
+
+        # SELECT <selected fields> ... JOIN <selected tables>
+        if action == self.join4Option:
+            return
+
+        if mainScript:
+            self.insertScript.emit(mainScript)
 
     def __customContextMenuRequestedEvent(self, position):
         """show popup edit menu"""
-
-        #itemIndex = self.itemAt(position)
-        #if itemIndex:
-        #    if not itemIndex.parent():
-        #        self.setCurrentItem(itemIndex)
 
         self.__setStatusMenuOptions()
         self.__menu.exec_(self.viewport().mapToGlobal(position))
 
     def __itemDoubleClickedEvent (self, item, column):
         if item:
-            script = ""
-            if item.childCount() > 0:
-                script = 'select * from "{0}"'.format(self.__extractTableName(item))
-            else:
-                script = '"{0}"."{1}"'.format(self.__extractTableName(item.parent()), item.text(0))
-            print script
+            if item.childCount() == 0:
+                script = self.__getSelectedItemsScript()
+                if script:
+                    self.insertScript.emit(script)
 
     def mouseMoveEvent(self, e):
         if e.buttons() != Qt.LeftButton:
             return
 
-        script = []
-        selectedItems = self.selectedItems()
-        for item in selectedItems:
-            if item.childCount() > 0:
-                script.append('"{0}"'.format(self.__extractTableName(item)))
-            else:
-                script.append('"{0}"."{1}"'.format(self.__extractTableName(item.parent()), item.text(0)))
-        script = ','.join(script)
-
+        script = self.__getSelectedItemsScript()
         mimeData = QMimeData()
         mimeData.setText(script)
         drag = QDrag(self)
@@ -304,6 +388,10 @@ class Editor(QLNPlainTextEdit):
 
     def isTextEmpty(self):
         return not self.toPlainText()
+
+    def insertText(self, text):
+        cursor = self.textCursor()
+        cursor.insertText(text);
 
     #
     # override
@@ -552,6 +640,12 @@ class Tab(QTabWidget):
                 #script = unicode(script)
         return script
 
+    def insertTextInCurrentScript(self, text):
+        editor = self.currentWidget()
+        if editor:
+            if isinstance(editor, Editor):
+                editor.insertText(text)
+
     #
     # init
     #
@@ -750,12 +844,13 @@ class QQueryCsv(QDialog):
     def __showResultBelowRequested(self):
         self.tab.setEnabledTabResult(False)
         self.result.setVisible(True)
-        pass
 
     def __showResultInTabRequested(self):
         self.tab.setEnabledTabResult(True)
         self.result.setVisible(False)
-        pass
+
+    def __insertScriptRequested(self, script):
+        self.tab.insertTextInCurrentScript(script)
 
     def __isEmptyEvent(self, empty):
         self.toolbar.runQueryAction.setDisabled(empty)
@@ -841,6 +936,7 @@ class QQueryCsv(QDialog):
         self.toolbar.showColumnWizardRequested.connect(self.__showColumnWizardRequested)
         self.toolbar.showResultBelowRequested.connect(self.__showResultBelowRequested)
         self.toolbar.showResultInTabRequested.connect(self.__showResultInTabRequested)
+        self.tables.insertScript.connect(self.__insertScriptRequested)
 
         # tab
         self.tab.isEmpty.connect(self.__isEmptyEvent)
