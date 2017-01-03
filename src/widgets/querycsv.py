@@ -34,9 +34,10 @@ class Tables(QTreeWidget):
         self.select6Option = QAction(QIcon(':tools/selectwhere.png'), self.tr('SELECT <all fields> ... WHERE <AND selected fields>'), self)
         self.select7Option = QAction(QIcon(':tools/selectwhere.png'), self.tr('SELECT <all fields> ... WHERE <OR selected fields>'), self)
         self.join1Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT * ... JOIN <selected tables>'), self)
-        self.join2Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT * ... JOIN <selected tables> WHERE <selected fields>'), self)
-        self.join3Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT <all fields> ... JOIN <selected tables>'), self)
-        self.join4Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT <selected fields> ... JOIN <selected tables>'), self)
+        self.join2Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT * ... JOIN <selected tables> WHERE <AND selected fields>'), self)
+        self.join3Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT * ... JOIN <selected tables> WHERE <OR selected fields>'), self)
+        self.join4Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT <all fields> ... JOIN <selected tables>'), self)
+        self.join5Option = QAction(QIcon(':tools/innerjoin.png'), self.tr('SELECT <selected fields> ... JOIN <selected tables>'), self)
         # make menu
         self.__menu = QMenu()
         self.__menu.addAction(self.dragOption)
@@ -53,6 +54,7 @@ class Tables(QTreeWidget):
         self.__menu.addAction(self.join2Option)
         self.__menu.addAction(self.join3Option)
         self.__menu.addAction(self.join4Option)
+        self.__menu.addAction(self.join5Option)
         self.__menu.triggered.connect(self.__menuAction)
 
     def __getSelectedItemsArray(self):
@@ -103,8 +105,9 @@ class Tables(QTreeWidget):
         self.select7Option.setEnabled(flagSeletedFields)
         self.join1Option.setEnabled(flagJoin)
         self.join2Option.setEnabled(flagJoin and flagSeletedFields)
-        self.join3Option.setEnabled(flagJoin)
-        self.join4Option.setEnabled(flagJoin and flagSeletedFields)
+        self.join3Option.setEnabled(flagJoin and flagSeletedFields)
+        self.join4Option.setEnabled(flagJoin)
+        self.join5Option.setEnabled(flagJoin and flagSeletedFields)
 
     #
     # public
@@ -145,40 +148,40 @@ class Tables(QTreeWidget):
         if action == self.select1Option:
             script = []
             for table in selected:
-                script.append('SELECT * FROM "{0}";'.format(table[0]))
-            mainScript = '\n'.join(script)
+                script.append('SELECT * \nFROM "{0}";'.format(table[0]))
+            mainScript = '\n\n'.join(script)
 
         # SELECT <all fields>
         if action == self.select2Option:
             script = []
             for table in selected:
                 fields = ', '.join(['"{0}"'.format(field) for field in table[2]])
-                script.append('SELECT {0} FROM "{1}";'.format(fields, table[0]))
-            mainScript = '\n'.join(script)
+                script.append('SELECT {0} \nFROM "{1}";'.format(fields, table[0]))
+            mainScript = '\n\n'.join(script)
 
         # SELECT <selected fields>
         if action == self.select3Option:
             script = []
             for table in selected:
                 fields = ', '.join(['"{0}"'.format(field) for field in table[1]])
-                script.append('SELECT {0} FROM "{1}";'.format(fields, table[0]))
-            mainScript = '\n'.join(script)
+                script.append('SELECT {0} \nFROM "{1}";'.format(fields, table[0]))
+            mainScript = '\n\n'.join(script)
 
         # SELECT * ... WHERE <AND selected fields>
         if action == self.select4Option:
             script = []
             for table in selected:
                 fields = ' AND '.join(['"{0}" = "?"'.format(field) for field in table[1]])
-                script.append('SELECT * FROM "{0}" WHERE {1};'.format(table[0], fields))
-            mainScript = '\n'.join(script)
+                script.append('SELECT * \nFROM "{0}" \nWHERE {1};'.format(table[0], fields))
+            mainScript = '\n\n'.join(script)
 
         # SELECT * ... WHERE <OR selected fields>
         if action == self.select5Option:
             script = []
             for table in selected:
                 fields = ' OR '.join(['"{0}" = "?"'.format(field) for field in table[1]])
-                script.append('SELECT * FROM "{0}" WHERE {1};'.format(table[0], fields))
-            mainScript = '\n'.join(script)
+                script.append('SELECT * \nFROM "{0}" \nWHERE {1};'.format(table[0], fields))
+            mainScript = '\n\n'.join(script)
 
         # SELECT <all fields> ... WHERE <AND selected fields>
         if action == self.select6Option:
@@ -186,8 +189,8 @@ class Tables(QTreeWidget):
             for table in selected:
                 fields1 = ', '.join(['"{0}"'.format(field) for field in table[2]])
                 fields2 = ' AND '.join(['"{0}" = "?"'.format(field) for field in table[1]])
-                script.append('SELECT {0} FROM "{1}" WHERE {2};'.format(fields1, table[0], fields2))
-            mainScript = '\n'.join(script)
+                script.append('SELECT {0} \nFROM "{1}" \nWHERE {2};'.format(fields1, table[0], fields2))
+            mainScript = '\n\n'.join(script)
 
         # SELECT <all fields> ... WHERE <OR selected fields>
         if action == self.select7Option:
@@ -195,32 +198,57 @@ class Tables(QTreeWidget):
             for table in selected:
                 fields1 = ', '.join(['"{0}"'.format(field) for field in table[2]])
                 fields2 = ' OR '.join(['"{0}" = "?"'.format(field) for field in table[1]])
-                script.append('SELECT {0} FROM "{1}" WHERE {2};'.format(fields1, table[0], fields2))
-            mainScript = '\n'.join(script)
+                script.append('SELECT {0} \nFROM "{1}" \nWHERE {2};'.format(fields1, table[0], fields2))
+            mainScript = '\n\n'.join(script)
 
         # SELECT * ... JOIN <selected tables>
         if action == self.join1Option:
             joins = []
             mainTable = selected[0][0]
-            for table in selected:
-                joins.append('JOIN "{0}" ON "{0}"."?" = "?"'.format(table[0]))
-            joins = ' '.join(joins)
-            mainScript = 'SELECT "{0}".* FROM "{0}" {1};'.format(mainTable, joins)
+            for table in selected[1:]:
+                joins.append('JOIN "{0}" ON "{0}"."?" = "?"."?"'.format(table[0]))
+            joins = ' \n'.join(joins)
+            fields = ', '.join(['"{0}".*'.format(table[0]) for table in selected])
+            mainScript = 'SELECT {0} \nFROM "{1}" \n{2};'.format(fields, mainTable, joins)
 
-        # SELECT * ... JOIN <selected tables> WHERE <selected fields>
+        # SELECT * ... JOIN <selected tables> WHERE <AND selected fields>
         if action == self.join2Option:
-            return
+            joins = []
+            fields = []
+            mainTable = selected[0][0]
+            for table in selected[1:]:
+                joins.append('JOIN "{0}" ON "{0}"."?" = "?"."?"'.format(table[0]))
+            for table in selected:
+                fields = fields + ['"{0}"."{1}" = "?"'.format(table[0], field) for field in table[1]]
+            joins = ' \n'.join(joins)
+            fields1 = ', '.join(['"{0}".*'.format(table[0]) for table in selected])
+            fields2 = ' AND '.join(fields)
+            mainScript = 'SELECT {0} \nFROM "{1}" \n{2} \nWHERE {3};'.format(fields1, mainTable, joins, fields2)
+
+        # SELECT * ... JOIN <selected tables> WHERE <OR selected fields>
+        if action == self.join3Option:
+            joins = []
+            fields = []
+            mainTable = selected[0][0]
+            for table in selected[1:]:
+                joins.append('JOIN "{0}" ON "{0}"."?" = "?"."?"'.format(table[0]))
+            for table in selected:
+                fields = fields + ['"{0}"."{1}" = "?"'.format(table[0], field) for field in table[1]]
+            joins = ' \n'.join(joins)
+            fields1 = ', '.join(['"{0}".*'.format(table[0]) for table in selected])
+            fields2 = ' OR '.join(fields)
+            mainScript = 'SELECT {0} \nFROM "{1}" \n{2} \nWHERE {3};'.format(fields1, mainTable, joins, fields2)
 
         # SELECT <all fields> ... JOIN <selected tables>
-        if action == self.join3Option:
-            return
-
-        # SELECT <selected fields> ... JOIN <selected tables>
         if action == self.join4Option:
             return
 
+        # SELECT <selected fields> ... JOIN <selected tables>
+        if action == self.join5Option:
+            return
+
         if mainScript:
-            self.insertScript.emit(mainScript)
+            self.insertScript.emit(mainScript + '\n')
 
     def __customContextMenuRequestedEvent(self, position):
         """show popup edit menu"""
