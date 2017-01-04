@@ -662,11 +662,16 @@ class Tab(QTabWidget):
     def currentScript(self):
         editor = self.currentWidget()
         script = None
+        filename = None
+        isNew = None
         if editor:
             if isinstance(editor, Editor):
                 script = editor.toPlainText()
                 #script = unicode(script)
-        return script
+                index = self.currentIndex()
+                filename = self.tabToolTip(index)
+                isNew = filename == self.tabText(index)
+        return script, filename, isNew
 
     def insertTextInCurrentScript(self, text):
         editor = self.currentWidget()
@@ -698,6 +703,7 @@ class ToolBar(QToolBar):
     runQueryRequested = pyqtSignal()
     newQueryRequested = pyqtSignal()
     loadQueryRequested = pyqtSignal()
+    saveQueryRequested = pyqtSignal()
     showResultBelowRequested = pyqtSignal()
     showResultInTabRequested = pyqtSignal()
     showColumnWizardRequested = pyqtSignal()
@@ -731,7 +737,7 @@ class ToolBar(QToolBar):
         elif action == self.loadQueryAction:
             self.loadQueryRequested.emit()
         elif action == self.saveQueryAction:
-            pass
+            self.saveQueryRequested.emit()
 
     #
     # init
@@ -818,7 +824,7 @@ class QQueryCsv(QDialog):
     @waiting
     def __runQueryRequested(self):
 
-        script = self.tab.currentScript()
+        script, _, _ = self.tab.currentScript()
 
         if script:
 
@@ -864,6 +870,18 @@ class QQueryCsv(QDialog):
             with open(filename, 'r') as fileScript:
                 script = fileScript.read()
                 self.tab.addScript(filename, script)
+
+####################
+    def __saveQueryRequested(self):
+        script, filename, isNew = self.tab.currentScript()
+        if isNew:
+            filename = QFileDialog.getSaveFileName(self, self.tr('Save as file'), filename, 'Scripts (*.sql *.qry);;All Files (*.*)')
+            if filename:
+                print 'save as', filename
+                print 'refresh status tab'
+        else:
+            print 'save', filename
+            print 'refresh status tab'
 
     def __showColumnWizardRequested(self):
         isVisible = not self.tables.isVisible()
@@ -961,6 +979,7 @@ class QQueryCsv(QDialog):
         self.toolbar.runQueryRequested.connect(self.__runQueryRequested)
         self.toolbar.newQueryRequested.connect(self.__newQueryRequested)
         self.toolbar.loadQueryRequested.connect(self.__loadQueryRequested)
+        self.toolbar.saveQueryRequested.connect(self.__saveQueryRequested)
         self.toolbar.showColumnWizardRequested.connect(self.__showColumnWizardRequested)
         self.toolbar.showResultBelowRequested.connect(self.__showResultBelowRequested)
         self.toolbar.showResultInTabRequested.connect(self.__showResultInTabRequested)

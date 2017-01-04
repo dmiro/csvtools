@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Csv Tools
+# CSV Tools
 # Written by David Miro aka dmiro (http://github.com/dmiro)
 #
 # This program is free software: you can redistribute it and/or modify
@@ -198,7 +198,7 @@ class MainWindow(QMainWindow):
     def saveAsFile(self, csv):
         filename = QFileDialog.getSaveFileName(self, self.tr('Save as file'),
                                                csv.document.filename,
-                                               "Csv Files (*.csv)")
+                                               'Csv Files (*.csv)')
         if filename:
             filename = str(filename)
             csv.document.save(filename)
