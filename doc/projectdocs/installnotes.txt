@@ -29,3 +29,7 @@
 
    > pylupdate4 csv.pyw -ts -noobsolete i18n/es_ES.ts
    > lrelease i18n/es_ES.ts
+
+   6.3) To generate .exe
+
+   > pyinstaller --onefile --noconsole csvtools.pyw
