@@ -7,7 +7,9 @@ import lib.images_rc
 import lib.querycsv
 import lib.helper
 
+import io
 import os
+import cchardet
 
 
 class Tables(QTreeWidget):
@@ -572,6 +574,12 @@ class Tab(QTabWidget):
                 return index
         return None
 
+    def __detectEncoding(self, filename):
+        with io.open(filename, mode="rb") as f:
+            data = f.read()
+        detect = cchardet.detect(data)
+        return detect['encoding']
+
     #
     # drag and drop events
     #
@@ -585,8 +593,9 @@ class Tab(QTabWidget):
     def dropEvent(self, event):
         if event.mimeData().hasUrls:
             for url in event.mimeData().urls():
-                filename = str(url.toLocalFile())
-                with open(filename, 'r') as fileScript:
+                filename = unicode(url.toLocalFile())
+                encoding_ = self.__detectEncoding(filename)
+                with io.open(filename, newline='', encoding=encoding_) as fileScript:
                     script = fileScript.read()
                     self.addScript(filename, script)
         else:
@@ -658,7 +667,7 @@ class Tab(QTabWidget):
         filename = 'script {0}'.format(self.countNewScript)
         self.countNewScript = self.countNewScript + 1
         self.addScript(filename)
-
+####################
     def currentScript(self):
         editor = self.currentWidget()
         script = None
@@ -672,6 +681,14 @@ class Tab(QTabWidget):
                 filename = self.tabToolTip(index)
                 isNew = filename == self.tabText(index)
         return script, filename, isNew
+
+    def setFilenameInCurrentScript(self, filename):
+        editor = self.currentWidget()
+        if editor:
+            if isinstance(editor, Editor):
+                index = self.currentIndex()
+                self.setTabText(index, os.path.basename(filename))
+                self.setTabToolTip(index, filename)
 
     def insertTextInCurrentScript(self, text):
         editor = self.currentWidget()
@@ -863,25 +880,35 @@ class QQueryCsv(QDialog):
     def __newQueryRequested(self):
         self.tab.newScript()
 
+    def __detectEncoding(self, filename):
+        with io.open(filename, mode="rb") as f:
+            data = f.read()
+        detect = cchardet.detect(data)
+        return detect['encoding']
+
     def __loadQueryRequested(self):
         filename = QFileDialog.getOpenFileName(parent = self, caption = self.tr('Open'), filter = 'All Files (*.*);;Scripts (*.sql *.qry)')
         if filename:
             filename = str(filename)
-            with open(filename, 'r') as fileScript:
+            encoding_ = self.__detectEncoding(filename)
+            with io.open(filename, newline='', encoding=encoding_) as fileScript:
                 script = fileScript.read()
                 self.tab.addScript(filename, script)
 
-####################
+#################### http://stackoverflow.com/a/37218065/2270217
     def __saveQueryRequested(self):
         script, filename, isNew = self.tab.currentScript()
         if isNew:
             filename = QFileDialog.getSaveFileName(self, self.tr('Save as file'), filename, 'Scripts (*.sql *.qry);;All Files (*.*)')
-            if filename:
-                print 'save as', filename
-                print 'refresh status tab'
+            filename = unicode(filename)
+            encoding_ = 'utf-8'
         else:
-            print 'save', filename
-            print 'refresh status tab'
+            filename = unicode(filename)
+            encoding_ = self.__detectEncoding(filename)
+        if filename:
+            with io.open(filename, 'w', newline='', encoding = encoding_) as fileScript:
+                fileScript.write(script)
+            self.tab.setFilenameInCurrentScript(filename)
 
     def __showColumnWizardRequested(self):
         isVisible = not self.tables.isVisible()
