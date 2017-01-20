@@ -111,6 +111,21 @@ class Tables(QTreeWidget):
         self.join4Option.setEnabled(flagJoin)
         self.join5Option.setEnabled(flagJoin and flagSeletedFields)
 
+    def __addTreeViewStateInData(self, data):
+        """
+        :param data: [ ('table', numrows, ('field1', 'field2',...)), ...]
+        :return: [ ('table', numrows, ('field1', 'field2',...), True, (False, True,...), ...]
+        """
+        result = []
+        for dataTable in data:
+            findResult = self.findItems(dataTable[0], Qt.MatchStartsWith)
+            if findResult:
+                dataTable += (findResult[0].isExpanded(),)
+            else:
+                dataTable += (False,)
+            result.append(dataTable)
+        return result
+
     #
     # public
     #
@@ -123,15 +138,18 @@ class Tables(QTreeWidget):
         :param data: [ ('table', numrows, ('field1', 'field2',...)), ...]
         :return: None
         """
+        data = self.__addTreeViewStateInData(data)
         self.delData()
         for dataTable in data:
             table = QTreeWidgetItem(self)
             table.setText(0, '{0} ({1})'.format(dataTable[0], dataTable[1]))
             table.setIcon(0, QIcon(':images/table.png'))
+            table.setExpanded(dataTable[3])
             for dataField in dataTable[2]:
                 field = QTreeWidgetItem(table)
                 field.setText(0, dataField)
                 field.setIcon(0, QIcon(':images/field.png'))
+                #field.setSelected(True)
 
     #
     # event
