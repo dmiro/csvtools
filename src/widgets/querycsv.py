@@ -114,15 +114,25 @@ class Tables(QTreeWidget):
     def __addTreeViewStateInData(self, data):
         """
         :param data: [ ('table', numrows, ('field1', 'field2',...)), ...]
-        :return: [ ('table', numrows, ('field1', 'field2',...), True, (False, True,...), ...]
+        :return: [ ('table', numrows, ('field1', 'field2',...), True, (False, True,...)), ...]
         """
         result = []
         for dataTable in data:
-            findResult = self.findItems(dataTable[0], Qt.MatchStartsWith)
-            if findResult:
-                dataTable += (findResult[0].isExpanded(),)
+            findTableResult = self.findItems(dataTable[0], Qt.MatchStartsWith)
+            if findTableResult:
+                dataTableState = findTableResult[0].isExpanded()
+                dataFieldState = ()
+                newFields  = [str(findTableResult[0].child(index).text(0)) for index in xrange(findTableResult[0].childCount())]
+                for dataField in dataTable[2]:
+                    if dataField in newFields:
+                        index = newFields.index(dataField)
+                        dataFieldState += (findTableResult[0].child(index).isSelected(),)
+                    else:
+                        dataFieldState += (False,)
             else:
-                dataTable += (False,)
+                dataTableState = False
+                dataFieldState = (False,) * len(dataTable[2])
+            dataTable = dataTable + (dataTableState, dataFieldState)
             result.append(dataTable)
         return result
 
@@ -145,11 +155,11 @@ class Tables(QTreeWidget):
             table.setText(0, '{0} ({1})'.format(dataTable[0], dataTable[1]))
             table.setIcon(0, QIcon(':images/table.png'))
             table.setExpanded(dataTable[3])
-            for dataField in dataTable[2]:
+            for dataField in zip(dataTable[2], dataTable[4]):
                 field = QTreeWidgetItem(table)
-                field.setText(0, dataField)
+                field.setText(0, dataField[0])
                 field.setIcon(0, QIcon(':images/field.png'))
-                #field.setSelected(True)
+                field.setSelected(dataField[1])
 
     #
     # event
