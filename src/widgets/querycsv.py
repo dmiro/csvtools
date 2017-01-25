@@ -955,6 +955,7 @@ class QQueryCsv(QDialog):
 
     def __isEmptyEvent(self, empty):
         self.toolbar.runQueryAction.setDisabled(empty)
+        self.toolbar.saveQueryAction.setDisabled(empty)
 
     #
     # widgets
